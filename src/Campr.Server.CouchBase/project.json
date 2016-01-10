@@ -1,0 +1,25 @@
+﻿{
+  "version": "1.0.0-*",
+  "description": "Campr.Server.CouchBase Console Application",
+  "authors": [ "quent" ],
+  "tags": [ "" ],
+  "projectUrl": "",
+  "licenseUrl": "",
+
+  "compilationOptions": {
+    "emitEntryPoint": true
+  },
+
+  "dependencies": {
+    "Newtonsoft.Json": "8.0.2",
+    "CouchbaseNetClient": "2.2.2"
+  },
+
+  "commands": {
+    "Campr.Server.CouchBase": "Campr.Server.CouchBase"
+  },
+
+  "frameworks": {
+    "dnx451": { }
+  }
+}

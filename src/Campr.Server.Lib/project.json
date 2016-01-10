@@ -1,0 +1,30 @@
+﻿{
+  "version": "1.0.0-*",
+  "description": "Campr.Server.Common Class Library",
+  "authors": [ "Campr" ],
+  "tags": [ "" ],
+  "projectUrl": "",
+  "licenseUrl": "",
+
+  "dependencies": {
+    "Microsoft.Extensions.DependencyInjection": "1.0.0-rc1-final",
+    "Microsoft.Net.Http": "2.2.29",
+    "Microsoft.Net.Http.Headers": "1.0.0-rc1-final",
+    "murmurhash": "1.0.0",
+    "CouchbaseNetClient": "2.2.2",
+    "NEST": "2.0.0-alpha1",
+    "WindowsAzure.Storage": "6.2.0",
+    "SharpDX": "3.0.0",
+    "SharpDX.Direct2D1": "3.0.0"
+  },
+
+  "frameworks": {
+    "dnx451": {
+      "frameworkAssemblies": {
+        "System.Runtime": "4.0.10.0",
+        "System.IO": "4.0.0.0",
+        "System.Linq": "4.0.0.0"
+      }
+    }
+  }
+}
