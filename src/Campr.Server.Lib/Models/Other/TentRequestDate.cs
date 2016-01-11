@@ -70,7 +70,7 @@ namespace Campr.Server.Lib.Models.Other
             }
 
             // Retrieve the Post.
-            var post = await this.postRepository.GetPostLastVersionAsync<object>(userId, this.PostId);
+            var post = await this.postRepository.GetLastVersionAsync<object>(userId, this.PostId);
             if (post == null)
             {
                 return;

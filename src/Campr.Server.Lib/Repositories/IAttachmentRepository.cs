@@ -1,11 +1,8 @@
-﻿using System.Threading.Tasks;
-using Campr.Server.Lib.Models.Db;
+﻿using Campr.Server.Lib.Models.Db;
 
 namespace Campr.Server.Lib.Repositories
 {
-    public interface IAttachmentRepository
+    public interface IAttachmentRepository : IBaseRepository<Attachment>
     {
-        Task<Attachment> GetAttachmentAsync(string digest);
-        Task UpdateAttachmentAsync(Attachment attachment);
     }
 }

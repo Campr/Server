@@ -38,7 +38,7 @@ namespace Campr.Server.Lib.Logic
                 digest = this.cryptoHelpers.ConvertToSha512Truncated(data, 128);
 
             // Try to find an existing attachment with this digest.
-            if (await this.attachmentRepository.GetAttachmentAsync(digest) != null)
+            if (await this.attachmentRepository.GetAsync(digest) != null)
                 return digest;
 
             // Save the file to the storage. 
@@ -47,7 +47,7 @@ namespace Campr.Server.Lib.Logic
             
             // Create a new attachment entry.
             var attachment = this.attachmentFactory.CreateAttachment(digest, data.Length, contentType);
-            await this.attachmentRepository.UpdateAttachmentAsync(attachment);
+            await this.attachmentRepository.UpdateAsync(attachment);
 
             return digest;
         }

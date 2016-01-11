@@ -42,7 +42,7 @@ namespace Campr.Server.Lib.Logic
 
             // Create the bewit object and save it.
             var bewit = this.bewitFactory.FromExpirationDate(expiresAt);
-            await this.bewitRepository.UpdateBewitAsync(bewit);
+            await this.bewitRepository.UpdateAsync(bewit);
 
             // Generate the bewit signature.
             return this.cryptoHelpers.CreateBewit(expiresAt, this.uriHelpers.GetCamprPostUri(userHandle, postId), null, bewit.Id, bewit.Key);

@@ -129,28 +129,9 @@ namespace Campr.Server.Lib.Models.Tent
         [WebProperty]
         [JsonConverter(typeof(TentPostContentConverter))]
         public TContent Content { get; set; }
-
-        //public TContent PostContent
-        //{
-        //    get
-        //    {
-        //        if (this.content != null)
-        //        {
-        //            return this.content;
-        //        }
-
-        //        if (this.jsonContent != null)
-        //        {
-        //            this.content = this.jsonContent.ToObject<TContent>();
-        //        }
-
-        //        return this.content;
-        //    }
-        //    set { this.content = value; }
-        //}
     }
 
-    public class TentPost : ModelBase
+    public class TentPost : DbModelBase
     {
         public bool Validate()
         {
@@ -223,5 +204,9 @@ namespace Campr.Server.Lib.Models.Tent
 
         public List<HttpContent> NewAttachments { get; set; }
         public TentPost<TentContentCredentials> PassengerCredentials { get; set; }
+        public override string GetId()
+        {
+            return this.Id;
+        }
     }
 }

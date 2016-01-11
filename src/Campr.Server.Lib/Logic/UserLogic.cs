@@ -49,11 +49,11 @@ namespace Campr.Server.Lib.Logic
             string camprHandle = null;
             if (this.uriHelpers.IsCamprHandle(entityOrHandle) || this.uriHelpers.IsCamprEntity(entityOrHandle, out camprHandle))
             {
-                return this.userRepository.GetUserIdFromHandleAsync(camprHandle ?? entityOrHandle);
+                return this.userRepository.GetIdFromHandleAsync(camprHandle ?? entityOrHandle);
             }
 
             // Otherwise, search by entity.
-            return this.userRepository.GetUserIdFromEntityAsync(entityOrHandle);
+            return this.userRepository.GetIdFromEntityAsync(entityOrHandle);
         }
 
         public async Task<User> GetUserAsync(string entityOrHandle)
@@ -72,7 +72,7 @@ namespace Campr.Server.Lib.Logic
                     var userId = await this.GetUserIdAsync(entityOrHandle);
                     if (!string.IsNullOrWhiteSpace(userId))
                     {
-                        return await this.userRepository.GetUserAsync(userId);
+                        return await this.userRepository.GetAsync(userId);
                     }
 
                     // If this is a Campr handle, and we didn't find a user, return now.
@@ -91,7 +91,7 @@ namespace Campr.Server.Lib.Logic
                             userId = await this.GetUserIdAsync(metaPost.Entity);
                             if (!string.IsNullOrWhiteSpace(userId))
                             {
-                                return await this.userRepository.GetUserAsync(userId);
+                                return await this.userRepository.GetAsync(userId);
                             }
 
                             entityOrHandle = metaPost.Entity;
@@ -102,7 +102,7 @@ namespace Campr.Server.Lib.Logic
                     var newUser = this.userFactory.CreateUserFromEntity(entityOrHandle);
 
                     // Save both.
-                    await this.userRepository.UpdateUserAsync(newUser);
+                    await this.userRepository.UpdateAsync(newUser);
 
                     // If needed, create the first metaPost for this user.
                     //if (metaPost != null)
@@ -152,7 +152,7 @@ namespace Campr.Server.Lib.Logic
             //var avatarAttachment = this.tentAttachmentFactory.FromByteArray("default_avatar.jpg", "avatar", "image/jpeg", avatar);
 
             // Save the newly created objects to the data store.
-            await this.userRepository.UpdateUserAsync(user);
+            await this.userRepository.UpdateAsync(user);
 
             //// Save the Meta Post.
             //await this.postLogic.CreateNewPostAsync(user, this.tentConstants.MetaPostType(), meta, true, null, null, new []

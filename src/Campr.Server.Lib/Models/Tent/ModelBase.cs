@@ -1,4 +1,5 @@
 ﻿using System;
+using Campr.Server.Lib.Json;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -10,5 +11,10 @@ namespace Campr.Server.Lib.Models.Tent
         {
             throw new NotImplementedException("This method shouldn't be called on this object.");
         }
+    }
+
+    public abstract class DbModelBase : ModelBase
+    {
+        public abstract string GetId();
     }
 }

@@ -3,7 +3,7 @@ using Campr.Server.Lib.Models.Tent;
 
 namespace Campr.Server.Lib.Models.Db
 {
-    public class Attachment : ModelBase
+    public class Attachment : DbModelBase
     {
         [DbProperty]
         public string Digest { get; set; }
@@ -13,5 +13,10 @@ namespace Campr.Server.Lib.Models.Db
 
         [DbProperty]
         public string ContentType { get; set; }
+
+        public override string GetId()
+        {
+            return this.Digest;
+        }
     }
 }

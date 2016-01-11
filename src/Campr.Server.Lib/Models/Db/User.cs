@@ -5,7 +5,7 @@ using Campr.Server.Lib.Models.Tent;
 
 namespace Campr.Server.Lib.Models.Db
 {
-    public class User : ModelBase
+    public class User : DbModelBase
     {
         #region Public properties.
 
@@ -52,5 +52,10 @@ namespace Campr.Server.Lib.Models.Db
         }
 
         #endregion
+
+        public override string GetId()
+        {
+            return this.Id;
+        }
     }
 }
