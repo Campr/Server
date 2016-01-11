@@ -12,7 +12,7 @@ namespace Campr.Server.Lib.Data
     class DbClient : IDbClient, IDisposable
     {
         public DbClient(IDbContractResolver dbContractResolver, 
-            ITentServConfiguration configuration)
+            IGeneralConfiguration configuration)
         {
             // Check arguments and assign local variables.
             Ensure.Argument.IsNotNull(dbContractResolver, nameof(dbContractResolver));

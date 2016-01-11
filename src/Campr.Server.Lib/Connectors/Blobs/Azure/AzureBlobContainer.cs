@@ -1,11 +1,11 @@
 ﻿using Campr.Server.Lib.Infrastructure;
 using Microsoft.WindowsAzure.Storage.Blob;
 
-namespace Campr.Server.Lib.Data
+namespace Campr.Server.Lib.Connectors.Blobs.Azure
 {
-    class BlobContainer : IBlobContainer
+    class AzureBlobContainer : IBlobContainer
     {
-        public BlobContainer(CloudBlobContainer baseContainer)
+        public AzureBlobContainer(CloudBlobContainer baseContainer)
         {
             Ensure.Argument.IsNotNull(baseContainer, "baseContainer");
             this.baseContainer = baseContainer;
@@ -16,7 +16,7 @@ namespace Campr.Server.Lib.Data
         public IBlob GetBlob(string blobId)
         {
             var blockBlobReference = this.baseContainer.GetBlockBlobReference(blobId);
-            return new Blob(blockBlobReference);
+            return new AzureBlob(blockBlobReference);
         }
     }
 }

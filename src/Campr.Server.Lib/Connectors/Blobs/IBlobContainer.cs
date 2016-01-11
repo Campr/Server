@@ -1,4 +1,4 @@
-﻿namespace Campr.Server.Lib.Data
+﻿namespace Campr.Server.Lib.Connectors.Blobs
 {
     public interface IBlobContainer
     {

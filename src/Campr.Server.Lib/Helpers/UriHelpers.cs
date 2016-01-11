@@ -10,7 +10,7 @@ namespace Campr.Server.Lib.Helpers
 {
     class UriHelpers : IUriHelpers
     {
-        public UriHelpers(ITentServConfiguration configuration)
+        public UriHelpers(IGeneralConfiguration configuration)
         {
             Ensure.Argument.IsNotNull(configuration, "configuration");
             this.configuration = configuration;
@@ -21,7 +21,7 @@ namespace Campr.Server.Lib.Helpers
         private readonly Regex isInternalEntityRegex = new Regex("^https://([0-9a-z-]{3,30}).campr.me/?\\z");
         private readonly Regex isCamprUserDomainRegex = new Regex("^([0-9a-z-]{3,30}).campr.me\\z");
 
-        private readonly ITentServConfiguration configuration;
+        private readonly IGeneralConfiguration configuration;
 
         public string UrlEncode(string src)
         {
@@ -112,16 +112,12 @@ namespace Campr.Server.Lib.Helpers
         {
             // Validate input.
             if (string.IsNullOrWhiteSpace(path))
-            {
                 return null;
-            }
 
             // Try to extract a username using the corresponding Regex.
             var match = this.isHandlePathRegex.Match(path);
             if (!match.Success)
-            {
                 return null;
-            }
 
             return match.Groups[0].Value;
         }
@@ -129,21 +125,19 @@ namespace Campr.Server.Lib.Helpers
         public string GetStandardEntity(string entity)
         {
             while (entity.Any() && entity.Last() == '/')
-            {
                 entity = entity.Remove(entity.Count() - 1);
-            }
 
             return entity;
         }
 
         public string GetCamprTentEntity(string userHandle)
         {
-            return string.Format(this.configuration.CamprEntityBaseUrl(), userHandle);
+            return string.Format(this.configuration.CamprEntityBaseUrl, userHandle);
         }
 
         public Uri GetCamprPostUri(string userHandle, string postId)
         {
-            return new Uri(this.configuration.CamprBaseUrl() + this.GetCamprPostPath(userHandle, postId), UriKind.Absolute);
+            return new Uri(this.configuration.CamprBaseUrl + this.GetCamprPostPath(userHandle, postId), UriKind.Absolute);
         }
 
         public Uri GetCamprPostBewitUri(string userHandle, string postId, string bewit)
@@ -158,7 +152,7 @@ namespace Campr.Server.Lib.Helpers
 
         public Uri GetCamprAttachmentUri(string userHandle, string entity, string digest)
         {
-            return new Uri(this.configuration.CamprBaseUrl() + string.Format("/{0}/attachments/{1}/{2}", userHandle.ToLowerInvariant(), this.UrlEncode(entity), digest));
+            return new Uri(this.configuration.CamprBaseUrl + $"/{userHandle.ToLowerInvariant()}/attachments/{this.UrlEncode(entity)}/{digest}");
         }
 
         public string GetCamprPostPath(string userHandle, string postId)
@@ -169,16 +163,12 @@ namespace Campr.Server.Lib.Helpers
         public Uri GetCamprUriFromPath(string path)
         {
             if (string.IsNullOrEmpty(path))
-            {
                 path = string.Empty;
-            }
 
             if (path.Length > 0 && path[0] != '/')
-            {
                 path = '/' + path;
-            }
 
-            return new Uri(this.configuration.CamprBaseUrl() + path);
+            return new Uri(this.configuration.CamprBaseUrl + path);
         }
 
         public Uri GetCamprUriFromUri(Uri uri)
@@ -187,7 +177,7 @@ namespace Campr.Server.Lib.Helpers
 
             var uriBuilder = new UriBuilder(uri)
             {
-                Host = this.configuration.CamprBaseDomain(),
+                Host = this.configuration.CamprBaseDomain,
                 Port = 443
             };
 

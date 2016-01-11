@@ -1,4 +1,8 @@
 ﻿using Campr.Server.Lib.Configuration;
+using Campr.Server.Lib.Connectors.Blobs;
+using Campr.Server.Lib.Connectors.Blobs.Azure;
+using Campr.Server.Lib.Connectors.Queues;
+using Campr.Server.Lib.Connectors.Queues.Azure;
 using Campr.Server.Lib.Data;
 using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Images;
@@ -13,7 +17,7 @@ namespace Campr.Server.Lib
         public static void Register(IServiceCollection services)
         {
             // Base classes.
-            services.AddSingleton<ITentServConfiguration, TentServConfiguration>();
+            services.AddSingleton<IGeneralConfiguration, GeneralConfiguration>();
             services.AddSingleton<ITentConstants, TentConstants>();
             services.AddSingleton<IUriHelpers, UriHelpers>();
             services.AddSingleton<IJsonHelpers, JsonHelpers>();
@@ -53,8 +57,8 @@ namespace Campr.Server.Lib
             //services.AddSingleton<ITentHawkSignatureFactory, TentHawkSignatureFactory>();
 
             // Data Access.
-            services.AddSingleton<ITentQueues, TentQueues>();
-            services.AddSingleton<ITentBlobs, TentBlobs>();
+            services.AddSingleton<ITentQueues, AzureTentQueues>();
+            services.AddSingleton<ITentBlobs, AzureTentBlobs>();
 
             services.AddSingleton<IDbClient, DbClient>();
             services.AddSingleton<IUserRepository, UserRepository>();

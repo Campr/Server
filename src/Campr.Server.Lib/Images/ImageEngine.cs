@@ -18,7 +18,7 @@ namespace Campr.Server.Lib.Images
         #region Constructor & Private variables.
 
         public ImageEngine(ICryptoHelpers cryptoHelpers,
-            ITentServConfiguration configuration)
+            IGeneralConfiguration configuration)
         {
             Ensure.Argument.IsNotNull(cryptoHelpers, "cryptoHelpers");
 

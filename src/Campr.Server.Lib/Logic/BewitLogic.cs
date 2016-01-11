@@ -14,7 +14,7 @@ namespace Campr.Server.Lib.Logic
             IBewitFactory bewitFactory, 
             ICryptoHelpers cryptoHelpers, 
             IUriHelpers uriHelpers, 
-            ITentServConfiguration configuration)
+            IGeneralConfiguration configuration)
         {
             Ensure.Argument.IsNotNull(bewitRepository, nameof(bewitRepository));
             Ensure.Argument.IsNotNull(bewitFactory, nameof(bewitFactory));
@@ -33,12 +33,12 @@ namespace Campr.Server.Lib.Logic
         private readonly IBewitFactory bewitFactory;
         private readonly ICryptoHelpers cryptoHelpers;
         private readonly IUriHelpers uriHelpers;
-        private readonly ITentServConfiguration configuration;
+        private readonly IGeneralConfiguration configuration;
 
         public async Task<string> CreateBewitForPostAsync(string userHandle, string postId, TimeSpan? expiresIn = null)
         {
             // Compute the expiration date for this bewit.
-            var expiresAt = DateTime.UtcNow + expiresIn.GetValueOrDefault(this.configuration.DefaultBewitExpiration());
+            var expiresAt = DateTime.UtcNow + expiresIn.GetValueOrDefault(this.configuration.DefaultBewitExpiration);
 
             // Create the bewit object and save it.
             var bewit = this.bewitFactory.FromExpirationDate(expiresAt);

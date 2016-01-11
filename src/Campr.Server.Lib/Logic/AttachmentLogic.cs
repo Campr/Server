@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using Campr.Server.Lib.Connectors.Blobs;
 using Campr.Server.Lib.Data;
 using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Infrastructure;
@@ -42,7 +43,7 @@ namespace Campr.Server.Lib.Logic
 
             // Save the file to the storage. 
             var blob = this.tentBlobs.Attachments.GetBlob(digest);
-            await blob.UploadFromByteArrayAsync(data);
+            await blob.UploadByteArrayAsync(data);
             
             // Create a new attachment entry.
             var attachment = this.attachmentFactory.CreateAttachment(digest, data.Length, contentType);

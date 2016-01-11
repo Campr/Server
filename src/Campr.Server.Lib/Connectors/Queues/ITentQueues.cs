@@ -1,11 +1,12 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading;
+using System.Threading.Tasks;
 using Campr.Server.Lib.Models.Queues;
 
-namespace Campr.Server.Lib.Data
+namespace Campr.Server.Lib.Connectors.Queues
 {
     public interface ITentQueues
     {
-        Task Initialize();
+        Task InitializeAsync(CancellationToken cancellationToken = default(CancellationToken));
         IQueue<QueueMentionMessage> Mentions { get; }
         IQueue<QueueSubscriptionMessage> Subscriptions { get; }
         IQueue<QueueAppNotificationMessage> AppNotifications { get; }
