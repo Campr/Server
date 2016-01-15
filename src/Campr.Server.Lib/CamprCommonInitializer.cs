@@ -5,9 +5,9 @@ using Campr.Server.Lib.Connectors.Queues;
 using Campr.Server.Lib.Connectors.Queues.Azure;
 using Campr.Server.Lib.Data;
 using Campr.Server.Lib.Helpers;
-using Campr.Server.Lib.Images;
 using Campr.Server.Lib.Json;
 using Campr.Server.Lib.Repositories;
+using Campr.Server.Lib.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Campr.Server.Lib
@@ -28,7 +28,7 @@ namespace Campr.Server.Lib
             //services.AddSingleton<IAuthenticationHelpers, AuthenticationHelpers>();
             //services.AddSingleton<IModelHelpers, ModelHelpers>();
             //services.AddSingleton<IHttpHelpers, HttpHelpers>();
-            services.AddSingleton<IImageEngine, ImageEngine>();
+            services.AddSingleton<IImageService, ImageService>();
             services.AddSingleton<IDbContractResolver, DbContractResolver>();
             services.AddSingleton<IWebContractResolver, WebContractResolver>();
 

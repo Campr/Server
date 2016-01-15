@@ -11,13 +11,13 @@ using SharpDX.Mathematics.Interop;
 using WIC = SharpDX.WIC;
 using Direct2D1 = SharpDX.Direct2D1;
 
-namespace Campr.Server.Lib.Images
+namespace Campr.Server.Lib.Services
 {
-    class ImageEngine : IImageEngine
+    class ImageService : IImageService
     {
         #region Constructor & Private variables.
 
-        public ImageEngine(ICryptoHelpers cryptoHelpers,
+        public ImageService(ICryptoHelpers cryptoHelpers,
             IGeneralConfiguration configuration)
         {
             Ensure.Argument.IsNotNull(cryptoHelpers, "cryptoHelpers");

@@ -36,7 +36,7 @@ namespace Campr.Server
 
             app.UseStaticFiles(); 
 
-            app.UseMvc();
+            app.UseMvc(); 
         }
 
         // Entry point for the application.

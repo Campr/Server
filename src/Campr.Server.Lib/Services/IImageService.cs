@@ -1,8 +1,8 @@
 ﻿using SharpDX.Mathematics.Interop;
 
-namespace Campr.Server.Lib.Images
+namespace Campr.Server.Lib.Services
 {
-    public interface IImageEngine
+    public interface IImageService
     {
         RawColor4 GenerateDefaultColor(string seed, double value = 0.8);
         string ColorToHex(RawColor4 color);
