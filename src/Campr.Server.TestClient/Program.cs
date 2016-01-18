@@ -32,8 +32,8 @@ namespace Campr.Server.TestClient
             //var externalUser = userFactory.CreateUserFromEntity("https://titanous.tent.is");
             //userRepository.UpdateAsync(externalUser).Wait();
 
-            // Retrieve a user by handle.
-            var user = userRepository.GetFromHandleAsync("quentez").Result;
+            //// Retrieve a user by handle.
+            //var user = userRepository.GetFromHandleAsync("quentez").Result;
 
             //// Retrieve a user by entity.
             //var user = userRepository.GetFromEntityAsync("https://quentez.tent.is").Result;

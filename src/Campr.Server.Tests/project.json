@@ -1,0 +1,28 @@
+{
+  "version": "1.0.0-*",
+  "description": "Campr.Server.Tests Class Library",
+  "authors": [ "quentez" ],
+  "tags": [ "" ],
+  "projectUrl": "",
+  "licenseUrl": "",
+
+  "dependencies": {
+    "Campr.Server.Lib": "1.0.0-*",
+    "xunit": "2.2.0-beta1-build3239",
+    "xunit.runner.dnx": "2.1.0-rc1-build204"
+  },
+
+  "commands": {
+    "test": "xunit.runner.dnx"
+  },
+
+  "frameworks": {
+    "dnx451": {
+      "frameworkAssemblies": {
+        "System.Runtime": "4.0.10.0",
+        "System.IO": "4.0.0.0",
+        "System.Linq": "4.0.0.0"
+      }
+    }
+  }
+}

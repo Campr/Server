@@ -1,4 +1,4 @@
-﻿{
+{
   "version": "1.0.0-*",
   "description": "Campr.Server.CouchBase Console Application",
   "authors": [ "quent" ],
@@ -11,8 +11,8 @@
   },
 
   "dependencies": {
-    "Newtonsoft.Json": "8.0.2",
-    "CouchbaseNetClient": "2.2.2"
+    "CouchbaseNetClient": "2.2.4",
+    "Newtonsoft.Json": "8.0.2"
   },
 
   "commands": {
