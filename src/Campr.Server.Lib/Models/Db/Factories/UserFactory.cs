@@ -16,25 +16,19 @@ namespace Campr.Server.Lib.Models.Db.Factories
 
         public User CreateUserFromEntity(string entity)
         {
-            var currentDate = DateTime.UtcNow;
             return new User
             {
                 Id = this.textHelpers.GenerateUniqueId(),
-                Entities = { entity },
-                CreatedAt = currentDate,
-                UpdatedAt = currentDate
+                Entity = entity
             };
         }
 
         public User CreateUserFromHandle(string handle)
         {
-            var currentDate = DateTime.UtcNow;
             return new User
             {
                 Id = this.textHelpers.GenerateUniqueId(),
-                Handle = handle,
-                CreatedAt = currentDate,
-                UpdatedAt = currentDate
+                Handle = handle
             };
         }
     }

@@ -6,10 +6,8 @@ namespace Campr.Server.Lib.Json
     class WebContractResolver : BaseContractResolver, IWebContractResolver
     {
         public WebContractResolver(ITextHelpers textHelpers)
-            : base(textHelpers)
+            : base(textHelpers, typeof(WebPropertyAttribute))
         {
         }
-
-        protected override Type ToIncludeAttributeType => typeof(WebPropertyAttribute);
     }
 }

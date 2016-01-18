@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 
 namespace Campr.Server.Lib.Helpers
 {
-    class JsonHelpers : IJsonHelpers
+    class JsonHelpers : IWebJsonHelpers, IDbJsonHelpers
     {
         public JsonHelpers(IBaseContractResolver contractResolver)
         {
@@ -27,12 +27,12 @@ namespace Campr.Server.Lib.Helpers
         
         private readonly JsonSerializer serializer;
 
+        #region IJsonHelpers implementation.
+
         public string ToJsonString(object obj)
         {
             if (obj == null)
-            {
                 return null;
-            }
 
             var sb = new StringBuilder(256);
             var sw = new StringWriter(sb, CultureInfo.InvariantCulture);
@@ -53,14 +53,14 @@ namespace Campr.Server.Lib.Helpers
 
             // Unescape it.
             // TODO: Replace this with Json.Net modification.
-            jsonString = jsonString.Replace("\\n", "\n");
-            jsonString = jsonString.Replace("\\t", "\t");
-            jsonString = jsonString.Replace("\\r", "\r");
-            jsonString = jsonString.Replace("\\f", "\f");
-            jsonString = jsonString.Replace("\\b", "\b");
-            jsonString = jsonString.Replace("\\u0085", "\u0085");
-            jsonString = jsonString.Replace("\\u2028", "\u2028");
-            jsonString = jsonString.Replace("\\u2029", "\u2029");
+            jsonString = jsonString.Replace("\\n", "\n")
+                .Replace("\\t", "\t")
+                .Replace("\\r", "\r")
+                .Replace("\\f", "\f")
+                .Replace("\\b", "\b")
+                .Replace("\\u0085", "\u0085")
+                .Replace("\\u2028", "\u2028")
+                .Replace("\\u2029", "\u2029");
 
             return jsonString;
         }
@@ -68,30 +68,20 @@ namespace Campr.Server.Lib.Helpers
         public T FromJsonString<T>(string src)
         {
             if (string.IsNullOrWhiteSpace(src))
-            {
                 return default(T);
-            }
+            
 
-            using (var reader = new JsonTextReader(new StringReader(src)))
+            using (var jsonReader = new JsonTextReader(new StringReader(src)))
             {
-                return (T)this.serializer.Deserialize(reader, typeof(T));
+                return this.serializer.Deserialize<T>(jsonReader);
             }
         }
 
         public T TryFromJsonString<T>(string src)
         {
-            if (string.IsNullOrWhiteSpace(src))
-            {
-                return default(T);
-            }
-
             try
             {
-
-                using (var reader = new JsonTextReader(new StringReader(src)))
-                {
-                    return (T)this.serializer.Deserialize(reader, typeof(T));
-                }
+                return this.FromJsonString<T>(src);
             }
             catch (Exception)
             {
@@ -99,9 +89,34 @@ namespace Campr.Server.Lib.Helpers
             }
         }
 
-        public JsonSerializer GetSerializer()
+        #endregion
+
+        #region ITypeConverter implementation.
+
+        public T Deserialize<T>(byte[] buffer, int offset, int length)
         {
-            return this.serializer;
+            var objStr = Encoding.UTF8.GetString(buffer, offset, length);
+            return this.FromJsonString<T>(objStr);
         }
+
+        public T Deserialize<T>(Stream stream)
+        {
+            if (stream == null)
+                return default(T);
+
+            using (var streamReader = new StreamReader(stream, Encoding.UTF8))
+            using (var jsonReader = new JsonTextReader(streamReader))
+            {
+                return this.serializer.Deserialize<T>(jsonReader);
+            }
+        }
+
+        public byte[] Serialize(object obj)
+        {
+            var objStr = this.ToJsonString(obj);
+            return Encoding.UTF8.GetBytes(objStr);
+        }
+
+        #endregion
     }
 }

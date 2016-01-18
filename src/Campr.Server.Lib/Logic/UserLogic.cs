@@ -15,25 +15,29 @@ namespace Campr.Server.Lib.Logic
         public UserLogic(IUserRepository userRepository,
             IUserFactory userFactory,
             IDiscoveryService discoveryService,
+            ILoggingService loggerService,
             IUriHelpers uriHelpers,
             ICryptoHelpers cryptoHelpers)
         {
             Ensure.Argument.IsNotNull(userRepository, nameof(userRepository));
             Ensure.Argument.IsNotNull(userFactory, nameof(userFactory));
             Ensure.Argument.IsNotNull(discoveryService, nameof(discoveryService));
+            Ensure.Argument.IsNotNull(loggerService, nameof(loggerService));
             Ensure.Argument.IsNotNull(uriHelpers, nameof(uriHelpers));
             Ensure.Argument.IsNotNull(cryptoHelpers, nameof(cryptoHelpers));
             
             this.userRepository = userRepository;
             this.userFactory = userFactory;
             this.discoveryService = discoveryService;
+            this.loggerService = loggerService;
             this.uriHelpers = uriHelpers;
             this.cryptoHelpers = cryptoHelpers;
         }
         
         private readonly IUserRepository userRepository;
-        private readonly IDiscoveryService discoveryService;
         private readonly IUserFactory userFactory;
+        private readonly IDiscoveryService discoveryService;
+        private readonly ILoggingService loggerService;
         private readonly IUriHelpers uriHelpers;
         private readonly ICryptoHelpers cryptoHelpers;
 
@@ -41,16 +45,12 @@ namespace Campr.Server.Lib.Logic
         {
             // Make sure we have something to work with.
             if (string.IsNullOrWhiteSpace(entityOrHandle))
-            {
                 return null;
-            }
 
             // If this is a Campr handle or entity, search by handle.
             string camprHandle = null;
             if (this.uriHelpers.IsCamprHandle(entityOrHandle) || this.uriHelpers.IsCamprEntity(entityOrHandle, out camprHandle))
-            {
                 return this.userRepository.GetIdFromHandleAsync(camprHandle ?? entityOrHandle);
-            }
 
             // Otherwise, search by entity.
             return this.userRepository.GetIdFromEntityAsync(entityOrHandle);
@@ -59,9 +59,7 @@ namespace Campr.Server.Lib.Logic
         public async Task<User> GetUserAsync(string entityOrHandle)
         {
             if (string.IsNullOrWhiteSpace(entityOrHandle))
-            {
                 return null;
-            }
             
             // Retry in case of conflicts when creating new users.
             for (var i = 0; i < 3; i++)
@@ -71,15 +69,11 @@ namespace Campr.Server.Lib.Logic
                     // First, try to retrieve the user internally.
                     var userId = await this.GetUserIdAsync(entityOrHandle);
                     if (!string.IsNullOrWhiteSpace(userId))
-                    {
                         return await this.userRepository.GetAsync(userId);
-                    }
 
                     // If this is a Campr handle, and we didn't find a user, return now.
                     if (this.uriHelpers.IsCamprHandle(entityOrHandle))
-                    {
                         return null;
-                    }
 
                     // Otherwise, retrieve the entity's profile (with discovery).
                     var metaPost = await this.discoveryService.DiscoverUriAsync<TentContentMeta>(new Uri(entityOrHandle, UriKind.Absolute));
@@ -90,9 +84,7 @@ namespace Campr.Server.Lib.Logic
                         {
                             userId = await this.GetUserIdAsync(metaPost.Entity);
                             if (!string.IsNullOrWhiteSpace(userId))
-                            {
                                 return await this.userRepository.GetAsync(userId);
-                            }
 
                             entityOrHandle = metaPost.Entity;
                         }
@@ -112,8 +104,9 @@ namespace Campr.Server.Lib.Logic
 
                     return newUser;
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    this.loggerService.Exception(ex, "Failed to retrieve user: {0}", entityOrHandle);
                 }
 
                 await Task.Delay(TimeSpan.FromMilliseconds(200));

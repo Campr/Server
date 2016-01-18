@@ -16,6 +16,8 @@ Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Campr.Server.Lib", "src\Cam
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Campr.Server.CouchBase", "src\Campr.Server.CouchBase\Campr.Server.CouchBase.xproj", "{8D9C56F4-27B9-4225-8BEB-7C98ADC1B37C}"
 EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Campr.Server.TestClient", "src\Campr.Server.TestClient\Campr.Server.TestClient.xproj", "{E8C98643-4379-4E40-8432-E6C8BD717593}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -34,6 +36,10 @@ Global
 		{8D9C56F4-27B9-4225-8BEB-7C98ADC1B37C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8D9C56F4-27B9-4225-8BEB-7C98ADC1B37C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8D9C56F4-27B9-4225-8BEB-7C98ADC1B37C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E8C98643-4379-4E40-8432-E6C8BD717593}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E8C98643-4379-4E40-8432-E6C8BD717593}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E8C98643-4379-4E40-8432-E6C8BD717593}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E8C98643-4379-4E40-8432-E6C8BD717593}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -42,5 +48,6 @@ Global
 		{D79F5D6D-7F87-4F1B-97CA-205AE8272A3B} = {506070A8-DFC7-410A-BB57-09880358A8B3}
 		{E23C3B1C-CBD0-4129-9F53-B76E96E4DEE6} = {506070A8-DFC7-410A-BB57-09880358A8B3}
 		{8D9C56F4-27B9-4225-8BEB-7C98ADC1B37C} = {506070A8-DFC7-410A-BB57-09880358A8B3}
+		{E8C98643-4379-4E40-8432-E6C8BD717593} = {506070A8-DFC7-410A-BB57-09880358A8B3}
 	EndGlobalSection
 EndGlobal

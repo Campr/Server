@@ -131,7 +131,7 @@ namespace Campr.Server.Lib.Models.Tent
         public TContent Content { get; set; }
     }
 
-    public class TentPost : DbModelBase
+    public class TentPost : ModelBase
     {
         public bool Validate()
         {
@@ -204,9 +204,5 @@ namespace Campr.Server.Lib.Models.Tent
 
         public List<HttpContent> NewAttachments { get; set; }
         public TentPost<TentContentCredentials> PassengerCredentials { get; set; }
-        public override string GetId()
-        {
-            return this.Id;
-        }
     }
 }

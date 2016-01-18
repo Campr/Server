@@ -13,21 +13,19 @@ namespace Campr.Server.Lib.Json
     {
         #region Constructor & Private variables.
 
-        protected BaseContractResolver(ITextHelpers textHelpers)
+        protected BaseContractResolver(ITextHelpers textHelpers, Type toIncludeAttributeType)
         {
             Ensure.Argument.IsNotNull(textHelpers, nameof(textHelpers));
+            Ensure.Argument.IsNotNull(toIncludeAttributeType, nameof(toIncludeAttributeType));
+
             this.textHelpers = textHelpers;
+            this.toIncludeAttributeType = toIncludeAttributeType;
             this.modelType = typeof(ModelBase);
         }
 
         private readonly ITextHelpers textHelpers;
+        private readonly Type toIncludeAttributeType;
         private readonly Type modelType;
-
-        #endregion
-
-        #region Abstract properties.
-
-        protected virtual Type ToIncludeAttributeType { get; }
 
         #endregion
 
@@ -36,8 +34,8 @@ namespace Campr.Server.Lib.Json
         protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
         {
             // Check if this property needs to be serialized.
-            if (this.ToIncludeAttributeType != null && member.DeclaringType != null && this.modelType.IsAssignableFrom(member.DeclaringType)
-                && !member.GetCustomAttributes(this.ToIncludeAttributeType, false).Any())
+            if (this.toIncludeAttributeType != null && member.DeclaringType != null && this.modelType.IsAssignableFrom(member.DeclaringType)
+                && !member.GetCustomAttributes(this.toIncludeAttributeType, false).Any())
             {
                 return null;
             }

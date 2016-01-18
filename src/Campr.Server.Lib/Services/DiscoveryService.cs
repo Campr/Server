@@ -45,7 +45,7 @@ namespace Campr.Server.Lib.Services
             }
 
             // Extract the Uri of the Meta post from this response.
-            var metaPostUri = targetUriResponse.FindLinkInHeader(this.tentConstants.MetaPostRel());
+            var metaPostUri = targetUriResponse.FindLinkInHeader(this.tentConstants.MetaPostRel);
 
             // If needed, combine this Uri to get the absolute Meta post Uri.
             var absoluteMetaPostUri = metaPostUri.IsAbsoluteUri

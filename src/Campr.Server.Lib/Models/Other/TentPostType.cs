@@ -16,7 +16,7 @@
         {
             return this.WildCard 
                 ? this.Type
-                : string.Format("{0}#{1}", this.Type, this.SubType);
+                : $"{this.Type}#{this.SubType}";
         }
 
         public override bool Equals(object obj)

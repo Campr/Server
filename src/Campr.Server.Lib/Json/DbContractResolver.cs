@@ -1,15 +1,12 @@
-﻿using System;
-using Campr.Server.Lib.Helpers;
+﻿using Campr.Server.Lib.Helpers;
 
 namespace Campr.Server.Lib.Json
 {
     class DbContractResolver : BaseContractResolver, IDbContractResolver
     {
         public DbContractResolver(ITextHelpers textHelpers)
-            : base(textHelpers)
+            : base(textHelpers, typeof(DbPropertyAttribute))
         {
         }
-
-        protected override Type ToIncludeAttributeType => typeof(DbPropertyAttribute);
     }
 }

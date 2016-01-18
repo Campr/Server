@@ -79,7 +79,7 @@ namespace Campr.Server.Lib.Net.Tent
         public Task<long> RetrievePublicationsCountForUserAsync(TentPost<TentContentMeta> metaPost, ITentRequestParameters parameters, ITentHawkSignature credentials)
         {
             var postFeedUri = this.GetEndpointUriFromMetaPost(metaPost, "posts_feed", null, parameters.ToDictionary());
-            return this.RetrieveCountAtUriAsync(postFeedUri, this.tentConstants.PostFeedContentType(), credentials);
+            return this.RetrieveCountAtUriAsync(postFeedUri, this.tentConstants.PostFeedContentType, credentials);
         }
 
         public Task<IList<TentMention>> RetrieveMentionsForUserAsync(TentPost<TentContentMeta> metaPost, ITentRequestParameters parameters, ITentHawkSignature credentials, string postId, string versionId = null)
@@ -115,7 +115,7 @@ namespace Campr.Server.Lib.Net.Tent
             }
 
             var postMentionsUri = this.GetEndpointUriFromMetaPost(metaPost, "post", uriParameters, queryParameters);
-            return this.RetrieveCountAtUriAsync(postMentionsUri, this.tentConstants.MentionsContentType(), credentials);
+            return this.RetrieveCountAtUriAsync(postMentionsUri, this.tentConstants.MentionsContentType, credentials);
         }
 
         public async Task<IList<TentVersion>> RetrieveVersionsForUserAsync(TentPost<TentContentMeta> metaPost, ITentRequestParameters parameters, ITentHawkSignature credentials, string postId)
@@ -127,7 +127,7 @@ namespace Campr.Server.Lib.Net.Tent
             };
 
             var postVersionsUri = this.GetEndpointUriFromMetaPost(metaPost, "post", uriParameters, parameters.ToDictionary());
-            var versions = await this.RetrieveVersionsAtUriAsync(postVersionsUri, this.tentConstants.VersionsContentType(), credentials);
+            var versions = await this.RetrieveVersionsAtUriAsync(postVersionsUri, this.tentConstants.VersionsContentType, credentials);
 
             // Add a UserId to the versions without entity.
             versions.Where(v => string.IsNullOrWhiteSpace(v.Entity))
@@ -145,7 +145,7 @@ namespace Campr.Server.Lib.Net.Tent
             };
 
             var postVersionsUri = this.GetEndpointUriFromMetaPost(metaPost, "post", uriParameters, parameters.ToDictionary());
-            return this.RetrieveCountAtUriAsync(postVersionsUri, this.tentConstants.VersionsContentType(), credentials);
+            return this.RetrieveCountAtUriAsync(postVersionsUri, this.tentConstants.VersionsContentType, credentials);
         }
 
         public async Task<IList<TentVersion>> RetrieveVersionChildrenForUserAsync(TentPost<TentContentMeta> metaPost, ITentRequestParameters parameters, ITentHawkSignature credentials, string postId)
@@ -157,7 +157,7 @@ namespace Campr.Server.Lib.Net.Tent
             };
 
             var postVersionsUri = this.GetEndpointUriFromMetaPost(metaPost, "post", uriParameters, parameters.ToDictionary());
-            var versions = await this.RetrieveVersionsAtUriAsync(postVersionsUri, this.tentConstants.VersionChildrenContentType(), credentials);
+            var versions = await this.RetrieveVersionsAtUriAsync(postVersionsUri, this.tentConstants.VersionChildrenContentType, credentials);
 
             // Add a UserId to the versions without entity.
             versions.Where(v => string.IsNullOrWhiteSpace(v.Entity))
@@ -174,7 +174,7 @@ namespace Campr.Server.Lib.Net.Tent
             };
 
             var postVersionsUri = this.GetEndpointUriFromMetaPost(metaPost, "post", uriParameters, parameters.ToDictionary());
-            return this.RetrieveCountAtUriAsync(postVersionsUri, this.tentConstants.VersionChildrenContentType(), credentials);
+            return this.RetrieveCountAtUriAsync(postVersionsUri, this.tentConstants.VersionChildrenContentType, credentials);
         }
 
         public Task<IHttpResponseMessage> GetAttachmentAsync(TentPost<TentContentMeta> metaPost, ITentHawkSignature credentials, string digest)
@@ -216,15 +216,15 @@ namespace Campr.Server.Lib.Net.Tent
             // Create the request.
             var request = this.requestFactory
                 .Put(postUri)
-                .AddLink(this.uriHelpers.GetCamprPostBewitUri(userHandle, relationshipPost.PassengerCredentials.Id, bewit), this.tentConstants.CredentialsRel())
-                .AddAccept(this.tentConstants.PostContentType())
+                .AddLink(this.uriHelpers.GetCamprPostBewitUri(userHandle, relationshipPost.PassengerCredentials.Id, bewit), this.tentConstants.CredentialsRel)
+                .AddAccept(this.tentConstants.PostContentType)
                 .AddContent(relationshipPost);
 
             var client = this.CreateClient();
             var response = await client.SendAsync(request);
 
             // Extract the Link header to credentials from the response.
-            return response?.FindLinkInHeader(this.tentConstants.CredentialsRel());
+            return response?.FindLinkInHeader(this.tentConstants.CredentialsRel);
         }
 
         public Task<bool> PostNotificationAsync(TentPost<TentContentMeta> metaPost, TentPost<object> post, ITentHawkSignature credentials)
@@ -265,7 +265,7 @@ namespace Campr.Server.Lib.Net.Tent
             // Perform the request.
             var request = this.requestFactory
                 .Get(postUri)
-                .AddAccept(this.tentConstants.PostContentType());
+                .AddAccept(this.tentConstants.PostContentType);
 
             // If needed, and an Authorization header to this request.
             if (credentials != null)
@@ -288,7 +288,7 @@ namespace Campr.Server.Lib.Net.Tent
         private async Task<IList<TentPost<T>>> RetrievePostsAtUriAsync<T>(Uri uri, ITentHawkSignature credentials) where T : class
         {
             // Make the request.
-            var postResult = await this.RetrievePostResultAtUriAsync<T>(uri, this.tentConstants.PostFeedContentType(), credentials);
+            var postResult = await this.RetrievePostResultAtUriAsync<T>(uri, this.tentConstants.PostFeedContentType, credentials);
             if (postResult?.Posts == null)
             {
                 return new List<TentPost<T>>();
@@ -303,7 +303,7 @@ namespace Campr.Server.Lib.Net.Tent
         private async Task<IList<TentMention>> RetrieveMentionsAtUriAsync(Uri uri, ITentHawkSignature credentials)
         {
             // Make the request.
-            var postResult = await this.RetrievePostResultAtUriAsync<object>(uri, this.tentConstants.MentionsContentType(), credentials);
+            var postResult = await this.RetrievePostResultAtUriAsync<object>(uri, this.tentConstants.MentionsContentType, credentials);
             if (postResult?.Mentions == null)
             {
                 return new List<TentMention>();
@@ -359,9 +359,9 @@ namespace Campr.Server.Lib.Net.Tent
 
             // Extract the count from the response.
             int count;
-            if (!response.Headers.Contains(this.tentConstants.CountHeaderName())
-                || !response.Headers.GetValues(this.tentConstants.CountHeaderName()).Any()
-                || !int.TryParse(response.Headers.GetValues(this.tentConstants.CountHeaderName()).First(), out count))
+            if (!response.Headers.Contains(this.tentConstants.CountHeaderName)
+                || !response.Headers.GetValues(this.tentConstants.CountHeaderName).Any()
+                || !int.TryParse(response.Headers.GetValues(this.tentConstants.CountHeaderName).First(), out count))
             {
                 return postResult;
             }
@@ -392,9 +392,9 @@ namespace Campr.Server.Lib.Net.Tent
 
             // Extract the count from the response.
             int result;
-            if (!response.Headers.Contains(this.tentConstants.CountHeaderName())
-                || !response.Headers.GetValues(this.tentConstants.CountHeaderName()).Any()
-                || !int.TryParse(response.Headers.GetValues(this.tentConstants.CountHeaderName()).First(), out result))
+            if (!response.Headers.Contains(this.tentConstants.CountHeaderName)
+                || !response.Headers.GetValues(this.tentConstants.CountHeaderName).Any()
+                || !int.TryParse(response.Headers.GetValues(this.tentConstants.CountHeaderName).First(), out result))
             {
                 return 0;
             }

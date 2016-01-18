@@ -1,6 +1,6 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using Campr.Server.Lib.Configuration;
+using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Infrastructure;
 using Couchbase;
 using Couchbase.Configuration.Client;
@@ -10,9 +10,14 @@ namespace Campr.Server.Lib.Connectors.Buckets.CouchBase
 {
     class TentBuckets : ITentBuckets
     {
-        public TentBuckets(IGeneralConfiguration configuration)
+        #region Constructor & Private fields.
+
+        public TentBuckets(IGeneralConfiguration configuration,
+            IDbJsonHelpers dbJsonHelpers)
         {
             Ensure.Argument.IsNotNull(configuration, nameof(configuration));
+            Ensure.Argument.IsNotNull(dbJsonHelpers, nameof(dbJsonHelpers));
+
             this.configuration = configuration;
 
             // Configure the CouchBase client.
@@ -22,7 +27,8 @@ namespace Campr.Server.Lib.Connectors.Buckets.CouchBase
                 BucketConfigs =
                 {
                     { configuration.MainBucketName, new BucketConfiguration { BucketName = configuration.MainBucketName }}
-                }
+                },
+                Serializer = () => dbJsonHelpers
             };
             this.cluster = new Cluster(config);
         }
@@ -31,13 +37,23 @@ namespace Campr.Server.Lib.Connectors.Buckets.CouchBase
         private readonly ICluster cluster;
         private IBucket mainBucket;
 
+        #endregion
+
+        #region ITentBuckets implementation.
+
         // Initialize the bucket only once.
         public IBucket Main => this.mainBucket ?? (this.mainBucket = this.cluster.OpenBucket(this.configuration.MainBucketName));
+
+        #endregion
+
+        #region IDisposable implementation.
 
         public void Dispose()
         {
             this.mainBucket?.Dispose();
             this.cluster?.Dispose();
         }
+
+        #endregion
     }
 }

@@ -10,5 +10,6 @@ namespace Campr.Server.Lib.Repositories
         Task<string> GetIdFromEmailAsync(string email);
         Task<User> GetFromHandleAsync(string handle);
         Task<User> GetFromEntityAsync(string entity);
+        Task<User> GetAsync(string userId, string versionId);
     }
 }

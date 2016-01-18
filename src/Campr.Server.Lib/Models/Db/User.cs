@@ -1,22 +1,21 @@
 ﻿using System;
-using System.Collections.Generic;
+using Campr.Server.Lib.Extensions;
 using Campr.Server.Lib.Json;
 using Campr.Server.Lib.Models.Tent;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Campr.Server.Lib.Models.Db
 {
-    public class User : DbModelBase
+    public class User : DbVersionModelBase
     {
         #region Public properties.
-
-        [DbProperty]
-        public string Id { get; set; }
 
         [DbProperty]
         public string Handle { get; set; }
 
         [DbProperty]
-        public IList<string> Entities { get; set; }
+        public string Entity { get; set; }
 
         [DbProperty]
         public string Email { get; set; }
@@ -28,16 +27,10 @@ namespace Campr.Server.Lib.Models.Db
         public byte[] PasswordSalt { get; set; }
 
         [DbProperty]
-        public bool IsBotFollowed { get; set; }
+        public bool? IsBotFollowed { get; set; }
 
         [DbProperty]
         public DateTime? LastDiscoveryAttempt { get; set; }
-
-        [DbProperty]
-        public DateTime CreatedAt { get; set; }
-
-        [DbProperty]
-        public DateTime UpdatedAt { get; set; }
 
         [DbProperty]
         public DateTime? DeletedAt { get; set; }
@@ -48,14 +41,29 @@ namespace Campr.Server.Lib.Models.Db
 
         public bool IsInternal()
         {
-            return !string.IsNullOrEmpty(this.Handle);
+            return !string.IsNullOrWhiteSpace(this.Handle);
+        }
+
+        public override JObject GetCanonicalJson(JsonSerializer serializer)
+        {
+            var result = new JObject
+            {
+                {"id", this.Id},
+                {"created_at", this.CreatedAt.GetValueOrDefault()},
+                {"updated_at", this.UpdatedAt.GetValueOrDefault()},
+                {"handle", this.Handle},
+                {"entity", this.Entity},
+                {"email", this.Email},
+                {"password", this.Password},
+                {"password_salt", this.PasswordSalt},
+                {"is_bot_followed", this.IsBotFollowed},
+                {"last_discovery_attempt", this.LastDiscoveryAttempt.GetValueOrDefault()},
+                {"deleted_at", this.DeletedAt.GetValueOrDefault()}
+            };
+
+            return result.Sort();
         }
 
         #endregion
-
-        public override string GetId()
-        {
-            return this.Id;
-        }
     }
 }

@@ -29,8 +29,7 @@ namespace Campr.Server.CouchBase
         private async Task MainAsync()
         {
             // Read the views and build the design documents.
-            var designDocumentTasks = Directory.GetDirectories(Path.Combine("DesignDocuments", "Dev"))
-                .Concat(Directory.GetDirectories(Path.Combine("DesignDocuments", "Prod")))
+            var designDocumentTasks = Directory.GetDirectories("DesignDocuments")
                 .Select(this.ReadDesignDocumentAsync).ToList();
             await Task.WhenAll(designDocumentTasks);
             var designDocuments = designDocumentTasks.Select(t => t.Result).ToList();
@@ -59,7 +58,7 @@ namespace Campr.Server.CouchBase
             var views = viewTasks.Select(t => t.Result).ToList();
 
             // Check if this is a developement document or not.
-            var isDev = Path.GetFileName(Path.GetDirectoryName(path)) == "Dev";
+            var isDev = true;
 
             // Return a design document object with the JSON version already serialized.
             return new DesignDocument

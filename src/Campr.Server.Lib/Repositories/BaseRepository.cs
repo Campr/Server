@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Campr.Server.Lib.Connectors.Buckets;
 using Campr.Server.Lib.Infrastructure;
 using Campr.Server.Lib.Models.Tent;
@@ -11,21 +12,25 @@ namespace Campr.Server.Lib.Repositories
         {
             Ensure.Argument.IsNotNull(buckets, nameof(buckets));
             this.Buckets = buckets;
-            this.prefix = prefix + '_';
+            this.Prefix = prefix + '_';
         }
 
         protected ITentBuckets Buckets { get; }
-        private readonly string prefix;
+        protected string Prefix { get; }
 
-        public async Task<T> GetAsync(string id)
+        public virtual async Task<T> GetAsync(string id)
         {
-            var operation = await this.Buckets.Main.GetAsync<T>(this.prefix + id);
+            var operation = await this.Buckets.Main.GetAsync<T>(this.Prefix + id);
             return operation.Value;
         }
 
-        public async Task UpdateAsync(T newT)
+        public virtual async Task UpdateAsync(T newT)
         {
-            await this.Buckets.Main.UpsertAsync(this.prefix + newT.GetId(), newT);
+            // If needed, set the creation date.
+            if (!newT.CreatedAt.HasValue)
+                newT.CreatedAt = DateTime.UtcNow;
+
+            await this.Buckets.Main.UpsertAsync(this.Prefix + newT.GetId(), newT);
         }
     }
 }

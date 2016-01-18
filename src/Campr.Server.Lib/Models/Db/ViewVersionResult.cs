@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 
 namespace Campr.Server.Lib.Models.Db
 {
-    public class ViewPostResult
+    public class ViewVersionResult
     {
         public string DocId { get; set; }
         

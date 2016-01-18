@@ -4,54 +4,56 @@ namespace Campr.Server.Lib.Configuration
 {
     public interface ITentConstants
     {
-        string NewPostEndpoint();
-        string OAuthEndpoint();
-        string OTokenEndpoint();
+        string NewPostEndpoint { get; }
+        string OAuthEndpoint { get; }
+        string OTokenEndpoint { get; }
 
-        string PostContentType();
-        string PostFeedContentType();
-        string MentionsContentType();
-        string VersionsContentType();
-        string VersionChildrenContentType();
-        string ReplyChainContentType();
-        string ErrorContentType();
-        string JsonContentType();
-        string[] ApiContentTypes();
-        string[] WebContentTypes();
+        string PostContentType { get; }
+        string PostFeedContentType { get; }
+        string MentionsContentType { get; }
+        string ReplyChainContentType { get; }
+        string ServerInfoContentType { get; }
+        string VersionsContentType { get; }
+        string VersionChildrenContentType { get; }
+        string ErrorContentType { get; }
+        string JsonContentType { get; }
+        string FormDataContentType { get; }
+        string[] ApiContentTypes { get; }
+        string[] WebContentTypes { get; }
 
-        string MetaPostType();
-        string AppPostType();
-        string AppAuthorizationPostType();
-        string RelationshipPostType();
-        string SubscriptionPostType();
-        string CredentialsPostType();
-        string DeletePostType();
-        string DeliveryFailurePostType();
-        string CamprProfilePostType();
+        string MetaPostType { get; }
+        string AppPostType { get; }
+        string AppAuthorizationPostType { get; }
+        string RelationshipPostType { get; }
+        string SubscriptionPostType { get; }
+        string CredentialsPostType { get; }
+        string DeletePostType { get; }
+        string DeliveryFailurePostType { get; }
+        string CamprProfilePostType { get; }
 
-        string CredentialsRel();
-        string NotificationRel();
-        string ImportRel();
-        string MetaPostRel();
+        string CredentialsRel { get; }
+        string NotificationRel { get; }
+        string ImportRel { get; }
+        string MetaPostRel { get; }
 
-        string HawkTokenType();
-        string CountHeaderName();
-        string HashPrefix();
-        string HawkAlgorithm();
-        string CreateDeletePostHeader();
+        string HawkTokenType { get; }
+        string CountHeaderName { get; }
+        string HashPrefix { get; }
+        string HawkAlgorithm { get; }
+        string CreateDeletePostHeader { get; }
 
-        string CacheNoProxyHeader();
-        string CacheProxyIfMissHeader();
-        string CacheProxyHeader();
+        string CacheNoProxyHeader { get; }
+        string CacheProxyIfMissHeader { get; }
+        string CacheProxyHeader { get; }
 
-        string DeliveryFailureStatusTemporary();
-        string DeliveryFailureStatusPermanent();
+        string DeliveryFailureStatusTemporary { get; }
+        string DeliveryFailureStatusPermanent { get; }
 
-        string DeliveryFailureReasonUnreachable();
-        string DeliveryFailureReasonDiscovery();
-        string DeliveryFailureReasonRelationship();
-        string DeliveryFailureReasonDelivery();
+        string DeliveryFailureReasonUnreachable { get; }
+        string DeliveryFailureReasonDiscovery { get; }
+        string DeliveryFailureReasonRelationship { get; }
+        string DeliveryFailureReasonDelivery { get; }
 
-        TimeSpan HawkTimestampThreshold();
+        TimeSpan HawkTimestampThreshold { get; }
     }
 }

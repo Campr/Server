@@ -73,12 +73,12 @@ namespace Campr.Server.Lib.Net
 
         public IHttpRequestMessage AddContent<T>(TentPost<T> post) where T : class
         {
-            return this.AddContent(post, new MediaTypeHeaderValue(this.tentConstants.PostContentType())
+            return this.AddContent(post, new MediaTypeHeaderValue(this.tentConstants.PostContentType)
             {
                 Parameters =
                 {
                     new NameValueHeaderValue("type", string.Format(CultureInfo.InvariantCulture, "\"{0}\"", post.Type)),
-                    new NameValueHeaderValue("rel", string.Format(CultureInfo.InvariantCulture, "\"{0}\"", this.tentConstants.NotificationRel()))
+                    new NameValueHeaderValue("rel", string.Format(CultureInfo.InvariantCulture, "\"{0}\"", this.tentConstants.NotificationRel))
                 }
             });
         }
@@ -92,7 +92,7 @@ namespace Campr.Server.Lib.Net
             // Specify the ContentType.
             this.request.Content.Headers.ContentType = 
                 contentType 
-                ?? new MediaTypeHeaderValue(this.tentConstants.JsonContentType()); 
+                ?? new MediaTypeHeaderValue(this.tentConstants.JsonContentType); 
 
             return this;
         }

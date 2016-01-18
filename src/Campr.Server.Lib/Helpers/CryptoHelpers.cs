@@ -113,17 +113,17 @@ namespace Campr.Server.Lib.Helpers
 
         public string ConvertToSha512TruncatedWithPrefix(string src, int length = 32)
         {
-            return this.tentConstants.HashPrefix() + this.ConvertToSha512Truncated(src, length);
+            return this.tentConstants.HashPrefix + this.ConvertToSha512Truncated(src, length);
         }
 
         public string ConvertToSha512TruncatedWithPrefix(byte[] src, int length = 32)
         {
-            return this.tentConstants.HashPrefix() + this.ConvertToSha512Truncated(src, length);
+            return this.tentConstants.HashPrefix + this.ConvertToSha512Truncated(src, length);
         }
 
         public string ConvertToSha512TruncatedWithPrefix(Stream src, int length = 32)
         {
-            return this.tentConstants.HashPrefix() + this.ConvertToSha512Truncated(src, length);
+            return this.tentConstants.HashPrefix + this.ConvertToSha512Truncated(src, length);
         }
 
         public string ConvertToSha512Truncated(string src, int length = 32)

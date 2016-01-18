@@ -31,14 +31,12 @@ namespace Campr.Server.Lib.Repositories
                 .Limit(1);
 
             // Run this query on our bucket.
-            var results = await this.buckets.Main.QueryAsync<ViewPostResult>(query);
+            var results = await this.buckets.Main.QueryAsync<ViewVersionResult>(query);
 
             // Retrieve and return the first result.
             var documentId = results.Rows.FirstOrDefault()?.Value?.DocId;
             if (string.IsNullOrEmpty(documentId))
-            {
                 return null;
-            }
 
             var operation = await this.buckets.Main.GetAsync<TentPost<T>>(documentId);
             return operation.Value;
@@ -49,19 +47,15 @@ namespace Campr.Server.Lib.Repositories
             // Create the view query to retrieve our post last version.
             var query = this.buckets.Main.CreateQuery("posts", "posts_type_lastversion").Group(true);
             if (type.WildCard)
-            {
                 query = query
                     .StartKey(new [] { userId, type.Type + '#' }, true)
                     .EndKey(new [] { userId, type.Type + '$' }, true)
                     .InclusiveEnd(false);
-            }
             else
-            {
                 query = query.Key(new [] { userId, type.ToString() }, true);
-            }
 
             // Run this query on our bucket.
-            var results = await this.buckets.Main.QueryAsync<ViewPostResult>(query);
+            var results = await this.buckets.Main.QueryAsync<ViewVersionResult>(query);
 
             // Find the most recent result.
             var documentId = results.Rows
