@@ -5,6 +5,7 @@ using Campr.Server.Lib.Connectors.Buckets;
 using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Infrastructure;
 using Campr.Server.Lib.Models.Db;
+using Couchbase.Views;
 
 namespace Campr.Server.Lib.Repositories
 {
@@ -22,6 +23,7 @@ namespace Campr.Server.Lib.Repositories
         {
             // Create the view query to retrieve our post last version.
             var query = this.Buckets.Main.CreateQuery("users", "users_handle")
+                .Stale(StaleState.False)
                 .Key(handle, true)
                 .Limit(1);
 
@@ -34,18 +36,20 @@ namespace Campr.Server.Lib.Repositories
         {
             // Create the view query to retrieve our post last version.
             var query = this.Buckets.Main.CreateQuery("users", "users_entity")
+                .Stale(StaleState.False)
                 .Key(entity, true)
                 .Limit(1);
 
             // Run this query on our bucket.
             var results = await this.Buckets.Main.QueryAsync<ViewVersionResult>(query);
-            return results.Rows.FirstOrDefault()?.Value?.DocId;
+            return results.Rows.FirstOrDefault()?.Value?.DocId.Split('_')[1];
         }
 
         public async Task<string> GetIdFromEmailAsync(string email)
         {
             // Create the view query to a user id by email.
             var query = this.Buckets.Main.CreateQuery("users", "users_email")
+                .Stale(StaleState.False)
                 .Key(email, true)
                 .Limit(1);
 
@@ -58,6 +62,7 @@ namespace Campr.Server.Lib.Repositories
         {
             // Create the view query to retrieve a user id by handle.
             var query = this.Buckets.Main.CreateQuery("users", "users_handle")
+                .Stale(StaleState.False)
                 .Key(handle, true)
                 .Limit(1);
 
@@ -77,6 +82,7 @@ namespace Campr.Server.Lib.Repositories
         {
             // Create the view query to retrieve a user id by entity.
             var query = this.Buckets.Main.CreateQuery("users", "users_entity")
+                .Stale(StaleState.False)
                 .Key(entity, true)
                 .Limit(1);
 
@@ -96,6 +102,7 @@ namespace Campr.Server.Lib.Repositories
         {
             // Create the viewer query to retrieve the last version of this user.
             var query = this.Buckets.Main.CreateQuery("users", "users_versions")
+                .Stale(StaleState.False)
                 .Key(userId, true)
                 .Limit(1);
 

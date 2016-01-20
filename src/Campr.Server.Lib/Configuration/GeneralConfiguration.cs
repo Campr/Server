@@ -7,21 +7,23 @@ namespace Campr.Server.Lib.Configuration
 {
     class GeneralConfiguration : IGeneralConfiguration
     {
-        public GeneralConfiguration(ISensitiveConfiguration sensitiveConfiguration)
+        public GeneralConfiguration(IExternalConfiguration externalConfiguration)
         {
-            Ensure.Argument.IsNotNull(sensitiveConfiguration, nameof(sensitiveConfiguration));
-            this.sensitiveConfiguration = sensitiveConfiguration;
+            Ensure.Argument.IsNotNull(externalConfiguration, nameof(externalConfiguration));
+            this.externalConfiguration = externalConfiguration;
         }
 
-        private readonly ISensitiveConfiguration sensitiveConfiguration;
+        private readonly IExternalConfiguration externalConfiguration;
         
-        public string AzureQueuesConnectionString => this.sensitiveConfiguration.AzureQueuesConnectionString;
-        public string AzureBlobsConnectionString => this.sensitiveConfiguration.AzureBlobsConnectionString;
-        public string EncryptionKey => this.sensitiveConfiguration.EncryptionKey;
-
-        public Uri[] CouchBaseServers { get; } = {
-            new Uri("http://localhost:8091/pools"), 
-        };
+        public string AzureQueuesConnectionString => this.externalConfiguration.AzureQueuesConnectionString;
+        public string AzureBlobsConnectionString => this.externalConfiguration.AzureBlobsConnectionString;
+        public string EncryptionKey => this.externalConfiguration.EncryptionKey;
+        public EnvironmentEnum Environment => this.externalConfiguration.Environment;
+        public IEnumerable<Uri> CouchBaseServers => this.externalConfiguration.CouchBaseServers;
+        public bool ConfigureBucket => this.externalConfiguration.ConfigureBucket;
+        public string BucketConfigurationPath => this.externalConfiguration.BucketConfigurationPath;
+        public string BucketAdministratorUsername => this.externalConfiguration.BucketAdministratorUsername;
+        public string BucketAdministratorPassword => this.externalConfiguration.BucketAdministratorPassword;
 
         public string MainBucketName { get; } = "camprdb-dev";
         public string AuthCookieName { get; } = "campr_auth";

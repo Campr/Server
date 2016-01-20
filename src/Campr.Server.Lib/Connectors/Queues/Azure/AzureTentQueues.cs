@@ -15,15 +15,15 @@ namespace Campr.Server.Lib.Connectors.Queues.Azure
     {
         public AzureTentQueues(IGeneralConfiguration configuration, 
             IJsonHelpers jsonHelpers,
-            IRetryHelpers retryHelpers,
+            ITaskHelpers taskHelpers,
             ILoggingService loggingService)
         {
             Ensure.Argument.IsNotNull(configuration, nameof(configuration));
             Ensure.Argument.IsNotNull(jsonHelpers, nameof(jsonHelpers));
-            Ensure.Argument.IsNotNull(retryHelpers, nameof(retryHelpers));
+            Ensure.Argument.IsNotNull(taskHelpers, nameof(taskHelpers));
             Ensure.Argument.IsNotNull(loggingService, nameof(loggingService));
 
-            this.retryHelpers = retryHelpers;
+            this.taskHelpers = taskHelpers;
             this.loggingService = loggingService;
 
             // Create the storage account from the connection string, and the corresponding client.
@@ -43,10 +43,12 @@ namespace Campr.Server.Lib.Connectors.Queues.Azure
             this.AppNotifications = new AzureQueue<QueueAppNotificationMessage>(this.appNotificationQueue, jsonHelpers);
             this.MetaSubscriptions = new AzureQueue<QueueMetaSubscriptionMessage>(this.metaSubscriptionQueue, jsonHelpers);
             this.Retries = new AzureQueue<QueueRetryMessage>(this.retryQueue, jsonHelpers);
+
+            // Create the initializer for this component.
+            this.initializer = new TaskRunner(this.InitializeOnceAsync);
         }
         
-        private bool initialized;
-        private readonly AsyncLock initializeLock = new AsyncLock();
+        private readonly TaskRunner initializer;
 
         private readonly CloudQueue mentionsQueue;
         private readonly CloudQueue subscriptionsQueue;
@@ -54,36 +56,32 @@ namespace Campr.Server.Lib.Connectors.Queues.Azure
         private readonly CloudQueue metaSubscriptionQueue;
         private readonly CloudQueue retryQueue;
 
-        private readonly IRetryHelpers retryHelpers;
+        private readonly ITaskHelpers taskHelpers;
         private readonly ILoggingService loggingService;
 
-        public async Task InitializeAsync(CancellationToken cancellationToken = default(CancellationToken))
+        public Task InitializeAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            // Make sure this is not executed in parallel.
-            using (await this.initializeLock.LockAsync(cancellationToken))
+            return this.initializer.RunOnce(cancellationToken);
+        }
+
+        private async Task InitializeOnceAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            // Try to create the queues.
+            try
             {
-                // If this instance of TentQueues was already initialized, return.
-                if (this.initialized)
-                    return;
-
-                // Try to create the Queues.
-                try
+                await this.taskHelpers.RetryAsync(async () =>
                 {
-                    await this.retryHelpers.RetryAsync(async () =>
-                    {
-                        await this.mentionsQueue.CreateIfNotExistsAsync(cancellationToken);
-                        await this.subscriptionsQueue.CreateIfNotExistsAsync(cancellationToken);
-                        await this.appNotificationQueue.CreateIfNotExistsAsync(cancellationToken);
-                        await this.metaSubscriptionQueue.CreateIfNotExistsAsync(cancellationToken);
-                        await this.retryQueue.CreateIfNotExistsAsync(cancellationToken);
-                    }, cancellationToken);
-
-                    this.initialized = true;
-                }
-                catch (Exception ex)
-                {
-                    this.loggingService.Exception(ex, "Error during Azure queues initialization. We won't retry.");
-                }
+                    await this.mentionsQueue.CreateIfNotExistsAsync(cancellationToken);
+                    await this.subscriptionsQueue.CreateIfNotExistsAsync(cancellationToken);
+                    await this.appNotificationQueue.CreateIfNotExistsAsync(cancellationToken);
+                    await this.metaSubscriptionQueue.CreateIfNotExistsAsync(cancellationToken);
+                    await this.retryQueue.CreateIfNotExistsAsync(cancellationToken);
+                }, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                this.loggingService.Exception(ex, "Error during Azure queues initialization. We won't retry.");
+                throw;
             }
         }
 

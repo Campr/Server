@@ -14,7 +14,7 @@ namespace Campr.Server.TestClient
             var services = new ServiceCollection();
 
             // Register required dependencies.
-            services.AddSingleton<ISensitiveConfiguration, TestSensitiveConfiguration>();
+            services.AddSingleton<IExternalConfiguration, TestExternalConfiguration>();
             CamprCommonInitializer.Register(services);
 
             var container = services.BuildServiceProvider();

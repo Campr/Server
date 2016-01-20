@@ -4,11 +4,8 @@ using Campr.Server.Lib.Enums;
 
 namespace Campr.Server.Lib.Configuration
 {
-    public interface IGeneralConfiguration : ISensitiveConfiguration
+    public interface IGeneralConfiguration : IExternalConfiguration
     {
-        Uri[] CouchBaseServers { get; }
-        string MainBucketName { get; }
-
         string AuthCookieName { get; }
         string LangCookieName { get; }
         string CacheControlHeaderName { get; }

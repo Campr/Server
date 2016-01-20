@@ -13,14 +13,14 @@ namespace Campr.Server.Lib.Connectors.Blobs.Azure
     class AzureTentBlobs : ITentBlobs
     {
         public AzureTentBlobs(IGeneralConfiguration configuration,
-            IRetryHelpers retryHelpers,
+            ITaskHelpers taskHelpers,
             ILoggingService loggingService)
         {
             Ensure.Argument.IsNotNull(configuration, nameof(configuration));
-            Ensure.Argument.IsNotNull(retryHelpers, nameof(retryHelpers));
+            Ensure.Argument.IsNotNull(taskHelpers, nameof(taskHelpers));
             Ensure.Argument.IsNotNull(loggingService, nameof(loggingService));
 
-            this.retryHelpers = retryHelpers;
+            this.taskHelpers = taskHelpers;
             this.loggingService = loggingService;
 
             // Create the storage account from the connection stirng, and the corresponding client.
@@ -32,36 +32,34 @@ namespace Campr.Server.Lib.Connectors.Blobs.Azure
 
             // Create IBlobContainer objects.
             this.Attachments = new AzureBlobContainer(this.attachmentsContainer);
+
+            // Create the initializer for this component.
+            this.initializer = new TaskRunner(this.InitializeOnceAsync);
         }
 
-        private bool initialized;
-        private readonly AsyncLock initializeLock = new AsyncLock();
+        private readonly TaskRunner initializer;
         private readonly CloudBlobContainer attachmentsContainer;
 
-        private readonly IRetryHelpers retryHelpers;
+        private readonly ITaskHelpers taskHelpers;
         private readonly ILoggingService loggingService;
         
-        public async Task InitializeAsync(CancellationToken cancellationToken = default(CancellationToken))
+        public Task InitializeAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            // Make sure this is not executed in parallel.
-            using (await this.initializeLock.LockAsync(cancellationToken))
-            {
-                // If this instance of TentBlobs was already initialized, return.
-                if (this.initialized)
-                    return;
-                
-                // Try to create the containers.
-                try
-                {
-                    await this.retryHelpers.RetryAsync(() => 
-                        this.attachmentsContainer.CreateIfNotExistsAsync(cancellationToken), cancellationToken);
+            return this.initializer.RunOnce(cancellationToken);
+        }
 
-                    this.initialized = true;
-                }
-                catch (Exception ex)
-                {
-                    this.loggingService.Exception(ex, "Error during Azure blobb initialization. We won't retry.");
-                }
+        private async Task InitializeOnceAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            // Try to create the containers.
+            try
+            {
+                await this.taskHelpers.RetryAsync(() =>
+                    this.attachmentsContainer.CreateIfNotExistsAsync(cancellationToken), cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                this.loggingService.Exception(ex, "Error during Azure blob initialization. We won't retry.");
+                throw;
             }
         }
 

@@ -1,5 +1,5 @@
 function (doc, meta) {
-  // This only applies to users.
+  // This only applies to users with handles.
   if (meta.id.indexOf("user") !== 0 || !doc.handle)
     return;
 

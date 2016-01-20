@@ -63,7 +63,7 @@ namespace Campr.Server.Lib
             // Data Access.
             services.AddSingleton<ITentQueues, AzureTentQueues>();
             services.AddSingleton<ITentBlobs, AzureTentBlobs>();
-            services.AddSingleton<ITentBuckets, TentBuckets>();
+            services.AddSingleton<ITentBuckets, CouchbaseTentBuckets>();
             
             services.AddSingleton<IUserRepository, UserRepository>();
             //services.AddSingleton<IUserMapRepository, UserMapRepository>();

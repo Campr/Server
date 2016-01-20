@@ -6,16 +6,16 @@ using Campr.Server.Lib.Services;
 
 namespace Campr.Server.Lib.Helpers
 {
-    class RetryHelpers : IRetryHelpers
+    class TaskHelpers : ITaskHelpers
     {
-        public RetryHelpers(ILoggingService loggingService)
+        public TaskHelpers(ILoggingService loggingService)
         {
             Ensure.Argument.IsNotNull(loggingService, nameof(loggingService));
             this.loggingService = loggingService;
         }
 
         private readonly ILoggingService loggingService;
-       
+
         public async Task RetryAsync(Func<Task> worker, CancellationToken cancellationToken = new CancellationToken())
         {
             var retryCount = 0;
