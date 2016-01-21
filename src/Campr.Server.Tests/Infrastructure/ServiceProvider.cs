@@ -4,7 +4,7 @@ using Campr.Server.Lib.Configuration;
 using Campr.Server.Lib.Services;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Campr.Server.Tests.TestInfrastructure
+namespace Campr.Server.Tests.Infrastructure
 {
     public class ServiceProvider
     {

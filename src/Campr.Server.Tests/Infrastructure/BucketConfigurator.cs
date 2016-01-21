@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Net.Http.Headers;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using Campr.Server.Lib.Configuration;
 using Campr.Server.Lib.Connectors.Buckets;
@@ -11,7 +9,7 @@ using Couchbase.Configuration.Client;
 using Couchbase.Core.Buckets;
 using Couchbase.Management;
 
-namespace Campr.Server.Tests.TestInfrastructure
+namespace Campr.Server.Tests.Infrastructure
 {
     public class BucketConfigurator
     {
@@ -42,13 +40,12 @@ namespace Campr.Server.Tests.TestInfrastructure
                 this.externalConfiguration.BucketAdministratorUsername, 
                 this.externalConfiguration.BucketAdministratorPassword);
 
-            //// Recreate the bucket.
+            // Recreate the bucket.
             await clusterManager.RemoveBucketAsync(BucketName);
             await clusterManager.CreateBucketAsync(new BucketSettings
             {
                 Name = BucketName,
                 BucketType = BucketTypeEnum.Couchbase,
-                RamQuota = 200,
                 AuthType = AuthType.Sasl,
                 ReplicaNumber = ReplicaNumber.Zero
             });

@@ -4,7 +4,7 @@ using System.IO;
 using Campr.Server.Lib.Configuration;
 using Campr.Server.Lib.Enums;
 
-namespace Campr.Server.Tests.TestInfrastructure
+namespace Campr.Server.Tests.Infrastructure
 {
     public class TestConfiguration : IExternalConfiguration
     {

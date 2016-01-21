@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using Campr.Server.Lib.Services;
 
-namespace Campr.Server.Tests.TestInfrastructure
+namespace Campr.Server.Tests.Infrastructure
 {
     public class LoggingService : ILoggingService
     {

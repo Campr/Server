@@ -14,7 +14,7 @@ Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Campr.Server", "src\Campr.S
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Campr.Server.Lib", "src\Campr.Server.Lib\Campr.Server.Lib.xproj", "{E23C3B1C-CBD0-4129-9F53-B76E96E4DEE6}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Campr.Server.CouchBase", "src\Campr.Server.CouchBase\Campr.Server.CouchBase.xproj", "{8D9C56F4-27B9-4225-8BEB-7C98ADC1B37C}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Campr.Server.Couchbase", "src\Campr.Server.Couchbase\Campr.Server.Couchbase.xproj", "{8D9C56F4-27B9-4225-8BEB-7C98ADC1B37C}"
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Campr.Server.TestClient", "src\Campr.Server.TestClient\Campr.Server.TestClient.xproj", "{E8C98643-4379-4E40-8432-E6C8BD717593}"
 EndProject

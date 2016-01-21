@@ -1,6 +1,6 @@
 {
   "version": "1.0.0-*",
-  "description": "Campr.Server.CouchBase Console Application",
+  "description": "Campr.Server.Couchbase Console Application",
   "authors": [ "quent" ],
   "tags": [ "" ],
   "projectUrl": "",
@@ -11,12 +11,12 @@
   },
 
   "dependencies": {
-    "CouchbaseNetClient": "2.2.4",
-    "Newtonsoft.Json": "8.0.2"
+    "Campr.Server.Lib": "1.0.0-*"
   },
 
   "commands": {
-    "Campr.Server.CouchBase": "Campr.Server.CouchBase"
+    "Campr.Server.Couchbase": "Campr.Server.Couchbase",
+    "run": "Campr.Server.Couchbase"
   },
 
   "frameworks": {

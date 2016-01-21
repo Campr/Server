@@ -1,9 +1,9 @@
 ﻿using System.Threading.Tasks;
-using Campr.Server.Tests.TestInfrastructure;
-using Xunit;
+using Campr.Server.Tests.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+using Xunit;
 
-namespace Campr.Server.Tests.Integration.Fixtures
+namespace Campr.Server.Tests.IntegrationTests.Fixtures
 {
     public class CouchbaseBucketFixture : IAsyncLifetime
     {

@@ -2,11 +2,18 @@
 using System.IO;
 using System.Threading.Tasks;
 using System.Linq;
+using Campr.Server.Lib;
+using Campr.Server.Lib.Configuration;
+using Campr.Server.Lib.Connectors.Buckets;
+using Campr.Server.Lib.Services;
 using Couchbase;
+using Couchbase.Authentication;
 using Couchbase.Configuration.Client;
-using Newtonsoft.Json;
+using Couchbase.Core.Buckets;
+using Couchbase.Management;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace Campr.Server.CouchBase
+namespace Campr.Server.Couchbase
 {
     public class Program
     {
@@ -18,105 +25,57 @@ namespace Campr.Server.CouchBase
 
         public Program()
         {
-            this.serializerSettings = new JsonSerializerSettings
-            {
-                NullValueHandling = NullValueHandling.Ignore
-            };
+            // Initialize dependency injection.
+            var services = new ServiceCollection();
+            
+            // Register core components.
+            services.AddSingleton<IExternalConfiguration, CouchbaseConfiguration>();
+            services.AddSingleton<ILoggingService, LoggingService>();
+            CamprCommonInitializer.Register(services);
+            
+            // Create the final container.
+            this.serviceProvider = services.BuildServiceProvider();
         }
 
-        private readonly JsonSerializerSettings serializerSettings;
+        private readonly IServiceProvider serviceProvider;
 
         private async Task MainAsync()
         {
-            // Read the views and build the design documents.
-            var designDocumentTasks = Directory.GetDirectories("DesignDocuments")
-                .Select(this.ReadDesignDocumentAsync).ToList();
-            await Task.WhenAll(designDocumentTasks);
-            var designDocuments = designDocumentTasks.Select(t => t.Result).ToList();
+            // Retrieve the full configuration.
+            var bucketName = "camprdb-dev";
+            var configuration = this.serviceProvider.GetService<IGeneralConfiguration>();
+            var tentBuckets = this.serviceProvider.GetService<ITentBuckets>();
 
-            // Configuration our connection to the cluster.
+            // Configure the connection to the cluster.
             var cluster = new Cluster(new ClientConfiguration
             {
-                Servers = { new Uri("http://localhost:8091") },
-                BucketConfigs = { { "camprdb-dev", new BucketConfiguration { BucketName = "camprdb-dev" } } }
+                Servers = configuration.CouchBaseServers.ToList()
             });
 
-            // Get an instance of the manager for the target bucket.
-            var bucket = cluster.OpenBucket("camprdb-dev");
-            var bucketManager = bucket.CreateManager("Administrator", "CbPass");
+            var clusterManager = cluster.CreateManager(
+                configuration.BucketAdministratorUsername,
+                configuration.BucketAdministratorPassword);
 
-            // Create/Update the design documents.
-            var upsertDesignDocumentTasks = designDocuments.Select(d => bucketManager.UpdateDesignDocumentAsync(d.Name, d.Json)).ToList();
-            await Task.WhenAll(upsertDesignDocumentTasks);
-        }
+            // Retrieve a list of buckets to check if we need to create a new one.
+            var buckets = await clusterManager.ListBucketsAsync();
 
-        private async Task<DesignDocument> ReadDesignDocumentAsync(string path)
-        {
-            // Read the views for this design document.
-            var viewTasks = Directory.GetDirectories(path).Select(this.ReadDesignDocumentViewAsync).ToList();
-            await Task.WhenAll(viewTasks);
-            var views = viewTasks.Select(t => t.Result).ToList();
-
-            // Check if this is a developement document or not.
-            var isDev = true;
-
-            // Return a design document object with the JSON version already serialized.
-            return new DesignDocument
+            // If needed, create the bucket.
+            if (buckets.Success && buckets.Value.All(b => b.Name != bucketName))
             {
-                Name = (isDev ? "dev_" : "") + this.ToSnakeCase(Path.GetFileName(path)),
-                Json = JsonConvert.SerializeObject(new
+                await clusterManager.CreateBucketAsync(new BucketSettings
                 {
-                    views = views.ToDictionary(v => v.Name, v => new
-                    {
-                        map = v.Map,
-                        reduce = v.Reduce  
-                    })
-                }, this.serializerSettings)
-            };
-        }
+                    Name = bucketName,
+                    BucketType = BucketTypeEnum.Couchbase,
+                    RamQuota = 200,
+                    AuthType = AuthType.Sasl
+                });
 
-        private async Task<DesignDocumentView> ReadDesignDocumentViewAsync(string path)
-        {
-            return new DesignDocumentView
-            {
-                Name = this.ToSnakeCase(Path.GetFileName(path)),
-                Map = await this.ReadFileAsync(Path.Combine(path, "Map.js")),
-                Reduce = await this.ReadFileAsync(Path.Combine(path, "Reduce.js"))
-            };
-        }
-
-        private string ToSnakeCase(string src)
-        {
-            return string.Concat(src.Select((x, i) => char.IsUpper(x) ? (i > 0 ? "_" : "") + x.ToString().ToLowerInvariant() : x.ToString()));
-        }
-
-        private async Task<string> ReadFileAsync(string path)
-        {
-            try
-            {
-                using (var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true))
-                using (var reader = new StreamReader(fileStream))
-                {
-                    return await reader.ReadToEndAsync();
-                }
+                // Allow some time for the bucket to initialize.
+                await Task.Delay(1000);
             }
-            catch
-            {
-                return null;
-            }
-        }
 
-        private class DesignDocument
-        {
-            public string Name { get; set; }
-            public string Json { get; set; }
-        }
-
-        private class DesignDocumentView
-        {
-            public string Name { get; set; }
-            public string Map { get; set; }
-            public string Reduce { get; set; }
+            // Configure the views in this bucket.
+            await tentBuckets.InitializeAsync();
         }
     }
 }

@@ -1,29 +1,26 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Campr.Server.Lib.Models.Db.Factories;
 using Campr.Server.Lib.Repositories;
-using Campr.Server.Tests.Integration.Fixtures;
-using Campr.Server.Tests.TestInfrastructure;
+using Campr.Server.Tests.Infrastructure;
+using Campr.Server.Tests.IntegrationTests.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
-namespace Campr.Server.Tests.Integration.Repositories
+namespace Campr.Server.Tests.IntegrationTests.Repositories
 {
     public class UserRepositoryTests : IClassFixture<CouchbaseBucketFixture>
     {
-        public UserRepositoryTests(CouchbaseBucketFixture couchbaseBucket)
+        public UserRepositoryTests()
         {
-            this.couchbaseBucket = couchbaseBucket;
             this.userFactory = ServiceProvider.Current.GetService<IUserFactory>();
             this.userRepository = ServiceProvider.Current.GetService<IUserRepository>();
         }
         
-        private readonly CouchbaseBucketFixture couchbaseBucket;
         private readonly IUserFactory userFactory;
         private readonly IUserRepository userRepository;
 
         [Fact]
-        public async Task CreateInternalUser()
+        public async Task InternalUser()
         {
             const string handle = "user1";
             const string email = "user1@campr.me";
@@ -48,10 +45,28 @@ namespace Campr.Server.Tests.Integration.Repositories
             // Retrieve the user id by email.
             var userId2 = await this.userRepository.GetIdFromEmailAsync(email);
             Assert.Equal(newUser.Id, userId2);
+
+            // Update the email for this user.
+            user.Email = "user1new@campr.me";
+            await this.userRepository.UpdateAsync(user);
+
+            // Retrieve the user by handle.
+            var updatedUser = await this.userRepository.GetFromHandleAsync(handle);
+
+            Assert.NotNull(updatedUser);
+            Assert.Equal(newUser.Id, updatedUser.Id);
+            Assert.Equal(user.Email, updatedUser.Email);
+
+            // Both emails should now point to the same user.
+            var email1UserId = await this.userRepository.GetIdFromEmailAsync(newUser.Email);
+            Assert.Equal(user.Id, email1UserId);
+
+            var email2UserId = await this.userRepository.GetIdFromEmailAsync(user.Email);
+            Assert.Equal(user.Id, email2UserId);
         }
 
         [Fact]
-        public async Task CreateExternalUser()
+        public async Task ExternalUser()
         {
             const string entity = "http://external1.tent.is";
             
