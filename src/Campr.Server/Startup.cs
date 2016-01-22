@@ -1,8 +1,12 @@
-﻿using Microsoft.AspNet.Builder;
+﻿using Campr.Server.Lib;
+using Campr.Server.Lib.Json;
+using Microsoft.AspNet.Builder;
 using Microsoft.AspNet.Hosting;
+using Microsoft.AspNet.Mvc.Formatters;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace Campr.Server
 {
@@ -14,28 +18,54 @@ namespace Campr.Server
             var builder = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json")
                 .AddEnvironmentVariables();
-            this.Configuration = builder.Build();
+            this.configuration = builder.Build();
+
+            // Create JSON serializer settings.
+            this.webJsonSerializerSettings = new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore
+            };
         }
 
-        public IConfigurationRoot Configuration { get; set; }
+        private readonly IConfigurationRoot configuration;
+        private readonly JsonSerializerSettings webJsonSerializerSettings;
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            // Add framework services.
-            services.AddMvc();
+            // Register core components.
+            CamprCommonInitializer.Register(services);
+
+            // Configure Dependency Injection.
+            services.AddMvc(options =>
+            {
+                // Configure input Json formatter.
+                options.InputFormatters.Clear();
+                options.InputFormatters.Add(new JsonInputFormatter
+                {
+                    SerializerSettings = this.webJsonSerializerSettings
+                });
+
+                // Configure output Json formatter.
+                options.OutputFormatters.Clear();
+                options.OutputFormatters.Add(new JsonOutputFormatter
+                {
+                    SerializerSettings = this.webJsonSerializerSettings
+                });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
-            loggerFactory.AddConsole(this.Configuration.GetSection("Logging"));
+            loggerFactory.AddConsole(this.configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
+            // Resolve contract resolver and update JSON settings.
+            this.webJsonSerializerSettings.ContractResolver = app.ApplicationServices.GetService<IWebContractResolver>();
+
             app.UseIISPlatformHandler();
-
             app.UseStaticFiles(); 
-
             app.UseMvc(); 
         }
 
