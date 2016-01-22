@@ -3,9 +3,9 @@ using System.Net;
 
 namespace Campr.Server.Lib.Exceptions
 {
-    public class CustomHttpException : Exception
+    public class ApiException : Exception
     {
-        public CustomHttpException(HttpStatusCode statusCode, string errorMessage = null)
+        public ApiException(HttpStatusCode statusCode, string errorMessage = null)
             : base(errorMessage)
         {
             this.StatusCode = statusCode;

@@ -2,7 +2,7 @@
 
 namespace Campr.Server.Lib.Exceptions
 {
-    public class StaleTimestampException : CustomHttpException
+    public class StaleTimestampException : ApiException
     {
         public StaleTimestampException(byte[] key) 
             : base(HttpStatusCode.Unauthorized, "Stale timestamp")
