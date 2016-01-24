@@ -74,23 +74,17 @@ namespace Campr.Server.Lib.Models.Other
 
             // If needed, add the content hash.
             if (!string.IsNullOrEmpty(this.ContentHash))
-            {
                 values["hash"] = this.ContentHash;
-            }
 
             // If needed, add the extension.
             if (!string.IsNullOrEmpty(this.Extension))
-            {
                 values["ext"] = this.Extension;
-            }
 
             // If needed, add the app.
             if (!string.IsNullOrEmpty(this.App))
-            {
                 values["app"] = this.App;
-            }
 
-            return string.Join(", ", values.Select(kv => string.Format("{0}=\"{1}\"", kv.Key, kv.Value)));
+            return string.Join(", ", values.Select(kv => $"{kv.Key}=\"{kv.Value}\""));
         }
 
         #endregion
@@ -104,13 +98,7 @@ namespace Campr.Server.Lib.Models.Other
 
         private string MacHeaderFromType()
         {
-            switch (this.Type)
-            {
-                case HawkMacTypeEnum.Bewit:
-                    return "bewit";
-                default:
-                    return "header";
-            }
+            return this.Type == HawkMacTypeEnum.Bewit ? "bewit" : "header";
         }
 
         #endregion

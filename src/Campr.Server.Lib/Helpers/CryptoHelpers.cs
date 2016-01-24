@@ -37,6 +37,7 @@ namespace Campr.Server.Lib.Helpers
         public byte[] CreatePasswordKeyAndSalt(string password, out byte[] salt)
         {
             // Specify that we want to randomly generate a 20-byte salt.
+            // Check if we can replace this with Scrypt or Bcrypt before release.
             using (var deriveBytes = new Rfc2898DeriveBytes(password, 20))
             {
                 salt = deriveBytes.Salt;

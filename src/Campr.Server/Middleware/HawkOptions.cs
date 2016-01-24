@@ -2,7 +2,7 @@
 
 namespace Campr.Server.Middleware
 {
-    public class HmacOptions : AuthenticationOptions
+    public class HawkOptions : AuthenticationOptions
     {
         
     }
