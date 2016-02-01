@@ -1,5 +1,6 @@
 ﻿using Campr.Server.Lib;
 using Campr.Server.Lib.Json;
+using Campr.Server.Middleware;
 using Microsoft.AspNet.Builder;
 using Microsoft.AspNet.Hosting;
 using Microsoft.AspNet.Mvc.Formatters;
@@ -61,12 +62,23 @@ namespace Campr.Server
             loggerFactory.AddConsole(this.configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
-            // Resolve contract resolver and update JSON settings.
-            this.webJsonSerializerSettings.ContractResolver = app.ApplicationServices.GetService<IWebContractResolver>();
-
             app.UseIISPlatformHandler();
-            app.UseStaticFiles(); 
-            app.UseMvc(); 
+            app.UseStaticFiles();
+
+            // Use our custom query parameters parser.
+            app.UseTentParameters();
+
+            // Use our custom authentication middleware.
+            app.UseHawkAuthentication(new HawkOptions
+            {
+                AuthenticationScheme = "Hawk"
+            });
+
+            // Use the builtin MVC framework.
+            app.UseMvc();
+
+            // Resolve our custom contract resolver and update the JSON settings.
+            this.webJsonSerializerSettings.ContractResolver = app.ApplicationServices.GetService<IWebContractResolver>();
         }
 
         // Entry point for the application.

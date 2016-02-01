@@ -24,8 +24,7 @@ namespace Campr.Server.Lib.Configuration
         public string BucketConfigurationPath => this.externalConfiguration.BucketConfigurationPath;
         public string BucketAdministratorUsername => this.externalConfiguration.BucketAdministratorUsername;
         public string BucketAdministratorPassword => this.externalConfiguration.BucketAdministratorPassword;
-
-        public string MainBucketName { get; } = "camprdb-dev";
+        
         public string AuthCookieName { get; } = "campr_auth";
         public string LangCookieName { get; } = "campr_lang";
         public string CacheControlHeaderName { get; } = "X-Cache-Control";

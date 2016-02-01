@@ -38,7 +38,6 @@ namespace Campr.Server.Lib.Models.Other
         IList<IList<ITentRequestPost>> NotMentioning { get; }
 
         IList<ITentPostType> PostTypes { get; }
-        IList<ITentPostType> AllowedTypes { get; set; }
         RequestSortByEnum SortBy { get; }
 
         #endregion

@@ -4,6 +4,5 @@ namespace Campr.Server.Middleware
 {
     public class HawkOptions : AuthenticationOptions
     {
-        
     }
 }

@@ -59,7 +59,7 @@ namespace Campr.Server.Lib.Models.Other.Factories
                 Extension = matchDictionary.TryGetValue("ext", string.Empty),
                 App = matchDictionary.TryGetValue("app"),
                 Type = HawkMacTypeEnum.Header
-            };
+            }; 
         }
 
         public ITentHawkSignature FromBewit(string bewit)

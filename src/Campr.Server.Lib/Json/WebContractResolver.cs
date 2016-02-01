@@ -1,4 +1,3 @@
-using System;
 using Campr.Server.Lib.Helpers;
 
 namespace Campr.Server.Lib.Json

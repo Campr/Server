@@ -14,7 +14,7 @@ namespace Campr.Server.Lib.Models.Other
         string App { get; }
         HawkMacTypeEnum Type { get; }
 
-        bool Validate(string verb, string targetUri, byte[] key);
-        string ToHeader(string verb, string targetUri);
+        bool Validate(string verb, Uri targetUri, byte[] key);
+        string ToHeader(string verb, Uri targetUri);
     }
 }

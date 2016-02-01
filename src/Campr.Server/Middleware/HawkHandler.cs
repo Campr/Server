@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Campr.Server.Lib.Configuration;
 using Campr.Server.Lib.Enums;
+using Campr.Server.Lib.Extensions;
 using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Infrastructure;
 using Campr.Server.Lib.Models.Other.Factories;
@@ -13,7 +14,6 @@ using Campr.Server.Lib.Models.Tent.PostContent;
 using Campr.Server.Lib.Repositories;
 using Microsoft.AspNet.Authentication;
 using Microsoft.AspNet.Http.Authentication;
-using Microsoft.AspNet.Http.Extensions;
 
 namespace Campr.Server.Middleware
 {
@@ -24,9 +24,8 @@ namespace Campr.Server.Middleware
             IPostRepository postRepository, 
             IBewitRepository bewitRepository, 
             IUriHelpers uriHelpers, 
-            IQueryStringHelpers queryStringHelpers, 
-            ITentRequestParametersFactory requestParametersFactory, 
-            ITentHawkSignatureFactory hawkSignatureFactory, 
+            ITentHawkSignatureFactory hawkSignatureFactory,
+            ITentPostTypeFactory postTypeFactory,
             IGeneralConfiguration configuration, 
             ITentConstants tentConstants)
         {
@@ -34,9 +33,8 @@ namespace Campr.Server.Middleware
             Ensure.Argument.IsNotNull(postRepository, nameof(postRepository));
             Ensure.Argument.IsNotNull(bewitRepository, nameof(bewitRepository));
             Ensure.Argument.IsNotNull(uriHelpers, nameof(uriHelpers));
-            Ensure.Argument.IsNotNull(queryStringHelpers, nameof(queryStringHelpers));
-            Ensure.Argument.IsNotNull(requestParametersFactory, nameof(requestParametersFactory));
             Ensure.Argument.IsNotNull(hawkSignatureFactory, nameof(hawkSignatureFactory));
+            Ensure.Argument.IsNotNull(postTypeFactory, nameof(postTypeFactory));
             Ensure.Argument.IsNotNull(configuration, nameof(configuration));
             Ensure.Argument.IsNotNull(tentConstants, nameof(tentConstants));
 
@@ -44,9 +42,8 @@ namespace Campr.Server.Middleware
             this.postRepository = postRepository;
             this.bewitRepository = bewitRepository;
             this.uriHelpers = uriHelpers;
-            this.queryStringHelpers = queryStringHelpers;
-            this.requestParametersFactory = requestParametersFactory;
             this.hawkSignatureFactory = hawkSignatureFactory;
+            this.postTypeFactory = postTypeFactory;
             this.configuration = configuration;
             this.tentConstants = tentConstants;
         }
@@ -55,22 +52,20 @@ namespace Campr.Server.Middleware
         private readonly IPostRepository postRepository;
         private readonly IBewitRepository bewitRepository;
         private readonly IUriHelpers uriHelpers;
-        private readonly IQueryStringHelpers queryStringHelpers;
-        private readonly ITentRequestParametersFactory requestParametersFactory;
         private readonly ITentHawkSignatureFactory hawkSignatureFactory;
+        private readonly ITentPostTypeFactory postTypeFactory;
         private readonly IGeneralConfiguration configuration;
         private readonly ITentConstants tentConstants;
     
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
-            // Read the request parameters from the request.
-            var query = this.queryStringHelpers.ParseQueryString(this.Request.QueryString.Value);
-            var requestParameters = this.requestParametersFactory.FromQueryString(query, this.ReadCacheControl());
-
             // Extract the user handle from the current request.
             var userHandle = this.uriHelpers.ExtractUsernameFromPath(this.Request.Path);
             if (string.IsNullOrWhiteSpace(userHandle))
                 return AuthenticateResult.Failed("This is not an authenticable request.");
+
+            // Parse the request Uri from the current request.
+            var requestUri = this.Request.ToUri();
             
             // Extract the hawk signature from the Authorization header.
             var authorizationHeader = this.Request.Headers["Authorization"];
@@ -98,7 +93,7 @@ namespace Campr.Server.Middleware
 
                 // Read the key from the credentials post, and validate the Hawk header.
                 var credentialsKey = Encoding.UTF8.GetBytes(credentialsPost.Content.HawkKey);
-                if (!authorizationHawkSignature.Validate(this.Request.Method, this.Request.GetDisplayUrl(), credentialsKey))
+                if (!authorizationHawkSignature.Validate(this.Request.Method, requestUri, credentialsKey))
                     return AuthenticateResult.Failed("Session not valid.");
 
                 // Retrieve the post mentioned by the credentials.
@@ -133,16 +128,17 @@ namespace Campr.Server.Middleware
                     // Add the authorized post types to the request context.
                     this.Context.Items["AppPostTypes"] = appAuthorizationContent.Types;
 
-                    return this.ResultFromIdentity(identity);
+                    // Update the parameters with the types allowed for this app.
+                    if (!appAuthorizationContent.Types.GetAllRead().Contains("all"))
+                        this.Context.Items[RequestItemEnum.AllowedPostTypes] = appAuthorizationContent.Types
+                            .GetAllRead()
+                            .Select(t => this.postTypeFactory.FromString(t));
 
-                    //// Update the parameters with the types allowed for this app.
-                    //if (!this.AppPostTypes.GetAllRead().Contains("all"))
-                    //{
-                    //    this.Parameters.AllowedTypes = this.AppPostTypes.GetAllRead().Select(t => this.postTypeFactory.FromString(t));
-                    //}
+                    return this.ResultFromIdentity(identity);
                 }
+                
                 // If this is an App post, authenticate as an app.
-                else if (credentialsTargetPost.Type == this.tentConstants.AppPostType)
+                if (credentialsTargetPost.Type == this.tentConstants.AppPostType)
                 {
                     var identity = new ClaimsIdentity(new[]
                     {
@@ -152,8 +148,9 @@ namespace Campr.Server.Middleware
 
                     return this.ResultFromIdentity(identity);
                 }
+                
                 // If this is a relationship post, authenticate as a remote server.
-                else if (credentialsTargetPost.Type.StartsWith(this.tentConstants.RelationshipPostType)
+                if (credentialsTargetPost.Type.StartsWith(this.tentConstants.RelationshipPostType)
                     && credentialsTargetPost.Mentions != null)
                 {
                     // Extract the first mention of the Relationship to get our user's Id.
@@ -170,16 +167,17 @@ namespace Campr.Server.Middleware
 
                     return this.ResultFromIdentity(identity);
                 }
+
                 // Otherwise, fail.
-                else
-                {
-                    return AuthenticateResult.Failed("Couldn't find the corresponding authentication post.");
-                }
+                return AuthenticateResult.Failed("Couldn't find the corresponding authentication post.");
             }
-            else if (!string.IsNullOrWhiteSpace(requestParameters.Bewit))
+
+            // If no authorization header was found, check for a bewit query parameter.
+            var bewitQueryParameter = this.Request.Query["bewit"].FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(bewitQueryParameter))
             {
                 // Read the bewit string to extract the credentials Id.
-                var hawk = this.hawkSignatureFactory.FromBewit(requestParameters.Bewit);
+                var hawk = this.hawkSignatureFactory.FromBewit(bewitQueryParameter);
                 if (hawk == null)
                     return AuthenticateResult.Failed("Couldn't read the provided bewit parameter.");
 
@@ -217,16 +215,15 @@ namespace Campr.Server.Middleware
             var cacheControlStr = this.Request.Headers[this.configuration.CacheControlHeaderName].FirstOrDefault() ??
                                   this.Request.Headers["Cache-Control"].FirstOrDefault();
 
-            var result = default(CacheControlValue);
-            if (string.IsNullOrWhiteSpace(cacheControlStr))
-                return result;
-
-            if (cacheControlStr == "proxy")
-                result = CacheControlValue.Proxy;
-            else if (cacheControlStr == "no-proxy")
-                result = CacheControlValue.NoProxy;
-
-            return result;
+            switch (cacheControlStr)
+            {
+                case "proxy":
+                    return CacheControlValue.Proxy;
+                case "no-proxy":
+                    return CacheControlValue.NoProxy;
+                default:
+                    return default(CacheControlValue);
+            }
         }
     }
 }
