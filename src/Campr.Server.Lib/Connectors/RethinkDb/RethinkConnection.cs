@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Campr.Server.Lib.Configuration;
 using Campr.Server.Lib.Enums;
 using Campr.Server.Lib.Infrastructure;
+using Campr.Server.Lib.Json;
 using Campr.Server.Lib.Services;
 using RethinkDb.Driver;
 using RethinkDb.Driver.Ast;
@@ -17,9 +18,11 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
     {
         public RethinkConnection(
             ILoggingService loggingService, 
+            IDbContractResolver dbContractResolver,
             IGeneralConfiguration configuration)
         {
             Ensure.Argument.IsNotNull(loggingService, nameof(loggingService));
+            Ensure.Argument.IsNotNull(dbContractResolver, nameof(dbContractResolver));
             Ensure.Argument.IsNotNull(configuration, nameof(configuration));
 
             this.loggingService = loggingService;
@@ -27,6 +30,9 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
             this.dbName = this.GetDbName(configuration.Environment);
             this.r = new RethinkDB();
             this.initializer = new TaskRunner(this.InitializeOnceAsync);
+
+            // Configure the static RethinkDb serializer.
+            Converter.Serializer.ContractResolver = dbContractResolver;
         }
 
         private readonly ILoggingService loggingService;
@@ -114,6 +120,8 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
 
         public Table Users => this.r.Db(this.dbName).Table("users");
         public Table Posts => this.r.Db(this.dbName).Table("posts");
+        public Table Attachments => this.r.Db(this.dbName).Table("attachments");
+        public Table Bewits => this.r.Db(this.dbName).Table("bewits");
 
         public void Dispose()
         {
@@ -128,9 +136,9 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
                 case EnvironmentEnum.Production:
                     return "camprprod";
                 case EnvironmentEnum.Test:
-                    return "camprdev";
-                default:
                     return "camprtest";
+                default:
+                    return "camprdev";
             }
         }
     }

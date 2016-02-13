@@ -8,7 +8,7 @@ using Xunit;
 
 namespace Campr.Server.Tests.IntegrationTests.Repositories
 {
-    public class UserRepositoryTests : IClassFixture<CouchbaseBucketFixture>
+    public class UserRepositoryTests : IClassFixture<RethinkDbFixture>
     {
         public UserRepositoryTests()
         {
@@ -56,13 +56,9 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             Assert.NotNull(updatedUser);
             Assert.Equal(newUser.Id, updatedUser.Id);
             Assert.Equal(user.Email, updatedUser.Email);
-
-            // Both emails should now point to the same user.
-            var email1UserId = await this.userRepository.GetIdFromEmailAsync(newUser.Email);
-            Assert.Equal(user.Id, email1UserId);
-
-            var email2UserId = await this.userRepository.GetIdFromEmailAsync(user.Email);
-            Assert.Equal(user.Id, email2UserId);
+            
+            var emailUserId = await this.userRepository.GetIdFromEmailAsync(user.Email);
+            Assert.Equal(user.Id, emailUserId);
         }
 
         [Fact]

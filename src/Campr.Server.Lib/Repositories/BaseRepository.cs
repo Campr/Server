@@ -37,10 +37,10 @@ namespace Campr.Server.Lib.Repositories
             {
                 var result = await this.Table
                     .Insert(newT)
-                    .optArg("upsert", true)
+                    .optArg("conflict", "replace")
                     .RunResultAsync(c);
 
-                result.AssertInserted(1);
+                result.AssertNoErrors();
             });
         }
     }

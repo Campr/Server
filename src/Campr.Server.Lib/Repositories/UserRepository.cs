@@ -66,72 +66,40 @@ namespace Campr.Server.Lib.Repositories
             });
         }
 
-        public async Task<User> GetFromHandleAsync(string handle)
+        public Task<User> GetFromHandleAsync(string handle)
         {
-            // Create the view query to retrieve a user id by handle.
-            var query = this.Buckets.Main.CreateQuery("users", "users_handle")
-                .Stale(StaleState.False)
-                .Key(handle, true)
-                .Limit(1);
+            return this.Db.Run(async c =>
+            {
+                var users = await this.Table
+                    .GetAll(handle)
+                    .optArg("index", "handle")
+                    .Limit(1)
+                    .RunResultAsync<List<User>>(c);
 
-            // Run this query on our bucket.
-            var results = await this.Buckets.Main.QueryAsync<ViewVersionResult>(query);
-
-            // Retrieve and return the first result.
-            var documentId = results.Rows.FirstOrDefault()?.Value?.DocId;
-            if (string.IsNullOrEmpty(documentId))
-                return null;
-
-            var operation = await this.Buckets.Main.GetAsync<User>(documentId);
-            return operation.Value;
+                return users.FirstOrDefault();
+            });
         }
 
-        public async Task<User> GetFromEntityAsync(string entity)
+        public Task<User> GetFromEntityAsync(string entity)
         {
-            // Create the view query to retrieve a user id by entity.
-            var query = this.Buckets.Main.CreateQuery("users", "users_entity")
-                .Stale(StaleState.False)
-                .Key(entity, true)
-                .Limit(1);
+            return this.Db.Run(async c =>
+            {
+                var users = await this.Table
+                    .GetAll(entity)
+                    .optArg("index", "entity")
+                    .Limit(1)
+                    .RunResultAsync<List<User>>(c);
 
-            // Run this query on our bucket.
-            var results = await this.Buckets.Main.QueryAsync<ViewVersionResult>(query);
-
-            // Retrieve and return the first result.
-            var documentId = results.Rows.FirstOrDefault()?.Value?.DocId;
-            if (string.IsNullOrEmpty(documentId))
-                return null;
-
-            var operation = await this.Buckets.Main.GetAsync<User>(documentId);
-            return operation.Value;
-        }
-
-        public override async Task<User> GetAsync(string userId)
-        {
-            // Create the viewer query to retrieve the last version of this user.
-            var query = this.Buckets.Main.CreateQuery("users", "users_versions")
-                .Stale(StaleState.False)
-                .Key(userId, true)
-                .Limit(1);
-
-            // Run this query on our bucket.
-            var results = await this.Buckets.Main.QueryAsync<ViewVersionResult>(query);
-
-            // Retrieve and return the first result.
-            var documentId = results.Rows.FirstOrDefault()?.Value?.DocId;
-            if (string.IsNullOrEmpty(documentId))
-                return null;
-
-            var operation = await this.Buckets.Main.GetAsync<User>(documentId);
-            return operation.Value;
+                return users.FirstOrDefault();
+            });
         }
 
         public Task<User> GetAsync(string userId, string versionId)
         {
-            return base.GetAsync($"{userId}_{versionId}");
+            throw new NotImplementedException();
         }
 
-        public override async Task UpdateAsync(User user)
+        public override Task UpdateAsync(User user)
         {
             // Set the update date.
             user.UpdatedAt = DateTime.UtcNow;
@@ -143,7 +111,7 @@ namespace Campr.Server.Lib.Repositories
             // Update the version for this user before we save it.
             user.VersionId = this.textHelpers.GenerateUniqueId();
 
-            await this.Buckets.Main.UpsertAsync(this.Prefix + user.GetId(), user);
+            return base.UpdateAsync(user);
         }
     }
 }

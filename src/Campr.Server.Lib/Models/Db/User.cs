@@ -3,7 +3,6 @@ using Campr.Server.Lib.Extensions;
 using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Json;
 using Campr.Server.Lib.Models.Tent;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Campr.Server.Lib.Models.Db
@@ -22,10 +21,10 @@ namespace Campr.Server.Lib.Models.Db
         public string Email { get; set; }
 
         [DbProperty]
-        public byte[] Password { get; set; }
+        public string Password { get; set; }
 
         [DbProperty]
-        public byte[] PasswordSalt { get; set; }
+        public string PasswordSalt { get; set; }
 
         [DbProperty]
         public bool? IsBotFollowed { get; set; }

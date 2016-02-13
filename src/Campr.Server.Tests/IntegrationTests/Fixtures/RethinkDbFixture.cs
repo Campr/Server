@@ -5,12 +5,12 @@ using Xunit;
 
 namespace Campr.Server.Tests.IntegrationTests.Fixtures
 {
-    public class CouchbaseBucketFixture : IAsyncLifetime
+    public class RethinkDbFixture : IAsyncLifetime
     {
         public async Task InitializeAsync()
         {
             // Resolve an instance of the bucket configurator.
-            var configurator = ServiceProvider.Current.GetService<BucketConfigurator>();
+            var configurator = ServiceProvider.Current.GetService<DbConfigurator>();
 
             // Use it to get the Db in a clean state.
             await configurator.Reset();

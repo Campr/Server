@@ -17,7 +17,7 @@ namespace Campr.Server.Tests.Infrastructure
             services.AddSingleton<IExternalConfiguration, TestConfiguration>();
             services.AddSingleton<ILoggingService, LoggingService>();
             CamprCommonInitializer.Register(services);
-            services.AddSingleton<BucketConfigurator>();
+            services.AddSingleton<DbConfigurator>();
 
             // Create the final container.
             return services.BuildServiceProvider();

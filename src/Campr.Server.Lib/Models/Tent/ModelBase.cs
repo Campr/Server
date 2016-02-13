@@ -17,7 +17,6 @@ namespace Campr.Server.Lib.Models.Tent
     public abstract class DbModelBase : ModelBase
     {
         [DbProperty]
-        [JsonConverter(typeof(UnixDateTimeConverter))]
         public DateTime? CreatedAt { get; set; }
 
         public abstract string GetId();
@@ -32,7 +31,6 @@ namespace Campr.Server.Lib.Models.Tent
         public string VersionId { get; set; }
 
         [DbProperty]
-        [JsonConverter(typeof(UnixDateTimeConverter))]
         public DateTime? UpdatedAt { get; set; }
 
         public override string GetId()

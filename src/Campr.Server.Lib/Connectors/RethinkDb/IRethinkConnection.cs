@@ -13,5 +13,7 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
         Task Run(Func<IConnection, Task> worker);
         Table Users { get; }
         Table Posts { get; }
+        Table Attachments { get; }
+        Table Bewits { get; }
     }
 }

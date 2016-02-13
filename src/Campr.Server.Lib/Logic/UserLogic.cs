@@ -123,8 +123,8 @@ namespace Campr.Server.Lib.Logic
 
             // Create the password hash and corresponding salt.
             byte[] passwordSalt;
-            user.Password = this.cryptoHelpers.CreatePasswordKeyAndSalt(password, out passwordSalt);
-            user.PasswordSalt = passwordSalt;
+            //user.Password = this.cryptoHelpers.CreatePasswordKeyAndSalt(password, out passwordSalt);
+            //user.PasswordSalt = passwordSalt;
 
             //// Create the Meta Post.
             //var meta = new TentContentMeta
