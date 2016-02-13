@@ -39,7 +39,7 @@ namespace Campr.Server.Lib.Helpers
             Ensure.Argument.IsNotNull(post, nameof(post));
 
             // Generate the JSON string.
-            var canonicalJson = post.GetCanonicalJson(this.jsonHelpers.);
+            var canonicalJson = post.GetCanonicalJson(this.jsonHelpers);
             var stringJson = this.jsonHelpers.ToJsonStringUnescaped(canonicalJson);
 
             // Hash and truncate the resulting JSON.

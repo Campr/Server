@@ -59,28 +59,26 @@ namespace Campr.Server.Lib.Helpers
             var srcKey = key.Split(';');
             var sKey = srcKey.First();
             var sIv = srcKey.Last();
-
-            var rmCrypto = new RijndaelManaged
-            {
-                KeySize = 256,
-                BlockSize = 128,
-                Mode = CipherMode.CBC,
-                Padding = PaddingMode.PKCS7
-            };
+            
+            // Create the AES provider.
+            var aes = Aes.Create();
+            aes.KeySize = 256;
+            aes.BlockSize = 128;
+            aes.Mode = CipherMode.CBC;
+            aes.Padding = PaddingMode.PKCS7;
 
             using (var encryptedStream = new MemoryStream())
+            using (var cryptoStream = new CryptoStream(
+                encryptedStream,
+                aes.CreateEncryptor(Convert.FromBase64String(sKey), Convert.FromBase64String(sIv)),
+                CryptoStreamMode.Write))
             {
-                using (var cryptoStream = new CryptoStream(encryptedStream,
-                    rmCrypto.CreateEncryptor(Convert.FromBase64String(sKey), Convert.FromBase64String(sIv)),
-                    CryptoStreamMode.Write))
-                {
+                var plainBytes = Encoding.UTF8.GetBytes(src);
+                cryptoStream.Write(plainBytes, 0, plainBytes.Length);
+                cryptoStream.FlushFinalBlock();
 
-                    var plainBytes = Encoding.UTF8.GetBytes(src);
-                    cryptoStream.Write(plainBytes, 0, plainBytes.Length);
-                    cryptoStream.FlushFinalBlock();
-
-                    return this.uriHelpers.UrlTokenEncode(encryptedStream.ToArray());
-                }
+                // Url encode the result and return.
+                return this.uriHelpers.UrlTokenEncode(encryptedStream.ToArray());
             }
         }
 
@@ -90,25 +88,22 @@ namespace Campr.Server.Lib.Helpers
             var sKey = srcKey.First();
             var sIv = srcKey.Last();
 
-            var rmCrypto = new RijndaelManaged
-            {
-                KeySize = 256,
-                BlockSize = 128,
-                Mode = CipherMode.CBC,
-                Padding = PaddingMode.PKCS7
-            };
+            // Create the AES provider.
+            var aes = Aes.Create();
+            aes.KeySize = 256;
+            aes.BlockSize = 128;
+            aes.Mode = CipherMode.CBC;
+            aes.Padding = PaddingMode.PKCS7;
 
             var encryptedBytes = this.uriHelpers.UrlTokenDecode(src);
             using (var encryptedStream = new MemoryStream(encryptedBytes))
+            using (var cryptoStream = new CryptoStream(
+                encryptedStream,
+                aes.CreateDecryptor(Convert.FromBase64String(sKey), Convert.FromBase64String(sIv)),
+                CryptoStreamMode.Read))
             {
-
-                using (var cryptoStream = new CryptoStream(encryptedStream,
-                    rmCrypto.CreateDecryptor(Convert.FromBase64String(sKey), Convert.FromBase64String(sIv)),
-                    CryptoStreamMode.Read))
-                {
-                    var sessionKeyReader = new StreamReader(cryptoStream);
-                    return sessionKeyReader.ReadToEnd();
-                }
+                var sessionKeyReader = new StreamReader(cryptoStream);
+                return sessionKeyReader.ReadToEnd();
             }
         }
 
@@ -139,10 +134,12 @@ namespace Campr.Server.Lib.Helpers
 
         public string ConvertToSha512Truncated(Stream src, int length = 32)
         {
-            using (var sha512Provider = new SHA512CryptoServiceProvider())
+            using (var sha512 = SHA512.Create())
             {
-                var hashBytes = sha512Provider.ComputeHash(src);
+                // Compute the Hash.
+                var hashBytes = sha512.ComputeHash(src);
 
+                // Make a standard string version.
                 var sb = new StringBuilder();
                 for (var i = 0; i < length; i++)
                 {
@@ -231,7 +228,7 @@ namespace Campr.Server.Lib.Helpers
 
         public byte[] GenerateNewSecretBytes()
         {
-            using (var rng = new RNGCryptoServiceProvider())
+            using (var rng = RandomNumberGenerator.Create())
             {
                 var key = new byte[14];
                 rng.GetBytes(key);

@@ -1,12 +1,12 @@
-﻿using Campr.Server.Lib.Json;
-using Newtonsoft.Json;
+﻿using Campr.Server.Lib.Helpers;
+using Campr.Server.Lib.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Campr.Server.Lib.Models.Tent
 {
     public class TentPostRef : ModelBase
     {
-        public override JObject GetCanonicalJson(JsonSerializer serializer)
+        public override JObject GetCanonicalJson(IJsonHelpers jsonHelpers)
         {
             var result = new JObject
             {

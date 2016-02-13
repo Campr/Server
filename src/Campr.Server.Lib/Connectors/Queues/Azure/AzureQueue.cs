@@ -53,7 +53,10 @@ namespace Campr.Server.Lib.Connectors.Queues.Azure
             if (azureQueueMessage == null)
                 return;
 
-            await this.baseQueue.DeleteMessageAsync(azureQueueMessage.BaseMessage, cancellationToken);
+            await this.baseQueue.DeleteMessageAsync(
+                azureQueueMessage.BaseMessage.Id,
+                azureQueueMessage.BaseMessage.PopReceipt,
+                null, null, cancellationToken);
         }
     }
 }

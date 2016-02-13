@@ -5,6 +5,7 @@ using System.Text;
 using Campr.Server.Lib.Infrastructure;
 using Campr.Server.Lib.Json;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Campr.Server.Lib.Helpers
 {
@@ -89,32 +90,9 @@ namespace Campr.Server.Lib.Helpers
             }
         }
 
-        #endregion
-
-        #region ITypeConverter implementation.
-
-        public T Deserialize<T>(byte[] buffer, int offset, int length)
+        public JToken FromObject(object src)
         {
-            var objStr = Encoding.UTF8.GetString(buffer, offset, length);
-            return this.FromJsonString<T>(objStr);
-        }
-
-        public T Deserialize<T>(Stream stream)
-        {
-            if (stream == null)
-                return default(T);
-
-            using (var streamReader = new StreamReader(stream, Encoding.UTF8))
-            using (var jsonReader = new JsonTextReader(streamReader))
-            {
-                return this.serializer.Deserialize<T>(jsonReader);
-            }
-        }
-
-        public byte[] Serialize(object obj)
-        {
-            var objStr = this.ToJsonString(obj);
-            return Encoding.UTF8.GetBytes(objStr);
+            return JToken.FromObject(src, this.serializer);
         }
 
         #endregion

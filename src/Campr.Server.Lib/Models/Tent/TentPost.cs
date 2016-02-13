@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using Campr.Server.Lib.Extensions;
+using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Json;
 using Campr.Server.Lib.Models.Tent.PostContent;
 using Newtonsoft.Json;
@@ -31,7 +32,7 @@ namespace Campr.Server.Lib.Models.Tent
             this.content = (TContent)newContent;
         }
 
-        public override JObject GetCanonicalJson(JsonSerializer serializer)
+        public override JObject GetCanonicalJson(IJsonHelpers jsonHelpers)
         {
             var result = new JObject
             {
@@ -46,21 +47,21 @@ namespace Campr.Server.Lib.Models.Tent
             // Mentions.
             if (this.Mentions != null && this.Mentions.Any())
             {
-                result.Add("mentions", JToken.FromObject(this.Mentions
+                result.Add("mentions", jsonHelpers.FromObject(this.Mentions
                     .Where(m => m.Public.GetValueOrDefault(true))
-                    .Select(m => m.GetCanonicalJson(serializer)), serializer));
+                    .Select(m => m.GetCanonicalJson(jsonHelpers))));
             }
 
             // Refs.
             if (this.Refs != null && this.Refs.Any())
             {
-                result.Add("refs", JToken.FromObject(this.Refs.Select(p => p.GetCanonicalJson(serializer)), serializer));
+                result.Add("refs", jsonHelpers.FromObject(this.Refs.Select(p => p.GetCanonicalJson(jsonHelpers))));
             }
 
             // Version.
             if (this.Version != null)
             {
-                result.Add("version", this.Version.GetCanonicalJson(serializer));
+                result.Add("version", this.Version.GetCanonicalJson(jsonHelpers));
             }
 
             // Content.
@@ -70,7 +71,7 @@ namespace Campr.Server.Lib.Models.Tent
             }
             else if (this.content != null)
             {
-                var contentObject = JObject.FromObject(this.content, serializer);
+                var contentObject = jsonHelpers.FromObject(this.content);
                 if (contentObject.HasValues)
                 {
                     result.Add("content", contentObject);
@@ -80,14 +81,14 @@ namespace Campr.Server.Lib.Models.Tent
             // Attachments.
             if (this.Attachments != null && this.Attachments.Any())
             {
-                result.Add("attachments", JToken.FromObject(this.Attachments
-                    .Select(a => a.GetCanonicalJson(serializer)), serializer));
+                result.Add("attachments", jsonHelpers.FromObject(this.Attachments
+                    .Select(a => a.GetCanonicalJson(jsonHelpers))));
             }
 
             // App.
             if (this.App != null)
             {
-                result.Add("app", this.App.GetCanonicalJson(serializer));
+                result.Add("app", this.App.GetCanonicalJson(jsonHelpers));
             }
 
             // Sort all the keys reccursively and return.
@@ -135,9 +136,7 @@ namespace Campr.Server.Lib.Models.Tent
     {
         public bool Validate()
         {
-            var isValid = true;
-            this.Mentions?.ForEach(m => isValid &= m.Validate());
-            return isValid;
+            return this.Mentions?.All(m => m.Validate()) ?? true;
         }
 
         // Core properties.
@@ -202,7 +201,11 @@ namespace Campr.Server.Lib.Models.Tent
         [WebProperty]
         public TentPermissions Permissions { get; set; }
 
+        #region Transient properties.
+
         public List<HttpContent> NewAttachments { get; set; }
         public TentPost<TentContentCredentials> PassengerCredentials { get; set; }
+
+        #endregion
     }
 }

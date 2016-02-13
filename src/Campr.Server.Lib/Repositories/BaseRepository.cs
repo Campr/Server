@@ -1,36 +1,47 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Campr.Server.Lib.Connectors.Buckets;
+using Campr.Server.Lib.Connectors.RethinkDb;
 using Campr.Server.Lib.Infrastructure;
 using Campr.Server.Lib.Models.Tent;
+using RethinkDb.Driver.Ast;
+using RethinkDb.Driver.Model;
 
 namespace Campr.Server.Lib.Repositories
 {
     abstract class BaseRepository<T> : IBaseRepository<T> where T : DbModelBase
     {
-        protected BaseRepository(ITentBuckets buckets, string prefix)
+        protected BaseRepository(IRethinkConnection db, Table table)
         {
-            Ensure.Argument.IsNotNull(buckets, nameof(buckets));
-            this.Buckets = buckets;
-            this.Prefix = prefix + '_';
+            Ensure.Argument.IsNotNull(db, nameof(db));
+            Ensure.Argument.IsNotNull(table, nameof(table));
+
+            this.Db = db;
+            this.Table = table;
         }
 
-        protected ITentBuckets Buckets { get; }
-        protected string Prefix { get; }
+        protected IRethinkConnection Db { get; }
+        protected Table Table { get; }
 
-        public virtual async Task<T> GetAsync(string id)
+        public virtual Task<T> GetAsync(string id)
         {
-            var operation = await this.Buckets.Main.GetAsync<T>(this.Prefix + id);
-            return operation.Value;
+            return this.Db.Run(c => this.Table.Get(id).RunResultAsync<T>(c));
         }
 
-        public virtual async Task UpdateAsync(T newT)
+        public virtual Task UpdateAsync(T newT)
         {
             // If needed, set the creation date.
             if (!newT.CreatedAt.HasValue)
                 newT.CreatedAt = DateTime.UtcNow;
 
-            await this.Buckets.Main.UpsertAsync(this.Prefix + newT.GetId(), newT);
+            return this.Db.Run(async c =>
+            {
+                var result = await this.Table
+                    .Insert(newT)
+                    .optArg("upsert", true)
+                    .RunResultAsync(c);
+
+                result.AssertInserted(1);
+            });
         }
     }
 }

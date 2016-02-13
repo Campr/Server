@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Campr.Server.Lib.Infrastructure;
+using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 
 namespace Campr.Server.Lib.Connectors.Blobs.Azure
@@ -18,26 +19,37 @@ namespace Campr.Server.Lib.Connectors.Blobs.Azure
 
         public Task<Stream> OpenReadAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            return this.baseBlockBlob.OpenReadAsync(cancellationToken);
+            return this.baseBlockBlob.OpenReadAsync(
+                AccessCondition.GenerateIfExistsCondition(),
+                null, null, cancellationToken);
         }
 
         public async Task<byte[]> DownloadByteArrayAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             using (var mem = new MemoryStream())
             {
-                await this.baseBlockBlob.DownloadToStreamAsync(mem, cancellationToken);
+                await this.baseBlockBlob.DownloadToStreamAsync(
+                    mem,
+                    AccessCondition.GenerateIfExistsCondition(),
+                    null, null, cancellationToken);
                 return mem.ToArray();
             }
         }
 
         public Task UploadStreamAsync(Stream stream, CancellationToken cancellationToken = new CancellationToken())
         {
-            return this.baseBlockBlob.UploadFromStreamAsync(stream, cancellationToken);
+            return this.baseBlockBlob.UploadFromStreamAsync(
+                stream,
+                AccessCondition.GenerateIfExistsCondition(),
+                null, null, cancellationToken);
         }
 
         public Task UploadByteArrayAsync(byte[] data, CancellationToken cancellationToken = default(CancellationToken))
         {
-            return this.baseBlockBlob.UploadFromByteArrayAsync(data, 0, data.Length, cancellationToken);
+            return this.baseBlockBlob.UploadFromByteArrayAsync(
+                data, 0, data.Length,
+                AccessCondition.GenerateIfExistsCondition(), 
+                null, null, cancellationToken);
         }
     }
 }

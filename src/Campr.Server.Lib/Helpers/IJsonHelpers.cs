@@ -1,12 +1,13 @@
-﻿using Couchbase.Core.Serialization;
+﻿using Newtonsoft.Json.Linq;
 
 namespace Campr.Server.Lib.Helpers
 {
-    public interface IJsonHelpers : ITypeSerializer
+    public interface IJsonHelpers
     {
         string ToJsonString(object obj);
         string ToJsonStringUnescaped(object obj);
         T FromJsonString<T>(string src);
         T TryFromJsonString<T>(string src);
+        JToken FromObject(object src);
     }
 }

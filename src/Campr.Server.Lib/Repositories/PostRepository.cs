@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Campr.Server.Lib.Connectors.Buckets;
+using Campr.Server.Lib.Connectors.RethinkDb;
 using Campr.Server.Lib.Infrastructure;
 using Campr.Server.Lib.Models.Db;
 using Campr.Server.Lib.Models.Other;
@@ -12,14 +13,14 @@ namespace Campr.Server.Lib.Repositories
 {
     class PostRepository : IPostRepository
     { 
-        public PostRepository(ITentBuckets buckets)
+        public PostRepository(IRethinkConnection buckets)
         {
             Ensure.Argument.IsNotNull(buckets, nameof(buckets));
             this.buckets = buckets;
             this.prefix = "post_";
         }
 
-        private readonly ITentBuckets buckets;
+        private readonly IRethinkConnection buckets;
         private readonly string prefix;
         
         public async Task<TentPost<T>> GetLastVersionAsync<T>(string userId, string postId) where T : class

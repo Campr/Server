@@ -1,5 +1,6 @@
 ﻿using System;
 using Campr.Server.Lib.Extensions;
+using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Json;
 using Campr.Server.Lib.Models.Tent;
 using Newtonsoft.Json;
@@ -44,7 +45,7 @@ namespace Campr.Server.Lib.Models.Db
             return !string.IsNullOrWhiteSpace(this.Handle);
         }
 
-        public override JObject GetCanonicalJson(JsonSerializer serializer)
+        public override JObject GetCanonicalJson(IJsonHelpers jsonHelpers)
         {
             var result = new JObject
             {

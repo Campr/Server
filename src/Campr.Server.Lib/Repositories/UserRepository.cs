@@ -1,17 +1,19 @@
 ﻿using System;
-using System.Threading.Tasks;
+using System.Collections.Generic;
 using System.Linq;
-using Campr.Server.Lib.Connectors.Buckets;
+using System.Threading.Tasks;
+using Campr.Server.Lib.Connectors.RethinkDb;
 using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Infrastructure;
 using Campr.Server.Lib.Models.Db;
-using Couchbase.Views;
 
 namespace Campr.Server.Lib.Repositories
 {
     class UserRepository : BaseRepository<User>, IUserRepository
     {
-        public UserRepository(ITentBuckets buckets, ITextHelpers textHelpers) : base(buckets, "user")
+        public UserRepository(
+            IRethinkConnection db, 
+            ITextHelpers textHelpers) : base(db, db.Users)
         {
             Ensure.Argument.IsNotNull(textHelpers, nameof(textHelpers));
             this.textHelpers = textHelpers;
@@ -19,43 +21,49 @@ namespace Campr.Server.Lib.Repositories
 
         private readonly ITextHelpers textHelpers;
 
-        public async Task<string> GetIdFromHandleAsync(string handle)
+        public Task<string> GetIdFromHandleAsync(string handle)
         {
-            // Create the view query to retrieve our post last version.
-            var query = this.Buckets.Main.CreateQuery("users", "users_handle")
-                .Stale(StaleState.False)
-                .Key(handle, true)
-                .Limit(1);
+            return this.Db.Run(async c =>
+            {
+                var userIds = await this.Table
+                    .GetAll(handle)
+                    .optArg("index", "handle")
+                    .Limit(1)
+                    .GetField("id")
+                    .RunResultAsync<List<string>>(c);
 
-            // Run this query on our bucket.
-            var results = await this.Buckets.Main.QueryAsync<ViewVersionResult>(query);
-            return results.Rows.FirstOrDefault()?.Value?.DocId.Split('_')[1];
+                return userIds.FirstOrDefault();
+            });
         }
 
-        public async Task<string> GetIdFromEntityAsync(string entity)
+        public Task<string> GetIdFromEntityAsync(string entity)
         {
-            // Create the view query to retrieve our post last version.
-            var query = this.Buckets.Main.CreateQuery("users", "users_entity")
-                .Stale(StaleState.False)
-                .Key(entity, true)
-                .Limit(1);
+            return this.Db.Run(async c =>
+            {
+                var userIds = await this.Table
+                    .GetAll(entity)
+                    .optArg("index", "entity")
+                    .Limit(1)
+                    .GetField("id")
+                    .RunResultAsync<List<string>>(c);
 
-            // Run this query on our bucket.
-            var results = await this.Buckets.Main.QueryAsync<ViewVersionResult>(query);
-            return results.Rows.FirstOrDefault()?.Value?.DocId.Split('_')[1];
+                return userIds.FirstOrDefault();
+            });
         }
 
-        public async Task<string> GetIdFromEmailAsync(string email)
+        public Task<string> GetIdFromEmailAsync(string email)
         {
-            // Create the view query to a user id by email.
-            var query = this.Buckets.Main.CreateQuery("users", "users_email")
-                .Stale(StaleState.False)
-                .Key(email, true)
-                .Limit(1);
+            return this.Db.Run(async c =>
+            {
+                var userIds = await this.Table
+                    .GetAll(email)
+                    .optArg("index", "email")
+                    .Limit(1)
+                    .GetField("id")
+                    .RunResultAsync<List<string>>(c);
 
-            // Run this query on our bucket.
-            var results = await this.Buckets.Main.QueryAsync<ViewVersionResult>(query);
-            return results.Rows.FirstOrDefault()?.Value?.DocId.Split('_')[1];
+                return userIds.FirstOrDefault();
+            });
         }
 
         public async Task<User> GetFromHandleAsync(string handle)

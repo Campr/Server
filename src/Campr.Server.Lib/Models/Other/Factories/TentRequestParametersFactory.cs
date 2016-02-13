@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Net.Mail;
 using Campr.Server.Lib.Configuration;
 using Campr.Server.Lib.Enums;
 using Campr.Server.Lib.Extensions;
@@ -60,8 +59,11 @@ namespace Campr.Server.Lib.Models.Other.Factories
 
             // Entities.
             var entities = queryString.TryGetValue("entities");
-            if (this.ReadSingle(entities) == "followings")
+            var entitiesSingle = this.ReadSingle(entities);
+            if (entitiesSingle == "followings")
                 result.OnlyFromFollowings = true;
+            else if (entitiesSingle == "followers")
+                result.OnlyFromFollowers = true;
             else
                 result.Entities = entities?.FirstOrDefault()?.Select(this.uriHelpers.UrlDecode).ToList();
 

@@ -1,15 +1,13 @@
 ﻿using Campr.Server.Lib.Configuration;
 using Campr.Server.Lib.Connectors.Blobs;
 using Campr.Server.Lib.Connectors.Blobs.Azure;
-using Campr.Server.Lib.Connectors.Buckets;
-using Campr.Server.Lib.Connectors.Buckets.CouchBase;
 using Campr.Server.Lib.Connectors.Queues;
 using Campr.Server.Lib.Connectors.Queues.Azure;
+using Campr.Server.Lib.Connectors.RethinkDb;
 using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Json;
 using Campr.Server.Lib.Models.Db.Factories;
 using Campr.Server.Lib.Repositories;
-using Campr.Server.Lib.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Campr.Server.Lib
@@ -29,7 +27,7 @@ namespace Campr.Server.Lib
             //services.AddSingleton<IAuthenticationHelpers, AuthenticationHelpers>();
             //services.AddSingleton<IModelHelpers, ModelHelpers>();
             //services.AddSingleton<IHttpHelpers, HttpHelpers>();
-            services.AddSingleton<IImageService, ImageService>();
+            //services.AddSingleton<IImageService, ImageService>();
 
             services.AddSingleton<IWebContractResolver, WebContractResolver>();
             services.AddSingleton<IDbContractResolver, DbContractResolver>();
@@ -63,7 +61,7 @@ namespace Campr.Server.Lib
             // Data Access.
             services.AddSingleton<ITentQueues, AzureTentQueues>();
             services.AddSingleton<ITentBlobs, AzureTentBlobs>();
-            services.AddSingleton<ITentBuckets, CouchbaseTentBuckets>();
+            services.AddSingleton<IRethinkConnection, RethinkConnection>();
             
             services.AddSingleton<IUserRepository, UserRepository>();
             //services.AddSingleton<IUserMapRepository, UserMapRepository>();

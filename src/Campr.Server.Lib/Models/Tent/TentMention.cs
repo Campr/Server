@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Json;
 using Campr.Server.Lib.Models.Db;
 using Newtonsoft.Json;
@@ -8,7 +9,7 @@ namespace Campr.Server.Lib.Models.Tent
 {
     public class TentMention : ModelBase
     {
-        public override JObject GetCanonicalJson(JsonSerializer serializer)
+        public override JObject GetCanonicalJson(IJsonHelpers jsonHelpers)
         {
             var result = new JObject();
 

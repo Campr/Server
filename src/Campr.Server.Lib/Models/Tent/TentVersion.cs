@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Campr.Server.Lib.Extensions;
+using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Json;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -10,7 +11,7 @@ namespace Campr.Server.Lib.Models.Tent
 {
     public class TentVersion : ModelBase
     {
-        public override JObject GetCanonicalJson(JsonSerializer serializer)
+        public override JObject GetCanonicalJson(IJsonHelpers jsonHelpers)
         {
             var result = new JObject
             {
@@ -19,7 +20,7 @@ namespace Campr.Server.Lib.Models.Tent
 
             if (this.Parents != null && this.Parents.Any())
             {
-                result.Add("parents", JToken.FromObject(this.Parents.Select(p => p.GetCanonicalJson(serializer)), serializer));
+                result.Add("parents", jsonHelpers.FromObject(this.Parents.Select(p => p.GetCanonicalJson(jsonHelpers))));
             }
 
             return result;

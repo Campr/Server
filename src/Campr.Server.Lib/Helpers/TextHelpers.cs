@@ -1,12 +1,22 @@
 ﻿using System;
+using System.Globalization;
 using System.Linq;
-using System.Net.Mail;
-using System.Text;
+using System.Text.RegularExpressions;
+using Campr.Server.Lib.Infrastructure;
+using Campr.Server.Lib.Services;
 
 namespace Campr.Server.Lib.Helpers
 {
     class TextHelpers : ITextHelpers
     {
+        public TextHelpers(ILoggingService loggingService)
+        {
+            Ensure.Argument.IsNotNull(loggingService, nameof(loggingService));
+            this.loggingService = loggingService;
+        }
+
+        private readonly ILoggingService loggingService;
+        
         public string GenerateUniqueId()
         {
             return Guid.NewGuid().ToString("N");
@@ -46,15 +56,31 @@ namespace Campr.Server.Lib.Helpers
 
         public bool IsEmail(string src)
         {
+            if (string.IsNullOrWhiteSpace(src))
+                return false;
+
             try
             {
-                src = Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(src));
-                var targetAddress = new MailAddress(src);
+                // Use IdnMapping class to convert Unicode domain names.
+                var idn = new IdnMapping();
+                src = Regex.Replace(
+                    src, 
+                    @"(@)(.+)$", 
+                    match => match.Groups[1].Value + idn.GetAscii(match.Groups[2].Value), 
+                    RegexOptions.None, 
+                    TimeSpan.FromMilliseconds(200));
 
-                return true;
+                // Validate email address using Regex.
+                return Regex.IsMatch(
+                    src,
+                    @"^(?("")("".+?(?<!\\)""@)|(([0-9a-z]((\.(?!\.))|[-!#\$%&'\*\+/=\?\^`\{\}\|~\w])*)(?<=[0-9a-z])@))" +
+                    @"(?(\[)(\[(\d{1,3}\.){3}\d{1,3}\])|(([0-9a-z][-\w]*[0-9a-z]*\.)+[a-z0-9][\-a-z0-9]{0,22}[a-z0-9]))$",
+                    RegexOptions.IgnoreCase, 
+                    TimeSpan.FromMilliseconds(250));
             }
-            catch
+            catch (Exception ex)
             {
+                this.loggingService.Exception(ex, "Error while validation email address:", src);
                 return false;
             }
         }

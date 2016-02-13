@@ -11,13 +11,13 @@ namespace Campr.Server.Lib.Logic
 {
     public interface IPostLogic
     {
-        Task<TentPost<T>> CreateNewPostAsync<T>(User user, string postType, T postContent, bool isPublic = true, IEnumerable<TentMention> mentions = null, IEnumerable<ApiPostRef> postRefs = null, IEnumerable<ApiPostAttachment> attachments = null, bool propagate = true) where T : class;
-        Task<TentPost<TentContentCredentials>> CreateNewCredentialsPostAsync(User user, User targetUser, TentPost<object> targetPost); 
-        Task<TentPost<T>> CreatePostAsync<T>(User user, TentPost<T> post, bool newVersion = false, bool propagate = true, bool import = false) where T : class;
-        Task CreateFeedItemAsync<T>(string userId, TentPost<T> post, bool? isSubscriber = null) where T : class;
-        Task<TentPost<T>> ImportPostFromLinkAsync<T>(User user, User targetUser, Uri uri) where T : class;
+        //Task<TentPost<T>> CreateNewPostAsync<T>(User user, string postType, T postContent, bool isPublic = true, IEnumerable<TentMention> mentions = null, IEnumerable<ApiPostRef> postRefs = null, IEnumerable<ApiPostAttachment> attachments = null, bool propagate = true) where T : class;
+        //Task<TentPost<TentContentCredentials>> CreateNewCredentialsPostAsync(User user, User targetUser, TentPost<object> targetPost); 
+        //Task<TentPost<T>> CreatePostAsync<T>(User user, TentPost<T> post, bool newVersion = false, bool propagate = true, bool import = false) where T : class;
+        //Task CreateFeedItemAsync<T>(string userId, TentPost<T> post, bool? isSubscriber = null) where T : class;
+        //Task<TentPost<T>> ImportPostFromLinkAsync<T>(User user, User targetUser, Uri uri) where T : class;
 
-        Task<TentPost<object>> GetPostAsync(User user, User targetUser, string postId, string versionId = null, CacheControlValue cacheControl = CacheControlValue.ProxyIfMiss, ITentPost<TentContentCredentials> credentialsPost = null);
+        Task<TentPost<object>> GetPostAsync(User user, User targetUser, string postId, string versionId = null, CacheControlValue cacheControl = CacheControlValue.ProxyIfMiss, TentPost<TentContentCredentials> credentialsPost = null);
         Task<IList<TentPost<object>>> GetPostsFromFeedAsync(string userId, ITentRequestParameters parameters);
         Task<long> GetPostsCountFromFeedAsync(string userId, ITentRequestParameters parameters);
         Task<IList<TentPost<object>>> GetPostsFromPublicationsAsync(User user, User targetUser, ITentRequestParameters parameters, bool proxy);

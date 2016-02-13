@@ -71,11 +71,11 @@ namespace Campr.Server.Lib.Connectors.Queues.Azure
             {
                 await this.taskHelpers.RetryAsync(async () =>
                 {
-                    await this.mentionsQueue.CreateIfNotExistsAsync(cancellationToken);
-                    await this.subscriptionsQueue.CreateIfNotExistsAsync(cancellationToken);
-                    await this.appNotificationQueue.CreateIfNotExistsAsync(cancellationToken);
-                    await this.metaSubscriptionQueue.CreateIfNotExistsAsync(cancellationToken);
-                    await this.retryQueue.CreateIfNotExistsAsync(cancellationToken);
+                    await this.mentionsQueue.CreateIfNotExistsAsync(null, null, cancellationToken);
+                    await this.subscriptionsQueue.CreateIfNotExistsAsync(null, null, cancellationToken);
+                    await this.appNotificationQueue.CreateIfNotExistsAsync(null, null, cancellationToken);
+                    await this.metaSubscriptionQueue.CreateIfNotExistsAsync(null, null, cancellationToken);
+                    await this.retryQueue.CreateIfNotExistsAsync(null, null, cancellationToken);
                 }, cancellationToken);
             }
             catch (Exception ex)

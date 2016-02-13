@@ -14,12 +14,14 @@ namespace Campr.Server.Lib.Infrastructure
         {
             Ensure.Argument.IsNotNull(nodes, nameof(nodes));
 
+            this.murmur = new MurmurHash2Simple();
             this.circle = new SortedDictionary<uint, string>();
 
             this.replicate = replicate;
             this.Add(nodes.ToArray());
         }
 
+        private readonly MurmurHash2Simple murmur;
         private readonly SortedDictionary<uint, string> circle; 
         private readonly uint replicate;
 
@@ -125,8 +127,7 @@ namespace Campr.Server.Lib.Infrastructure
 
         private uint MurmurHash(string src)
         {
-            var algorithm = Murmur.MurmurHash.Create32();
-            return BitConverter.ToUInt32(algorithm.ComputeHash(Encoding.UTF8.GetBytes(src)), 0);
+            return this.murmur.Hash(Encoding.UTF8.GetBytes(src));
         }
 
         #endregion

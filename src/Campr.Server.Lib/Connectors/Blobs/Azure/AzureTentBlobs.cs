@@ -54,7 +54,10 @@ namespace Campr.Server.Lib.Connectors.Blobs.Azure
             try
             {
                 await this.taskHelpers.RetryAsync(() =>
-                    this.attachmentsContainer.CreateIfNotExistsAsync(cancellationToken), cancellationToken);
+                    this.attachmentsContainer.CreateIfNotExistsAsync(
+                        BlobContainerPublicAccessType.Off, 
+                        null, null, cancellationToken),
+                        cancellationToken);
             }
             catch (Exception ex)
             {
