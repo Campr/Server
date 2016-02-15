@@ -7,9 +7,21 @@ using Newtonsoft.Json.Linq;
 
 namespace Campr.Server.Lib.Models.Db
 {
-    public class User : DbVersionModelBase
+    public class User : DbModelBase
     {
         #region Public properties.
+
+        [DbProperty]
+        public string Id { get; set; }
+
+        [DbProperty]
+        public string VersionId { get; set; }
+
+        [DbProperty]
+        public string[] FullId => new[] { this.Id, this.VersionId };
+
+        [DbProperty]
+        public DateTime? UpdatedAt { get; set; }
 
         [DbProperty]
         public string Handle { get; set; }
@@ -21,10 +33,10 @@ namespace Campr.Server.Lib.Models.Db
         public string Email { get; set; }
 
         [DbProperty]
-        public string Password { get; set; }
+        public byte[] Password { get; set; }
 
         [DbProperty]
-        public string PasswordSalt { get; set; }
+        public byte[] PasswordSalt { get; set; }
 
         [DbProperty]
         public bool? IsBotFollowed { get; set; }

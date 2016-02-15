@@ -18,24 +18,5 @@ namespace Campr.Server.Lib.Models.Tent
     {
         [DbProperty]
         public DateTime? CreatedAt { get; set; }
-
-        public abstract string GetId();
-    }
-
-    public abstract class DbVersionModelBase : DbModelBase
-    {
-        [DbProperty]
-        public string Id { get; set; }
-
-        [DbProperty]
-        public string VersionId { get; set; }
-
-        [DbProperty]
-        public DateTime? UpdatedAt { get; set; }
-
-        public override string GetId()
-        {
-            return $"{this.Id}_{this.VersionId}";
-        }
     }
 }

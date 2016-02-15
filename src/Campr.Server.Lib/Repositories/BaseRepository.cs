@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Campr.Server.Lib.Connectors.RethinkDb;
 using Campr.Server.Lib.Infrastructure;
@@ -22,12 +23,12 @@ namespace Campr.Server.Lib.Repositories
         protected IRethinkConnection Db { get; }
         protected Table Table { get; }
 
-        public virtual Task<T> GetAsync(string id)
+        public virtual Task<T> GetAsync(object id, CancellationToken cancellationToken = default(CancellationToken))
         {
-            return this.Db.Run(c => this.Table.Get(id).RunResultAsync<T>(c));
+            return this.Db.Run(c => this.Table.Get(id).RunResultAsync<T>(c, null, cancellationToken), cancellationToken);
         }
 
-        public virtual Task UpdateAsync(T newT)
+        public virtual Task UpdateAsync(T newT, CancellationToken cancellationToken = default(CancellationToken))
         {
             // If needed, set the creation date.
             if (!newT.CreatedAt.HasValue)
@@ -38,10 +39,10 @@ namespace Campr.Server.Lib.Repositories
                 var result = await this.Table
                     .Insert(newT)
                     .optArg("conflict", "replace")
-                    .RunResultAsync(c);
+                    .RunResultAsync(c, null, cancellationToken);
 
                 result.AssertNoErrors();
-            });
+            }, cancellationToken);
         }
     }
 }

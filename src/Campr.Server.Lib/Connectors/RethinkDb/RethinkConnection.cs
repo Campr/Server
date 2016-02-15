@@ -28,7 +28,7 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
             this.loggingService = loggingService;
 
             this.dbName = this.GetDbName(configuration.Environment);
-            this.r = new RethinkDB();
+            this.R = new RethinkDB();
             this.initializer = new TaskRunner(this.InitializeOnceAsync);
 
             // Configure the static RethinkDb serializer.
@@ -39,7 +39,6 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
         private readonly TaskRunner initializer;
 
         private readonly string dbName;
-        private readonly RethinkDB r;
         private Connection connection;
 
         public Task InitializeAsync(CancellationToken cancellationToken = new CancellationToken())
@@ -52,52 +51,61 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
             try
             {
                 // Create the connection.
-                this.connection = await this.r.Connection()
+                this.connection = await this.R.Connection()
                     .Hostname("localhost")
                     .ConnectAsync();
 
                 // Retrieve a list of databases and create ours if it doesn't exist.
-                var dbList = await this.r.DbList().RunResultAsync<List<string>>(this.connection);
+                var dbList = await this.R.DbList().RunResultAsync<List<string>>(this.connection, null, cancellationToken);
                 if (!dbList.Contains(this.dbName))
                 {
-                    var dbCreateResult = await this.r.DbCreate(this.dbName).RunResultAsync(this.connection);
+                    var dbCreateResult = await this.R.DbCreate(this.dbName).RunResultAsync(this.connection, null, cancellationToken);
                     dbCreateResult.AssertDatabasesCreated(1);
                 }
 
-                var db = this.r.Db(this.dbName);
+                var db = this.R.Db(this.dbName);
 
                 // Retrieve a list of tables for this database.
-                var tableList = await db.TableList().RunResultAsync<List<string>>(this.connection);
+                var tableList = await db.TableList().RunResultAsync<List<string>>(this.connection, null, cancellationToken);
                 
                 // Create the missing tables, if any.
                 if (!tableList.Contains("users"))
                 {
-                    var tableCreateResult = await db.TableCreate("users").RunResultAsync(this.connection);
+                    var tableCreateResult = await db.TableCreate("users").RunResultAsync(this.connection, null, cancellationToken);
                     tableCreateResult.AssertTablesCreated(1);
                 }
 
-                var usersIndexList = await this.Users.IndexList().RunResultAsync<List<string>>(this.connection);
+                var usersIndexList = await this.Users.IndexList().RunResultAsync<List<string>>(this.connection, null, cancellationToken);
                 if (!usersIndexList.Contains("handle"))
                 {
-                    var indexCreateResult = await this.Users.IndexCreate("handle").RunResultAsync(this.connection);
+                    var indexCreateResult = await this.Users.IndexCreate("handle").RunResultAsync(this.connection, null, cancellationToken);
                     indexCreateResult.AssertNoErrors();
                 }
                 
                 if (!usersIndexList.Contains("entity"))
                 {
-                    var indexCreateResult = await this.Users.IndexCreate("entity").RunResultAsync(this.connection);
+                    var indexCreateResult = await this.Users.IndexCreate("entity").RunResultAsync(this.connection, null, cancellationToken);
                     indexCreateResult.AssertNoErrors();
                 }
 
                 if (!usersIndexList.Contains("email"))
                 {
-                    var indexCreateResult = await this.Users.IndexCreate("email").RunResultAsync(this.connection);
+                    var indexCreateResult = await this.Users.IndexCreate("email").RunResultAsync(this.connection, null, cancellationToken);
                     indexCreateResult.AssertNoErrors();
+                }
+
+                if (!tableList.Contains("userversions"))
+                {
+                    var tableCreateResult = await db.TableCreate("userversions")
+                        .optArg("primary_key", "full_id")
+                        .RunResultAsync(this.connection, null, cancellationToken);
+
+                    tableCreateResult.AssertNoErrors();
                 }
 
                 if (!tableList.Contains("posts"))
                 {
-                    var tableCreatedResult = await db.TableCreate("posts").RunResultAsync(this.connection);
+                    var tableCreatedResult = await db.TableCreate("posts").RunResultAsync(this.connection, null, cancellationToken);
                     tableCreatedResult.AssertTablesCreated(1);
                 }
             }
@@ -108,20 +116,23 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
             }
         }
 
-        public Task<T> Run<T>(Func<IConnection, Task<T>> worker)
+        public Task<T> Run<T>(Func<IConnection, Task<T>> worker, CancellationToken cancellationToken = default(CancellationToken))
         {
             return worker(this.connection);
         }
 
-        public Task Run(Func<IConnection, Task> worker)
+        public Task Run(Func<IConnection, Task> worker, CancellationToken cancellationToken = default(CancellationToken))
         {
             return worker(this.connection);
         }
 
-        public Table Users => this.r.Db(this.dbName).Table("users");
-        public Table Posts => this.r.Db(this.dbName).Table("posts");
-        public Table Attachments => this.r.Db(this.dbName).Table("attachments");
-        public Table Bewits => this.r.Db(this.dbName).Table("bewits");
+        public RethinkDB R { get; }
+        public Table Users => this.R.Db(this.dbName).Table("users");
+        public Table UserVersions => this.R.Db(this.dbName).Table("userversions");
+        public Table Posts => this.R.Db(this.dbName).Table("posts");
+        public Table PostVersions => this.R.Db(this.dbName).Table("postversions");
+        public Table Attachments => this.R.Db(this.dbName).Table("attachments");
+        public Table Bewits => this.R.Db(this.dbName).Table("bewits");
 
         public void Dispose()
         {

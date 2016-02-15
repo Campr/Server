@@ -10,12 +10,11 @@
     "Microsoft.Extensions.DependencyInjection": "1.0.0-rc1-final",
     "Microsoft.Net.Http": "2.2.29",
     "Microsoft.Net.Http.Headers": "1.0.0-rc1-final",
-    "RethinkDb.Driver": "2.2.5-beta-3",
+    "RethinkDb.Driver": "2.2.5-beta-5",
     "WindowsAzure.Storage": "6.2.2-preview"
   },
 
   "frameworks": {
-    "dnxcore50": {
-    }
+    "dnxcore50": {}
   }
 }

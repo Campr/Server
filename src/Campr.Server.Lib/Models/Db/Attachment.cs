@@ -13,10 +13,5 @@ namespace Campr.Server.Lib.Models.Db
 
         [DbProperty]
         public string ContentType { get; set; }
-
-        public override string GetId()
-        {
-            return this.Digest;
-        }
     }
 }

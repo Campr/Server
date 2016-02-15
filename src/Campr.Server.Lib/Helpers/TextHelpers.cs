@@ -36,15 +36,11 @@ namespace Campr.Server.Lib.Helpers
         {
             // Make sure we have something to work with.
             if (string.IsNullOrWhiteSpace(src))
-            {
                 return src;
-            }
 
             // If it ends with "Id", remove it.
-            if (src.Length > 2 && src.EndsWith("Id"))
-            {
+            if (src != "Id" && src != "FullId" && src.EndsWith("Id"))
                 src = src.Substring(0, src.Length - 2);
-            }
 
             // Insert an underscore before all uppercase chars.
             src = string.Concat(src.Select((c, i) => 

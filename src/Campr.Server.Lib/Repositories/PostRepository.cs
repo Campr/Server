@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Campr.Server.Lib.Connectors.RethinkDb;
 using Campr.Server.Lib.Infrastructure;
 using Campr.Server.Lib.Models.Other;
 using Campr.Server.Lib.Models.Tent;
 using RethinkDb.Driver.Ast;
+using RethinkDb.Driver.Model;
 
 namespace Campr.Server.Lib.Repositories
 {
@@ -15,165 +18,116 @@ namespace Campr.Server.Lib.Repositories
         {
             Ensure.Argument.IsNotNull(db, nameof(db));
             this.db = db;
-            this.Posts = this.db.Posts;
+
+            this.table = db.Posts;
+            this.tableVersions = db.PostVersions;
         }
 
         private readonly IRethinkConnection db;
-        private readonly Table Posts;
-        private readonly Table PostVersions;
+        private readonly Table table;
+        private readonly Table tableVersions;
         
-        public Task<TentPost<T>> GetLastVersionAsync<T>(string userId, string postId) where T : class
+        public Task<TentPost<T>> GetLastVersionAsync<T>(string userId, string postId, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
-            //return this.db.Run(c => this.Posts.Get("", ""))
-
-            //// Create the view query to retrieve our post last version.
-            //var query = this.buckets.Main.CreateQuery("posts", "posts_lastversion")
-            //    .Key(new [] { userId, postId }, true)
-            //    .Group(true)
-            //    .Limit(1);
-
-            //// Run this query on our bucket.
-            //var results = await this.buckets.Main.QueryAsync<ViewVersionResult>(query);
-
-            //// Retrieve and return the first result.
-            //var documentId = results.Rows.FirstOrDefault()?.Value?.DocId;
-            //if (string.IsNullOrEmpty(documentId))
-            //    return null;
-
-            //var operation = await this.buckets.Main.GetAsync<TentPost<T>>(documentId);
-            //return operation.Value;
-            throw new NotImplementedException();
+            return this.db.Run(c => this.tableVersions.Get(new[] { userId, postId }).RunResultAsync<TentPost<T>>(c, null, cancellationToken), cancellationToken);
         }
 
-        public async Task<TentPost<T>> GetLastVersionByTypeAsync<T>(string userId, ITentPostType type) where T : class
+        public Task<TentPost<T>> GetLastVersionByTypeAsync<T>(string userId, ITentPostType type, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
-            //// Create the view query to retrieve our post last version.
-            //var query = this.buckets.Main.CreateQuery("posts", "posts_type_lastversion").Group(true);
-            //if (type.WildCard)
-            //    query = query
-            //        .StartKey(new [] { userId, type.Type + '#' }, true)
-            //        .EndKey(new [] { userId, type.Type + '$' }, true)
-            //        .InclusiveEnd(false);
-            //else
-            //    query = query.Key(new [] { userId, type.ToString() }, true);
+            return this.db.Run(c =>
+            {
+                // Depending on whether this is a wildcard query or not, don't use the same index.
+                var index = type.WildCard 
+                    ? "user_stype_updatedat" 
+                    : "user_ftype_updatedat";
 
-            //// Run this query on our bucket.
-            //var results = await this.buckets.Main.QueryAsync<ViewVersionResult>(query);
-
-            //// Find the most recent result.
-            //var documentId = results.Rows
-            //    .OrderByDescending(r => r.Value.Date)
-            //    .FirstOrDefault()?
-            //    .Value?
-            //    .DocId;
-
-            //// Retrieve and return that document.
-            //if (string.IsNullOrEmpty(documentId))
-            //{
-            //    return null;  
-            //}
-
-            //var operation = await this.buckets.Main.GetAsync<TentPost<T>>(documentId);
-            //return operation.Value;
-            throw new NotImplementedException();
+                // Perform the query.
+                return this.table.Between(
+                        new object[] { userId, type.ToString(), this.db.R.Minval() },
+                        new object[] { userId, type.ToString(), this.db.R.Maxval() })[new { index }]
+                    .OrderBy()[new { index }]
+                    .Nth(0)
+                    .RunResultAsync<TentPost<T>>(c, null, cancellationToken);
+            }, cancellationToken);
         }
 
-        public async Task<TentPost<T>> GetAsync<T>(string userId, string postId, string versionId) where T : class
+        public Task<TentPost<T>> GetAsync<T>(string userId, string postId, string versionId, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
-            //// Create the view query to retrieve our post version.
-            //var query = this.buckets.Main.CreateQuery("posts", "posts_versions")
-            //    .Key(new [] { userId, postId, versionId }, true)
-            //    .Limit(1);
-
-            //// Run this query on our bucket.
-            //var results = await this.buckets.Main.QueryAsync<object>(query);
-
-            //// Retrieve and return the first result.
-            //var documentId = results.Rows.FirstOrDefault()?.Id;
-            //if (string.IsNullOrEmpty(documentId))
-            //{
-            //    return null;
-            //}
-
-            //var operation = await this.buckets.Main.GetAsync<TentPost<T>>(documentId);
-            //return operation.Value;
-            throw new NotImplementedException();
+            return this.db.Run(c => this.tableVersions.Get(new[] { userId, postId, versionId }).RunResultAsync<TentPost<T>>(c, null, cancellationToken), cancellationToken);
         }
 
-        public async Task<IList<TentPost<T>>> GetAllAsync<T>(string userId, string postId) where T : class
+        public Task<IList<TentPost<T>>> GetBulkAsync<T>(IList<TentPostReference> references, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
-            //// Create the view query to retrieve our post version.
-            //var query = this.buckets.Main.CreateQuery("posts", "posts_versions")
-            //    .StartKey(new [] { userId, postId, "0" }, true)
-            //    .EndKey(new [] { userId, postId, "z" }, true);
-
-            //// Run this query on our bucket.
-            //var results = await this.buckets.Main.QueryAsync<TentPost<T>>(query);
-
-            //// Retrieve and return the corresponding documents.
-            //var documentIds = results.Rows.Select(r => r.Id).ToList();
-            //var operationTasks = documentIds.Select(did => this.buckets.Main.GetAsync<TentPost<T>>(did)).ToList();
-            //await Task.WhenAll(operationTasks);
-
-            //return operationTasks
-            //    .Where(t => t.Result != null && t.Result.Success)
-            //    .Select(t => t.Result.Value)
-            //    .ToList();
-            throw new NotImplementedException();
+            var postIds = references.Select(r => new [] { r.UserId, r.PostId, r.VersionId });
+            return this.db.Run(c => this.table.GetAll(postIds).RunResultAsync<IList<TentPost<T>>>(c, null, cancellationToken), cancellationToken);
         }
 
-        public async Task<IList<TentPost<T>>> GetBulkAsync<T>(IList<TentPostReference> references) where T : class
+        public Task UpdateAsync<T>(TentPost<T> post, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
-            //// Directly retrieve the documents for the provided references.
-            //var documentIds = references.Select(this.GetPostId).ToList();
-            //var operationTasks = documentIds.Select(did => this.buckets.Main.GetAsync<TentPost<T>>(did)).ToList();
-            //await Task.WhenAll(operationTasks);
+            return this.db.Run(async c =>
+            {
+                // Start by saving this specific version.
+                var versionInsertResult = await this.tableVersions
+                    .Insert(post)
+                    .RunResultAsync(c, null, cancellationToken);
 
-            //return operationTasks
-            //    .Where(t => t.Result != null && t.Result.Success)
-            //    .Select(t => t.Result.Value)
-            //    .ToList();
-            throw new NotImplementedException();
+                versionInsertResult.AssertInserted(1);
+
+                // Then, conditionally update the last version.
+                var upsertResult = await this.table
+                    .Get(new [] { post.UserId, post.Id, post.Version.Id })
+                    .Replace(r => this.db.R.Branch(r.Eq(null)
+                        .Or(r.G("version").G("received_at").Lt(post.Version.ReceivedAt)
+                            .Or(r.G("version").G("received_at").Eq(post.Version.ReceivedAt).And(r.G("version").G("id").Lt(post.Version.Id)))),
+                        post, r))
+                    .RunResultAsync(c, null, cancellationToken);
+
+                upsertResult.AssertNoErrors();
+            }, cancellationToken);
         }
 
-        public async Task UpdateAsync<T>(TentPost<T> post) where T : class 
+        public Task DeleteAsync<T>(TentPost<T> post, CancellationToken cancellationToken = new CancellationToken()) where T : class
         {
-            //await this.buckets.Main.UpsertAsync(this.GetPostId(post), post);
+            return this.DeleteAsync(post.UserId, post.Id, null, cancellationToken);
         }
 
-        public Task DeleteAsync<T>(TentPost<T> post, bool specificVersion = false) where T : class
+        public Task DeleteAsync<T>(TentPost<T> post, bool specificVersion = false, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
-            return this.DeleteAsync(post.UserId, post.Id, specificVersion ? post.Version.Id : null);
+            return this.DeleteAsync(post.UserId, post.Id, post.Version.Id, cancellationToken);
         }
 
-        public async Task DeleteAsync(string userId, string postId, string versionId = null)
+        public Task DeleteAsync(string userId, string postId, CancellationToken cancellationToken = new CancellationToken())
         {
-            //// Retrieve all the documents to update.
-            //var postsToDelete = new List<TentPost<object>>();
-            //if (string.IsNullOrWhiteSpace(versionId))
-            //    postsToDelete.Add(await this.GetAsync<object>(userId, postId, versionId));
-            //else
-            //    postsToDelete.AddRange(await this.GetAllAsync<object>(userId, postId));
-
-            //// Set the deleted date on those documents.
-            //var deletedAt = DateTime.UtcNow;
-            //postsToDelete.ForEach(p => p.DeletedAt = deletedAt);
-
-            //// Update these documents in the Db.
-            //var operationTasks = postsToDelete.Select(p => this.buckets.Main.UpsertAsync(this.GetPostId(p), p)).ToList();
-            //await Task.WhenAll(operationTasks);
-        }
-        
-        private string GetPostId(TentPost post)
-        {
-            throw new NotImplementedException();
-            //return $"{this.prefix}{post.UserId}_{post.Id}_{post.Version.Id}";
+            return this.DeleteAsync(userId, postId, null, cancellationToken);
         }
 
-        private string GetPostId(TentPostReference postReference)
+        public Task DeleteAsync(string userId, string postId, string versionId = null, CancellationToken cancellationToken = default(CancellationToken))
         {
-            throw new NotImplementedException();
-            //return $"{this.prefix}{postReference.UserId}_{postReference.PostId}_{postReference.VersionId}";
+            // Make sure we use the date for all.
+            var deletedAt = DateTime.UtcNow;
+
+            return this.db.Run(async c =>
+            {
+                // Update the last version.
+                var lastVersionUpdateResult = await this.table
+                    .Get(new[] { userId, postId })
+                    .Update(r => this.db.R.Branch(r.Ne(null).And(r.G("version").Eq(versionId)), new { deletedAt }, null))
+                    .RunResultAsync(c, null, cancellationToken);
+
+                lastVersionUpdateResult.AssertNoErrors();
+
+                // Depending of whether a version id was specified, update one or more versions.
+                var versionUpdateResult = await (string.IsNullOrWhiteSpace(versionId)
+                    ? this.tableVersions.Between(
+                            new object[] { userId, postId, this.db.R.Minval() },
+                            new object[] { userId, postId, this.db.R.Maxval() })
+                        .Update(new { deletedAt })
+                    : this.tableVersions.Get(new { userId, postId, versionId })
+                        .Update(new { deletedAt }))
+                    .RunResultAsync(c, null, cancellationToken);
+
+                versionUpdateResult.AssertNoErrors();
+            }, cancellationToken);
         }
     }
 }
