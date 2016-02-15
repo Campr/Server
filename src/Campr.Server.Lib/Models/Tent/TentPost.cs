@@ -45,23 +45,17 @@ namespace Campr.Server.Lib.Models.Tent
 
             // Mentions.
             if (this.Mentions != null && this.Mentions.Any())
-            {
                 result.Add("mentions", jsonHelpers.FromObject(this.Mentions
                     .Where(m => m.Public.GetValueOrDefault(true))
                     .Select(m => m.GetCanonicalJson(jsonHelpers))));
-            }
 
             // Refs.
             if (this.Refs != null && this.Refs.Any())
-            {
                 result.Add("refs", jsonHelpers.FromObject(this.Refs.Select(p => p.GetCanonicalJson(jsonHelpers))));
-            }
 
             // Version.
             if (this.Version != null)
-            {
                 result.Add("version", this.Version.GetCanonicalJson(jsonHelpers));
-            }
 
             // Content.
             if (this.jsonContent != null && this.jsonContent.HasValues)
@@ -72,23 +66,17 @@ namespace Campr.Server.Lib.Models.Tent
             {
                 var contentObject = jsonHelpers.FromObject(this.content);
                 if (contentObject.HasValues)
-                {
                     result.Add("content", contentObject);
-                }
             }
 
             // Attachments.
             if (this.Attachments != null && this.Attachments.Any())
-            {
                 result.Add("attachments", jsonHelpers.FromObject(this.Attachments
                     .Select(a => a.GetCanonicalJson(jsonHelpers))));
-            }
 
             // App.
             if (this.App != null)
-            {
                 result.Add("app", this.App.GetCanonicalJson(jsonHelpers));
-            }
 
             // Sort all the keys reccursively and return.
             return result.Sort();
@@ -98,15 +86,11 @@ namespace Campr.Server.Lib.Models.Tent
         {
             // Content.
             if (this.jsonContent != null && !this.jsonContent.HasValues)
-            {
                 this.jsonContent = null;
-            }
 
             // Attachments.
             if (this.Attachments != null && !this.Attachments.Any())
-            {
                 this.Attachments = null;
-            }
         }
 
         public void ResponseClean(bool removeReceiveDate, bool removeDefaultPermissions)
@@ -120,9 +104,7 @@ namespace Campr.Server.Lib.Models.Tent
 
             // Permissions.
             if (removeDefaultPermissions && this.Permissions.IsDefault())
-            {
                 this.Permissions = null;
-            }
         }
 
         [DbProperty]
