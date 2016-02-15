@@ -7,6 +7,7 @@ using Campr.Server.Lib.Connectors.RethinkDb;
 using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Json;
 using Campr.Server.Lib.Models.Db.Factories;
+using Campr.Server.Lib.Models.Other.Factories;
 using Campr.Server.Lib.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -25,7 +26,7 @@ namespace Campr.Server.Lib
             services.AddSingleton<ITextHelpers, TextHelpers>();
             services.AddSingleton<IQueryStringHelpers, QueryStringHelpers>();
             //services.AddSingleton<IAuthenticationHelpers, AuthenticationHelpers>();
-            //services.AddSingleton<IModelHelpers, ModelHelpers>();
+            services.AddSingleton<IModelHelpers, ModelHelpers>();
             //services.AddSingleton<IHttpHelpers, HttpHelpers>();
             //services.AddSingleton<IImageService, ImageService>();
 
@@ -43,6 +44,7 @@ namespace Campr.Server.Lib
 
             // Model factories.
             services.AddSingleton<IUserFactory, UserFactory>();
+            services.AddSingleton<ITentPostFactory, TentPostFactory>();
             //services.AddSingleton<IDbSessionFactory, DbSessionFactory>();
             //services.AddSingleton<IDbPostFactory, DbPostFactory>();
             //services.AddSingleton<IDbAttachmentFactory, DbAttachmentFactory>();
@@ -52,7 +54,7 @@ namespace Campr.Server.Lib
             //services.AddSingleton<ITentMetaServerFactory, TentMetaServerFactory>();
             //services.AddSingleton<ITentAttachmentFactory, TentAttachmentFactory>();
 
-            //services.AddSingleton<ITentPostTypeFactory, TentPostTypeFactory>();
+            services.AddSingleton<ITentPostTypeFactory, TentPostTypeFactory>();
             //services.AddSingleton<ITentRequestDateFactory, TentRequestDateFactory>();
             //services.AddSingleton<ITentRequestPostFactory, ITentRequestPostFactory>();
             //services.AddSingleton<ITentRequestParametersFactory, TentRequestParametersFactory>();

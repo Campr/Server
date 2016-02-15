@@ -1,5 +1,4 @@
-﻿using System;
-using Campr.Server.Lib.Helpers;
+﻿using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Infrastructure;
 
 namespace Campr.Server.Lib.Models.Db.Factories

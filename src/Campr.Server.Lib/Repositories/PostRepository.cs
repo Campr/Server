@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Campr.Server.Lib.Connectors.RethinkDb;
+using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Infrastructure;
 using Campr.Server.Lib.Models.Other;
 using Campr.Server.Lib.Models.Tent;
@@ -14,22 +15,34 @@ namespace Campr.Server.Lib.Repositories
 {
     class PostRepository : IPostRepository
     { 
-        public PostRepository(IRethinkConnection db)
+        public PostRepository(
+            IRethinkConnection db,
+            IModelHelpers modelHelpers)
         {
             Ensure.Argument.IsNotNull(db, nameof(db));
+            Ensure.Argument.IsNotNull(modelHelpers, nameof(modelHelpers));
+
             this.db = db;
+            this.modelHelpers = modelHelpers;
 
             this.table = db.Posts;
             this.tableVersions = db.PostVersions;
         }
 
         private readonly IRethinkConnection db;
+        private readonly IModelHelpers modelHelpers;
+
         private readonly Table table;
         private readonly Table tableVersions;
-        
+
+        public Task<TentPost<T>> GetAsync<T>(string userId, string postId, string versionId, CancellationToken cancellationToken = default(CancellationToken)) where T : class
+        {
+            return this.db.Run(c => this.tableVersions.Get(new[] { userId, postId, versionId }).RunResultAsync<TentPost<T>>(c, null, cancellationToken), cancellationToken);
+        }
+
         public Task<TentPost<T>> GetLastVersionAsync<T>(string userId, string postId, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
-            return this.db.Run(c => this.tableVersions.Get(new[] { userId, postId }).RunResultAsync<TentPost<T>>(c, null, cancellationToken), cancellationToken);
+            return this.db.Run(c => this.table.Get(new[] { userId, postId }).RunResultAsync<TentPost<T>>(c, null, cancellationToken), cancellationToken);
         }
 
         public Task<TentPost<T>> GetLastVersionByTypeAsync<T>(string userId, ITentPostType type, CancellationToken cancellationToken = default(CancellationToken)) where T : class
@@ -51,11 +64,6 @@ namespace Campr.Server.Lib.Repositories
             }, cancellationToken);
         }
 
-        public Task<TentPost<T>> GetAsync<T>(string userId, string postId, string versionId, CancellationToken cancellationToken = default(CancellationToken)) where T : class
-        {
-            return this.db.Run(c => this.tableVersions.Get(new[] { userId, postId, versionId }).RunResultAsync<TentPost<T>>(c, null, cancellationToken), cancellationToken);
-        }
-
         public Task<IList<TentPost<T>>> GetBulkAsync<T>(IList<TentPostReference> references, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
             var postIds = references.Select(r => new [] { r.UserId, r.PostId, r.VersionId });
@@ -64,6 +72,24 @@ namespace Campr.Server.Lib.Repositories
 
         public Task UpdateAsync<T>(TentPost<T> post, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
+            // Set the version receive date.
+            post.Version.ReceivedAt = DateTime.UtcNow;
+            
+            // If needed, set the version publish date.
+            if (!post.Version.PublishedAt.HasValue)
+                post.Version.PublishedAt = post.Version.ReceivedAt;
+
+            // If needed, set the post receive date.
+            if (!post.ReceivedAt.HasValue)
+                post.ReceivedAt = post.Version.ReceivedAt;
+
+            // If needed, set the post publish date.
+            if (!post.PublishedAt.HasValue)
+                post.PublishedAt = post.Version.PublishedAt;
+
+            // Compute the VersionId for this post.
+            post.Version.Id = this.modelHelpers.GetVersionIdFromPost(post);
+
             return this.db.Run(async c =>
             {
                 // Start by saving this specific version.
@@ -75,7 +101,7 @@ namespace Campr.Server.Lib.Repositories
 
                 // Then, conditionally update the last version.
                 var upsertResult = await this.table
-                    .Get(new [] { post.UserId, post.Id, post.Version.Id })
+                    .Get(new [] { post.UserId, post.Id })
                     .Replace(r => this.db.R.Branch(r.Eq(null)
                         .Or(r.G("version").G("received_at").Lt(post.Version.ReceivedAt)
                             .Or(r.G("version").G("received_at").Eq(post.Version.ReceivedAt).And(r.G("version").G("id").Lt(post.Version.Id)))),

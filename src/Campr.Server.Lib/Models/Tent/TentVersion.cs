@@ -49,12 +49,10 @@ namespace Campr.Server.Lib.Models.Tent
         
         [DbProperty]
         [WebProperty]
-        [JsonConverter(typeof(UnixDateTimeConverter))]
         public DateTime? PublishedAt { get; set; }
         
         [DbProperty]
         [WebProperty]
-        [JsonConverter(typeof(UnixDateTimeConverter))]
         public DateTime? ReceivedAt { get; set; }
         
         [DbProperty]

@@ -60,14 +60,14 @@ namespace Campr.Server.Controllers
             if (user == null)
                 throw new ApiException(HttpStatusCode.NotFound);
 
-            // Retrieve the meta post for this user.
-            var metaPost = this.postLogic.GetMetaPostForUser(user.Id);
-            if (metaPost == null)
-                throw new ApiException(HttpStatusCode.NotFound);
+            //// Retrieve the meta post for this user.
+            //var metaPost = this.postLogic.GetMetaPostForUser(user.Id);
+            //if (metaPost == null)
+            //    throw new ApiException(HttpStatusCode.NotFound);
 
-            // Add link headers to the response.
-            this.Response.Headers.Add("Link", $"<{this.uriHelpers.GetCamprPostUri(userHandle, metaPost.Post.Id).AbsoluteUri}>; " +
-                                              $"rel=\"{this.tentConstants.MetaPostRel}\"");
+            //// Add link headers to the response.
+            //this.Response.Headers.Add("Link", $"<{this.uriHelpers.GetCamprPostUri(userHandle, metaPost.Post.Id).AbsoluteUri}>; " +
+            //                                  $"rel=\"{this.tentConstants.MetaPostRel}\"");
         }
     }
 }

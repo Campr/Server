@@ -86,16 +86,19 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
         [Fact]
         public async Task UserVersions()
         {
+            const string email1 = "user2email1@campr.me";
+            const string email2 = "user2email2@campr.me";
+
             // Create a new user.
             var newUser = this.userFactory.CreateUserFromHandle("user2");
-            newUser.Email = "user2email1@campr.me";
+            newUser.Email = email1;
 
             // Save it to the Db.
             await this.userRepository.UpdateAsync(newUser);
             var version1 = newUser.VersionId;
 
             // Update the email address.
-            newUser.Email = "user2email2@campr.me";
+            newUser.Email = email2;
 
             // Save it again.
             await this.userRepository.UpdateAsync(newUser);
@@ -105,12 +108,14 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
 
             Assert.NotNull(userLastVersion);
             Assert.Equal(newUser.VersionId, userLastVersion.VersionId);
+            Assert.Equal(email2, userLastVersion.Email);
 
             // Retrieve the previous version.
             var userVersion1 = await this.userRepository.GetAsync(newUser.Id, version1);
 
             Assert.NotNull(userVersion1);
             Assert.Equal(version1, userVersion1.VersionId);
+            Assert.Equal(email1, userVersion1.Email);
         }
     }
 }

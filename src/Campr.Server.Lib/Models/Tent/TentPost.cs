@@ -6,7 +6,6 @@ using Campr.Server.Lib.Extensions;
 using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Json;
 using Campr.Server.Lib.Models.Tent.PostContent;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 // ReSharper disable StaticMemberInGenericType
@@ -128,7 +127,6 @@ namespace Campr.Server.Lib.Models.Tent
 
         [DbProperty]
         [WebProperty]
-        [JsonConverter(typeof(TentPostContentConverter))]
         public TContent Content { get; set; }
     }
 
@@ -163,16 +161,13 @@ namespace Campr.Server.Lib.Models.Tent
 
         [DbProperty]
         [WebProperty]
-        [JsonConverter(typeof(UnixDateTimeConverter))]
         public DateTime? PublishedAt { get; set; }
 
         [DbProperty]
         [WebProperty]
-        [JsonConverter(typeof(UnixDateTimeConverter))]
         public DateTime? ReceivedAt { get; set; }
 
         [DbProperty]
-        [JsonConverter(typeof(UnixDateTimeConverter))]
         public DateTime? DeletedAt { get; set; }
 
         [DbProperty]
