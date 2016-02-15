@@ -39,7 +39,7 @@ namespace Campr.Server.Lib.Helpers
                 return src;
 
             // If it ends with "Id", remove it.
-            if (src != "Id" && src != "FullId" && src.EndsWith("Id"))
+            if (src != "Id" && src.EndsWith("Id"))
                 src = src.Substring(0, src.Length - 2);
 
             // Insert an underscore before all uppercase chars.

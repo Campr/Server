@@ -18,7 +18,7 @@ namespace Campr.Server.Lib.Models.Db
         public string VersionId { get; set; }
 
         [DbProperty]
-        public string[] FullId => new[] { this.Id, this.VersionId };
+        public string[] KeyUserVersion => new [] { this.Id, this.VersionId };
 
         [DbProperty]
         public DateTime? UpdatedAt { get; set; }

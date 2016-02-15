@@ -97,7 +97,7 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
                 if (!tableList.Contains("userversions"))
                 {
                     var tableCreateResult = await db.TableCreate("userversions")
-                        .optArg("primary_key", "full_id")
+                        .optArg("primary_key", "key_user_version")
                         .RunResultAsync(this.connection, null, cancellationToken);
 
                     tableCreateResult.AssertNoErrors();
@@ -105,8 +105,39 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
 
                 if (!tableList.Contains("posts"))
                 {
-                    var tableCreatedResult = await db.TableCreate("posts").RunResultAsync(this.connection, null, cancellationToken);
+                    var tableCreatedResult = await db.TableCreate("posts")
+                        .optArg("primary_key", "key_user_post")
+                        .RunResultAsync(this.connection, null, cancellationToken);
+
                     tableCreatedResult.AssertTablesCreated(1);
+                }
+
+                if (!tableList.Contains("postversions"))
+                {
+                    var tableCreatedResult = await db.TableCreate("postversions")
+                        .optArg("primary_key", "key_user_post_version")
+                        .RunResultAsync(this.connection, null, cancellationToken);
+
+                    tableCreatedResult.AssertTablesCreated(1);
+                }
+
+                var postVersionsIndexList = await this.PostVersions.IndexList().RunResultAsync<IList<string>>(this.connection, null, cancellationToken);
+                if (!postVersionsIndexList.Contains("user_stype_updatedat"))
+                {
+                    var indexCreateResult = await this.PostVersions.IndexCreate("user_stype_updatedat", r =>
+                            this.R.Add(new object[] { r.G("user"), r.G("type").Split("#", 1).Nth(0), r.G("version").G("received_at") }))
+                        .RunResultAsync(this.connection, null, cancellationToken);
+
+                    indexCreateResult.AssertNoErrors();
+                }
+
+                if (!postVersionsIndexList.Contains("user_ftype_updatedat"))
+                {
+                    var indexCreateResult = await this.PostVersions.IndexCreate("user_ftype_updatedat", r =>
+                            this.R.Add(new object[] { r.G("user"), r.G("type"), r.G("version").G("received_at") }))
+                        .RunResultAsync(this.connection, null, cancellationToken);
+
+                    indexCreateResult.AssertNoErrors();
                 }
             }
             catch (Exception ex)

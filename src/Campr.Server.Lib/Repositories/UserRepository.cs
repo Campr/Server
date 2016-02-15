@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Campr.Server.Lib.Connectors.RethinkDb;
@@ -100,8 +98,8 @@ namespace Campr.Server.Lib.Repositories
                     .Get(user.Id)
                     .Replace(r => this.Db.R.Branch(r.Eq(null)
                         .Or(r.G("updated_at").Lt(user.UpdatedAt)
-                            .Or(r.G("updated_at").Eq(user.UpdatedAt).And(r.G("version").Lt(user.VersionId))))
-                        , user, r))
+                            .Or(r.G("updated_at").Eq(user.UpdatedAt).And(r.G("version").Lt(user.VersionId)))),
+                        user, r))
                     .RunResultAsync(c, null, cancellationToken);
 
                 upsertResult.AssertNoErrors();

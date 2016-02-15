@@ -148,7 +148,10 @@ namespace Campr.Server.Lib.Models.Tent
         public string UserId { get; set; }
 
         [DbProperty]
-        public string[] FullId => new [] { this.UserId, this.Id, this.Version?.Id };
+        public string[] KeyUserPost => new [] { this.UserId, this.Id };
+
+        [DbProperty]
+        public string[] KeyUserPostVersion => new [] { this.UserId, this.Id, this.Version?.Id };
 
         [DbProperty]
         [WebProperty]
