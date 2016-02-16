@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Campr.Server.Lib.Models.Db;
 using Campr.Server.Lib.Models.Db.Factories;
@@ -144,6 +146,47 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             Assert.NotNull(lastPostVersionOfType4);
             Assert.Equal(type2.ToString(), lastPostVersionOfType4.Type);
             Assert.Equal(entity4, lastPostVersionOfType4.Content.Entity);
+        }
+
+        [Fact]
+        public async Task PostBulkRequest()
+        {
+            const string entity1 = "http://external1.tent.is";
+            const string entity2 = "http://external2.tent.is";
+
+            var type = this.postTypeFactory.FromString("https://test.com/type#type");
+            var user = new User { Id = Guid.NewGuid().ToString("N") };
+
+            // Create two new posts of the same type.
+            var newPost1 = this.tentPostFactory.FromContent(user, new TentContentMeta
+            {
+                Entity = entity1
+            }, type);
+
+            var newPost2 = this.tentPostFactory.FromContent(user, new TentContentMeta
+            {
+                Entity = entity2
+            }, type);
+
+            // Save the posts to the db.
+            await this.postRepository.UpdateAsync(newPost1);
+            await this.postRepository.UpdateAsync(newPost2);
+            
+            // Retrieve these two posts in bulk.
+            var references = new List<TentPostReference>
+            {
+                new TentPostReference { UserId = newPost1.UserId, PostId = newPost1.Id, VersionId = newPost1.Version.Id },
+                new TentPostReference { UserId = newPost2.UserId, PostId = newPost2.Id, VersionId = newPost2.Version.Id }
+            };
+
+            var posts = await this.postRepository.GetBulkAsync<TentContentMeta>(references);
+
+            // Check that the right posts were returned, in the correct order.
+            Assert.NotNull(posts);
+            Assert.Equal(2, posts.Count);
+
+            Assert.True(posts.Any(p => p.Id == newPost1.Id));
+            Assert.True(posts.Any(p => p.Id == newPost2.Id));
         }
     }
 }

@@ -67,7 +67,7 @@ namespace Campr.Server.Lib.Repositories
         public Task<IList<TentPost<T>>> GetBulkAsync<T>(IList<TentPostReference> references, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
             var postIds = references.Select(r => new [] { r.UserId, r.PostId, this.GetShortVersionId(r.VersionId) });
-            return this.db.Run(c => this.table.GetAll(postIds).RunResultAsync<IList<TentPost<T>>>(c, null, cancellationToken), cancellationToken);
+            return this.db.Run(c => this.tableVersions.GetAll(postIds.Cast<object>().ToArray()).RunResultAsync<IList<TentPost<T>>>(c, null, cancellationToken), cancellationToken);
         }
 
         public Task UpdateAsync<T>(TentPost<T> post, CancellationToken cancellationToken = default(CancellationToken)) where T : class
