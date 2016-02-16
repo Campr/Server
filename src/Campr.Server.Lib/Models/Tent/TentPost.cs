@@ -62,9 +62,9 @@ namespace Campr.Server.Lib.Models.Tent
             {
                 result.Add("content", this.jsonContent);
             }
-            else if (this.content != null)
+            else if (this.Content != null)
             {
-                var contentObject = jsonHelpers.FromObject(this.content);
+                var contentObject = jsonHelpers.FromObject(this.Content);
                 if (contentObject.HasValues)
                     result.Add("content", contentObject);
             }
@@ -128,10 +128,10 @@ namespace Campr.Server.Lib.Models.Tent
         public string UserId { get; set; }
 
         [DbProperty]
-        public string[] KeyUserPost => new [] { this.UserId, this.Id };
+        public string[] KeyUserPost { get; set; }
 
         [DbProperty]
-        public string[] KeyUserPostVersion => new [] { this.UserId, this.Id, this.Version?.Id };
+        public string[] KeyUserPostVersion { get; set; }
 
         [DbProperty]
         [WebProperty]

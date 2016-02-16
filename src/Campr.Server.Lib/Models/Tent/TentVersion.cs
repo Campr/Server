@@ -4,7 +4,6 @@ using System.Linq;
 using Campr.Server.Lib.Extensions;
 using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Json;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Campr.Server.Lib.Models.Tent

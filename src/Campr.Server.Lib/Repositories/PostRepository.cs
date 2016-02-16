@@ -37,7 +37,7 @@ namespace Campr.Server.Lib.Repositories
 
         public Task<TentPost<T>> GetAsync<T>(string userId, string postId, string versionId, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
-            return this.db.Run(c => this.tableVersions.Get(new[] { userId, postId, versionId }).RunResultAsync<TentPost<T>>(c, null, cancellationToken), cancellationToken);
+            return this.db.Run(c => this.tableVersions.Get(new[] { userId, postId, this.GetShortVersionId(versionId) }).RunResultAsync<TentPost<T>>(c, null, cancellationToken), cancellationToken);
         }
 
         public Task<TentPost<T>> GetLastVersionAsync<T>(string userId, string postId, CancellationToken cancellationToken = default(CancellationToken)) where T : class
@@ -45,20 +45,20 @@ namespace Campr.Server.Lib.Repositories
             return this.db.Run(c => this.table.Get(new[] { userId, postId }).RunResultAsync<TentPost<T>>(c, null, cancellationToken), cancellationToken);
         }
 
-        public Task<TentPost<T>> GetLastVersionByTypeAsync<T>(string userId, ITentPostType type, CancellationToken cancellationToken = default(CancellationToken)) where T : class
+        public Task<TentPost<T>> GetLastVersionOfTypeAsync<T>(string userId, ITentPostType type, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
             return this.db.Run(c =>
             {
                 // Depending on whether this is a wildcard query or not, don't use the same index.
                 var index = type.WildCard 
-                    ? "user_stype_updatedat" 
-                    : "user_ftype_updatedat";
+                    ? "user_stype_versionreceivedat"
+                    : "user_ftype_versionreceivedat";
 
                 // Perform the query.
                 return this.table.Between(
                         new object[] { userId, type.ToString(), this.db.R.Minval() },
                         new object[] { userId, type.ToString(), this.db.R.Maxval() })[new { index }]
-                    .OrderBy()[new { index }]
+                    .OrderBy()[new { index = this.db.R.Desc(index) }]
                     .Nth(0)
                     .RunResultAsync<TentPost<T>>(c, null, cancellationToken);
             }, cancellationToken);
@@ -66,7 +66,7 @@ namespace Campr.Server.Lib.Repositories
 
         public Task<IList<TentPost<T>>> GetBulkAsync<T>(IList<TentPostReference> references, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
-            var postIds = references.Select(r => new [] { r.UserId, r.PostId, r.VersionId });
+            var postIds = references.Select(r => new [] { r.UserId, r.PostId, this.GetShortVersionId(r.VersionId) });
             return this.db.Run(c => this.table.GetAll(postIds).RunResultAsync<IList<TentPost<T>>>(c, null, cancellationToken), cancellationToken);
         }
 
@@ -92,12 +92,20 @@ namespace Campr.Server.Lib.Repositories
 
             return this.db.Run(async c =>
             {
+                // Set the key values.
+                post.KeyUserPost = null;
+                post.KeyUserPostVersion = new [] { post.UserId, post.Id, this.GetShortVersionId(post.Version.Id) };
+
                 // Start by saving this specific version.
                 var versionInsertResult = await this.tableVersions
                     .Insert(post)
                     .RunResultAsync(c, null, cancellationToken);
 
                 versionInsertResult.AssertInserted(1);
+
+                // Set the key values.
+                post.KeyUserPost = new [] { post.UserId, post.Id };
+                post.KeyUserPostVersion = null;
 
                 // Then, conditionally update the last version.
                 var upsertResult = await this.table
@@ -137,7 +145,7 @@ namespace Campr.Server.Lib.Repositories
                 // Update the last version.
                 var lastVersionUpdateResult = await this.table
                     .Get(new[] { userId, postId })
-                    .Update(r => this.db.R.Branch(r.Ne(null).And(r.G("version").Eq(versionId)), new { deletedAt }, null))
+                    .Update(r => this.db.R.Branch(r.Ne(null).And(r.G("version").G("id").Eq(versionId)), new { deletedAt }, null))
                     .RunResultAsync(c, null, cancellationToken);
 
                 lastVersionUpdateResult.AssertNoErrors();
@@ -148,12 +156,17 @@ namespace Campr.Server.Lib.Repositories
                             new object[] { userId, postId, this.db.R.Minval() },
                             new object[] { userId, postId, this.db.R.Maxval() })
                         .Update(new { deletedAt })
-                    : this.tableVersions.Get(new { userId, postId, versionId })
+                    : this.tableVersions.Get(new [] { userId, postId, this.GetShortVersionId(versionId) })
                         .Update(new { deletedAt }))
                     .RunResultAsync(c, null, cancellationToken);
 
                 versionUpdateResult.AssertNoErrors();
             }, cancellationToken);
+        }
+
+        private string GetShortVersionId(string versionId)
+        {
+            return versionId.Substring(versionId.Length - 32, 32);
         }
     }
 }

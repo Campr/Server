@@ -7,6 +7,7 @@ using Campr.Server.Lib.Enums;
 using Campr.Server.Lib.Infrastructure;
 using Campr.Server.Lib.Json;
 using Campr.Server.Lib.Services;
+using Newtonsoft.Json;
 using RethinkDb.Driver;
 using RethinkDb.Driver.Ast;
 using RethinkDb.Driver.Model;
@@ -33,6 +34,10 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
 
             // Configure the static RethinkDb serializer.
             Converter.Serializer.ContractResolver = dbContractResolver;
+            Converter.Serializer.DefaultValueHandling = DefaultValueHandling.Include;
+            Converter.Serializer.MissingMemberHandling = MissingMemberHandling.Ignore;
+            Converter.Serializer.NullValueHandling = NullValueHandling.Ignore;
+            Converter.Serializer.TypeNameHandling = TypeNameHandling.None;
         }
 
         private readonly ILoggingService loggingService;
@@ -112,6 +117,25 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
                     tableCreatedResult.AssertTablesCreated(1);
                 }
 
+                var postsIndexList = await this.Posts.IndexList().RunResultAsync<IList<string>>(this.connection, null, cancellationToken);
+                if (!postsIndexList.Contains("user_stype_updatedat"))
+                {
+                    var indexCreateResult = await this.Posts.IndexCreate("user_stype_versionreceivedat", r =>
+                            this.R.Add(new object[] { r.G("user"), r.G("type").Split("#", 1).Nth(0), r.G("version").G("received_at") }))
+                        .RunResultAsync(this.connection, null, cancellationToken);
+
+                    indexCreateResult.AssertNoErrors();
+                }
+
+                if (!postsIndexList.Contains("user_ftype_updatedat"))
+                {
+                    var indexCreateResult = await this.Posts.IndexCreate("user_ftype_versionreceivedat", r =>
+                            this.R.Add(new object[] { r.G("user"), r.G("type"), r.G("version").G("received_at") }))
+                        .RunResultAsync(this.connection, null, cancellationToken);
+
+                    indexCreateResult.AssertNoErrors();
+                }
+
                 if (!tableList.Contains("postversions"))
                 {
                     var tableCreatedResult = await db.TableCreate("postversions")
@@ -119,25 +143,6 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
                         .RunResultAsync(this.connection, null, cancellationToken);
 
                     tableCreatedResult.AssertTablesCreated(1);
-                }
-
-                var postVersionsIndexList = await this.PostVersions.IndexList().RunResultAsync<IList<string>>(this.connection, null, cancellationToken);
-                if (!postVersionsIndexList.Contains("user_stype_updatedat"))
-                {
-                    var indexCreateResult = await this.PostVersions.IndexCreate("user_stype_updatedat", r =>
-                            this.R.Add(new object[] { r.G("user"), r.G("type").Split("#", 1).Nth(0), r.G("version").G("received_at") }))
-                        .RunResultAsync(this.connection, null, cancellationToken);
-
-                    indexCreateResult.AssertNoErrors();
-                }
-
-                if (!postVersionsIndexList.Contains("user_ftype_updatedat"))
-                {
-                    var indexCreateResult = await this.PostVersions.IndexCreate("user_ftype_updatedat", r =>
-                            this.R.Add(new object[] { r.G("user"), r.G("type"), r.G("version").G("received_at") }))
-                        .RunResultAsync(this.connection, null, cancellationToken);
-
-                    indexCreateResult.AssertNoErrors();
                 }
             }
             catch (Exception ex)

@@ -10,7 +10,7 @@ namespace Campr.Server.Lib.Repositories
     {
         Task<TentPost<T>> GetAsync<T>(string userId, string postId, string versionId, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
         Task<TentPost<T>> GetLastVersionAsync<T>(string userId, string postId, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
-        Task<TentPost<T>> GetLastVersionByTypeAsync<T>(string userId, ITentPostType type, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
+        Task<TentPost<T>> GetLastVersionOfTypeAsync<T>(string userId, ITentPostType type, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
         Task<IList<TentPost<T>>> GetBulkAsync<T>(IList<TentPostReference> references, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
         Task UpdateAsync<T>(TentPost<T> post, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
         Task DeleteAsync<T>(TentPost<T> post, CancellationToken cancellationToken = default(CancellationToken)) where T : class;

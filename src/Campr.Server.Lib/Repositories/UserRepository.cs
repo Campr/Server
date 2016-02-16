@@ -86,12 +86,18 @@ namespace Campr.Server.Lib.Repositories
 
             return this.Db.Run(async c =>
             {
+                // Set the version key.
+                user.KeyUserVersion = new[] { user.Id, user.VersionId };
+
                 // Start by saving this specific version.
                 var versionInsertResult = await this.tableVersions
                     .Insert(user)
                     .RunResultAsync(c, null, cancellationToken);
 
                 versionInsertResult.AssertInserted(1);
+
+                // Clear the version key.
+                user.KeyUserVersion = null;
 
                 // Then, conditionally update the last version.
                 var upsertResult = await this.Table
