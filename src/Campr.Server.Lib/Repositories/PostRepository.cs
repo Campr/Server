@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 using Campr.Server.Lib.Connectors.RethinkDb;
 using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Infrastructure;
@@ -67,6 +66,7 @@ namespace Campr.Server.Lib.Repositories
                         new object[] { userId, type.ToString(), this.db.R.Maxval() })[new { index }]
                     .OrderBy()[new { index = this.db.R.Desc(index) }]
                     .Nth(0)
+                    .Default_((object)null)
                     .RunResultAsync<TentPost<T>>(c, null, cancellationToken);
             }, cancellationToken);
         }
@@ -153,21 +153,39 @@ namespace Campr.Server.Lib.Repositories
 
             return this.db.Run(async c =>
             {
-                // Retrieve the penultimate version.
+                // If a specific version was specified, retrieve the penultimate version.
                 var postVersionReceivedAtIndex = "user_post_versionreceivedat";
-                var penultimatePostVersion = await this.tableVersions
-                    .Between(
-                        new object[] { userId, postId, this.db.R.Minval() },
-                        new object[] { userId, postId, this.db.R.Maxval() })[new { index = postVersionReceivedAtIndex }]
-                    .OrderBy()[new { index = this.db.R.Desc(postVersionReceivedAtIndex) }]
-                    .Nth(1)
-                    .RunResultAsync<TentPost<object>>(c, null, cancellationToken);
+                var penultimatePostVersion = string.IsNullOrWhiteSpace(versionId)
+                    ? null
+                    : await this.tableVersions
+                        .Between(
+                            new object[] { userId, postId, this.db.R.Minval() },
+                            new object[] { userId, postId, this.db.R.Maxval() })[new { index = postVersionReceivedAtIndex }]
+                        .OrderBy()[new { index = this.db.R.Desc(postVersionReceivedAtIndex) }]
+                        .Nth(1)
+                        .Default_((object)null)
+                        .RunResultAsync<TentPost<object>>(c, null, cancellationToken);
 
-                // Update the last version.
-                var lastVersionUpdateResult = await this.table
-                    .Get(new[] { userId, postId })
-                    .Update(r => this.db.R.Branch(r.Ne(null).And(r.G("version").G("id").Eq(versionId)), new { deletedAt }, null))
-                    .RunResultAsync(c, null, cancellationToken);
+                // If a penultimate version was found, prepare for insertion in different table.
+                if (penultimatePostVersion != null)
+                {
+                    penultimatePostVersion.KeyUserPost = new [] { userId, postId };
+                    penultimatePostVersion.KeyUserPostVersion = null;
+                }
+
+                // Depending on the result, either update the last version, or replace it with the penultimate.
+                var lastVersionUpdateResult = penultimatePostVersion == null
+                    ? await this.table
+                        .Get(new [] { userId, postId })
+                        .Update(r => this.db.R.Branch(string.IsNullOrWhiteSpace(versionId) 
+                                ? (object)r.Ne(null) 
+                                : (object)r.Ne(null).And(r.G("version").G("id").Eq(versionId))
+                            , new { deletedAt }, null))
+                        .RunResultAsync(c, null, cancellationToken)
+                    : await this.table
+                        .Get(new [] { userId, postId })
+                        .Replace(r => this.db.R.Branch(r.Ne(null).And(r.G("version").G("id").Eq(versionId)), penultimatePostVersion, r))
+                        .RunResultAsync(c, null, cancellationToken);
 
                 lastVersionUpdateResult.AssertNoErrors();
 

@@ -192,6 +192,98 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
         [Fact]
         public async Task PostDelete()
         {
+            var type = this.postTypeFactory.FromString("https://test.com/type#type");
+            var user = new User { Id = Guid.NewGuid().ToString("N") };
+
+            // Create a new post and save it.
+            var newPost = this.tentPostFactory.FromContent(user, new TentContentMeta
+            {
+                Entity = "http://external1.tent.is"
+            }, type);
+
+            await this.postRepository.UpdateAsync(newPost);
+
+            // Delete this post and all its versions.
+            await this.postRepository.DeleteAsync(newPost);
+
+            // Make sure this post can't be found anymore.
+            var postLastVersion = await this.postRepository.GetLastVersionAsync<TentContentMeta>(user.Id, newPost.Id);
+            Assert.Null(postLastVersion);
+
+            var postExactVersion = await this.postRepository.GetAsync<TentContentMeta>(user.Id, newPost.Id, newPost.Version.Id);
+            Assert.Null(postExactVersion);
+        }
+
+        [Fact]
+        public async Task PostDeleteVersion()
+        {
+            var type = this.postTypeFactory.FromString("https://test.com/type#type");
+            var user = new User { Id = Guid.NewGuid().ToString("N") };
+
+            // Create a new post and save it.
+            var newPost = this.tentPostFactory.FromContent(user, new TentContentMeta
+            {
+                Entity = "http://external1.tent.is"
+            }, type);
+
+            await this.postRepository.UpdateAsync(newPost);
+
+            // Delete this specific version of this post.
+            await this.postRepository.DeleteAsync(newPost, true);
+
+            // Make sure this post can't be found anymore.
+            var postLastVersion = await this.postRepository.GetLastVersionAsync<TentContentMeta>(user.Id, newPost.Id);
+            Assert.Null(postLastVersion);
+
+            var postExactVersion = await this.postRepository.GetAsync<TentContentMeta>(user.Id, newPost.Id, newPost.Version.Id);
+            Assert.Null(postExactVersion);
+        }
+
+        [Fact]
+        public async Task PostDeleteLastVersion()
+        {
+            const string entity1 = "http://external1.tent.is";
+            const string entity2 = "http://external2.tent.is";
+
+            var type = this.postTypeFactory.FromString("https://test.com/type#type");
+            var user = new User { Id = Guid.NewGuid().ToString("N") };
+
+            // Create a new post and save it.
+            var newPost = this.tentPostFactory.FromContent(user, new TentContentMeta
+            {
+                Entity = entity1
+            }, type);
+
+            await this.postRepository.UpdateAsync(newPost);
+
+            // Update the post and publish a new version.
+            var versionId1 = newPost.Version.Id;
+
+            newPost.Content.Entity = entity2;
+            newPost.Version = new TentVersion
+            {
+                UserId = user.Id,
+                Type = newPost.Type
+            };
+
+            // Save the new version.
+            await this.postRepository.UpdateAsync(newPost);
+
+            // Delete the last version of this post.
+            await this.postRepository.DeleteAsync(newPost, true);
+
+            // Check that the first version still exists.
+            var postVersion1 = await this.postRepository.GetAsync<TentContentMeta>(user.Id, newPost.Id, versionId1);
+            Assert.NotNull(postVersion1);
+
+            // Check that this second version doesn't exist anymore.
+            var postVersion2 = await this.postRepository.GetAsync<TentContentMeta>(user.Id, newPost.Id, newPost.Version.Id);
+            Assert.Null(postVersion2);
+
+            // Check that the last version is now back to version 1.
+            var postLastVersion = await this.postRepository.GetLastVersionAsync<TentContentMeta>(user.Id, newPost.Id);
+            Assert.NotNull(postLastVersion);
+            Assert.Equal(entity1, postLastVersion.Content.Entity);
         }
     }
 }

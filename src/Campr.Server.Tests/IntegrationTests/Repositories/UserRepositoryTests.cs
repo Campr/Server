@@ -117,5 +117,29 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             Assert.Equal(version1, userVersion1.VersionId);
             Assert.Equal(email1, userVersion1.Email);
         }
+
+        [Fact]
+        public async Task NonExistingUsers()
+        {
+            // Id by handle.
+            var userIdFromHandle = await this.userRepository.GetIdFromHandleAsync("nonexistent");
+            Assert.Null(userIdFromHandle);
+
+            // Id by entity.
+            var userIdFromEntity = await this.userRepository.GetIdFromEntityAsync("nonexistent");
+            Assert.Null(userIdFromEntity);
+
+            // Id by email.
+            var userIdFromEmail = await this.userRepository.GetIdFromEmailAsync("nonexistent");
+            Assert.Null(userIdFromEmail);
+
+            // User by handle.
+            var userFromHandle = await this.userRepository.GetFromHandleAsync("nonexistent");
+            Assert.Null(userFromHandle);
+
+            // User by entity.
+            var userFromEntity = await this.userRepository.GetFromEntityAsync("nonexistent");
+            Assert.Null(userFromEntity);
+        }
     }
 }

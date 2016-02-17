@@ -30,6 +30,7 @@ namespace Campr.Server.Lib.Repositories
                 .GetAll(handle)[new { index = "handle" }]
                 .Nth(0)
                 .GetField("id")
+                .Default_((object)null)
                 .RunResultAsync<string>(c, null, cancellationToken), cancellationToken);
         }
 
@@ -39,6 +40,7 @@ namespace Campr.Server.Lib.Repositories
                 .GetAll(entity)[new { index = "entity" }]
                 .Nth(0)
                 .GetField("id")
+                .Default_((object)null)
                 .RunResultAsync<string>(c, null, cancellationToken), cancellationToken);
         }
 
@@ -48,6 +50,7 @@ namespace Campr.Server.Lib.Repositories
                 .GetAll(email)[new { index = "email" }]
                 .Nth(0)
                 .GetField("id")
+                .Default_((object)null)
                 .RunResultAsync<string>(c, null, cancellationToken), cancellationToken);
         }
 
@@ -56,6 +59,7 @@ namespace Campr.Server.Lib.Repositories
             return this.Db.Run(c => this.Table
                 .GetAll(handle)[new { index = "handle" }]
                 .Nth(0)
+                .Default_((object)null)
                 .RunResultAsync<User>(c, null, cancellationToken), cancellationToken);
         }
 
@@ -64,6 +68,7 @@ namespace Campr.Server.Lib.Repositories
             return this.Db.Run(c => this.Table
                 .GetAll(entity)[new { index = "entity" }]
                 .Nth(0)
+                .Default_((object)null)
                 .RunResultAsync<User>(c, null, cancellationToken), cancellationToken);
         }
 
