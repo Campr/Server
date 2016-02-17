@@ -188,5 +188,10 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             Assert.True(posts.Any(p => p.Id == newPost1.Id));
             Assert.True(posts.Any(p => p.Id == newPost2.Id));
         }
+
+        [Fact]
+        public async Task PostDelete()
+        {
+        }
     }
 }

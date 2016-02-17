@@ -121,7 +121,9 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
                 if (!postsIndexList.Contains("user_stype_updatedat"))
                 {
                     var indexCreateResult = await this.Posts.IndexCreate("user_stype_versionreceivedat", r =>
-                            this.R.Add(new object[] { r.G("user"), r.G("type").Split("#", 1).Nth(0), r.G("version").G("received_at") }))
+                            this.R.Branch(r.HasFields("deleted_at"),
+                                null,
+                                new object[] { r.G("user"), r.G("type").Split("#", 1).Nth(0), r.G("version").G("received_at") }))
                         .RunResultAsync(this.connection, null, cancellationToken);
 
                     indexCreateResult.AssertNoErrors();
@@ -130,7 +132,9 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
                 if (!postsIndexList.Contains("user_ftype_updatedat"))
                 {
                     var indexCreateResult = await this.Posts.IndexCreate("user_ftype_versionreceivedat", r =>
-                            this.R.Add(new object[] { r.G("user"), r.G("type"), r.G("version").G("received_at") }))
+                            this.R.Branch(r.HasFields("deleted_at"),
+                                null,
+                                new object[] { r.G("user"), r.G("type"), r.G("version").G("received_at") }))
                         .RunResultAsync(this.connection, null, cancellationToken);
 
                     indexCreateResult.AssertNoErrors();
@@ -143,6 +147,18 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
                         .RunResultAsync(this.connection, null, cancellationToken);
 
                     tableCreatedResult.AssertTablesCreated(1);
+                }
+
+                var postVersionsIndexList = await this.PostVersions.IndexList().RunResultAsync<IList<string>>(this.connection, null, cancellationToken);
+                if (!postVersionsIndexList.Contains("user_post_versionreceivedat"))
+                {
+                    var indexCreateResult = await this.PostVersions.IndexCreate("user_post_versionreceivedat", r =>
+                            this.R.Branch(r.HasFields("deleted_at").Eq(null), 
+                                null,
+                                new object[] { r.G("user"), r.G("id"), r.G("version").G("received_at") }))
+                        .RunResultAsync(this.connection, null, cancellationToken);
+
+                    indexCreateResult.AssertNoErrors();
                 }
             }
             catch (Exception ex)

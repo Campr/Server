@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Campr.Server.Lib.Connectors.RethinkDb;
 using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Infrastructure;
@@ -37,12 +38,18 @@ namespace Campr.Server.Lib.Repositories
 
         public Task<TentPost<T>> GetAsync<T>(string userId, string postId, string versionId, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
-            return this.db.Run(c => this.tableVersions.Get(new[] { userId, postId, this.GetShortVersionId(versionId) }).RunResultAsync<TentPost<T>>(c, null, cancellationToken), cancellationToken);
+            return this.db.Run(c => this.tableVersions
+                .Get(new [] { userId, postId, this.GetShortVersionId(versionId) })
+                .Do_(r => this.db.R.Branch(r.HasFields("deleted_at"), null, r))
+                .RunResultAsync<TentPost<T>>(c, null, cancellationToken), cancellationToken);
         }
 
         public Task<TentPost<T>> GetLastVersionAsync<T>(string userId, string postId, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
-            return this.db.Run(c => this.table.Get(new[] { userId, postId }).RunResultAsync<TentPost<T>>(c, null, cancellationToken), cancellationToken);
+            return this.db.Run(c => this.table
+                .Get(new [] { userId, postId })
+                .Do_(r => this.db.R.Branch(r.HasFields("deleted_at"), null, r))
+                .RunResultAsync<TentPost<T>>(c, null, cancellationToken), cancellationToken);
         }
 
         public Task<TentPost<T>> GetLastVersionOfTypeAsync<T>(string userId, ITentPostType type, CancellationToken cancellationToken = default(CancellationToken)) where T : class
@@ -67,7 +74,10 @@ namespace Campr.Server.Lib.Repositories
         public Task<IList<TentPost<T>>> GetBulkAsync<T>(IList<TentPostReference> references, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
             var postIds = references.Select(r => new [] { r.UserId, r.PostId, this.GetShortVersionId(r.VersionId) });
-            return this.db.Run(c => this.tableVersions.GetAll(postIds.Cast<object>().ToArray()).RunResultAsync<IList<TentPost<T>>>(c, null, cancellationToken), cancellationToken);
+            return this.db.Run(c => this.tableVersions
+                .GetAll(postIds.Cast<object>().ToArray())
+                .Filter(r => this.db.R.Not(r.HasFields("deleted_at")))
+                .RunResultAsync<IList<TentPost<T>>>(c, null, cancellationToken), cancellationToken);
         }
 
         public Task UpdateAsync<T>(TentPost<T> post, CancellationToken cancellationToken = default(CancellationToken)) where T : class
@@ -111,6 +121,7 @@ namespace Campr.Server.Lib.Repositories
                 var upsertResult = await this.table
                     .Get(new [] { post.UserId, post.Id })
                     .Replace(r => this.db.R.Branch(r.Eq(null)
+                        .Or(r.HasFields("deleted_at"))
                         .Or(r.G("version").G("received_at").Lt(post.Version.ReceivedAt)
                             .Or(r.G("version").G("received_at").Eq(post.Version.ReceivedAt).And(r.G("version").G("id").Lt(post.Version.Id)))),
                         post, r))
@@ -142,6 +153,16 @@ namespace Campr.Server.Lib.Repositories
 
             return this.db.Run(async c =>
             {
+                // Retrieve the penultimate version.
+                var postVersionReceivedAtIndex = "user_post_versionreceivedat";
+                var penultimatePostVersion = await this.tableVersions
+                    .Between(
+                        new object[] { userId, postId, this.db.R.Minval() },
+                        new object[] { userId, postId, this.db.R.Maxval() })[new { index = postVersionReceivedAtIndex }]
+                    .OrderBy()[new { index = this.db.R.Desc(postVersionReceivedAtIndex) }]
+                    .Nth(1)
+                    .RunResultAsync<TentPost<object>>(c, null, cancellationToken);
+
                 // Update the last version.
                 var lastVersionUpdateResult = await this.table
                     .Get(new[] { userId, postId })
@@ -164,6 +185,7 @@ namespace Campr.Server.Lib.Repositories
             }, cancellationToken);
         }
 
+        // Don't use the full version for a post's primary key.
         private string GetShortVersionId(string versionId)
         {
             return versionId.Substring(versionId.Length - 32, 32);

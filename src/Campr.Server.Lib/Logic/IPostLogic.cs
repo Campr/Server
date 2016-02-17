@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Campr.Server.Lib.Enums;
 using Campr.Server.Lib.Models.Db;
