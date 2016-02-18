@@ -59,7 +59,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             await this.postRepository.UpdateAsync(newPost);
 
             // Retrieve the last version for this post.
-            var postLastVersion = await this.postRepository.GetLastVersionAsync<TentContentMeta>(user.Id, newPost.Id);
+            var postLastVersion = await this.postRepository.GetAsync<TentContentMeta>(user.Id, newPost.Id);
 
             Assert.NotNull(postLastVersion);
             Assert.Equal(newPost.Version.Id, postLastVersion.Version.Id);
@@ -173,10 +173,10 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             await this.postRepository.UpdateAsync(newPost2);
             
             // Retrieve these two posts in bulk.
-            var references = new List<TentPostReference>
+            var references = new List<TentPostIdentifier>
             {
-                new TentPostReference { UserId = newPost1.UserId, PostId = newPost1.Id, VersionId = newPost1.Version.Id },
-                new TentPostReference { UserId = newPost2.UserId, PostId = newPost2.Id, VersionId = newPost2.Version.Id }
+                new TentPostIdentifier { UserId = newPost1.UserId, PostId = newPost1.Id, VersionId = newPost1.Version.Id },
+                new TentPostIdentifier { UserId = newPost2.UserId, PostId = newPost2.Id, VersionId = newPost2.Version.Id }
             };
 
             var posts = await this.postRepository.GetBulkAsync<TentContentMeta>(references);
@@ -207,7 +207,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             await this.postRepository.DeleteAsync(newPost);
 
             // Make sure this post can't be found anymore.
-            var postLastVersion = await this.postRepository.GetLastVersionAsync<TentContentMeta>(user.Id, newPost.Id);
+            var postLastVersion = await this.postRepository.GetAsync<TentContentMeta>(user.Id, newPost.Id);
             Assert.Null(postLastVersion);
 
             var postExactVersion = await this.postRepository.GetAsync<TentContentMeta>(user.Id, newPost.Id, newPost.Version.Id);
@@ -232,7 +232,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             await this.postRepository.DeleteAsync(newPost, true);
 
             // Make sure this post can't be found anymore.
-            var postLastVersion = await this.postRepository.GetLastVersionAsync<TentContentMeta>(user.Id, newPost.Id);
+            var postLastVersion = await this.postRepository.GetAsync<TentContentMeta>(user.Id, newPost.Id);
             Assert.Null(postLastVersion);
 
             var postExactVersion = await this.postRepository.GetAsync<TentContentMeta>(user.Id, newPost.Id, newPost.Version.Id);
@@ -281,9 +281,21 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             Assert.Null(postVersion2);
 
             // Check that the last version is now back to version 1.
-            var postLastVersion = await this.postRepository.GetLastVersionAsync<TentContentMeta>(user.Id, newPost.Id);
+            var postLastVersion = await this.postRepository.GetAsync<TentContentMeta>(user.Id, newPost.Id);
             Assert.NotNull(postLastVersion);
             Assert.Equal(entity1, postLastVersion.Content.Entity);
+        }
+
+        [Fact]
+        public async Task NonExistingPosts()
+        {
+            // Last version.
+            var postLastVersion = await this.postRepository.GetAsync<TentContentMeta>("nonexistent", "nonexistent");
+            Assert.Null(postLastVersion);
+
+            // Specific version.
+            var postSpecificVersion = await this.postRepository.GetAsync<TentContentMeta>("nonexistent", "nonexistent", "nonexistent");
+            Assert.Null(postSpecificVersion);
         }
     }
 }
