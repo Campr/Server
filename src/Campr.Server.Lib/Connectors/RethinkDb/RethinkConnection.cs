@@ -160,6 +160,69 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
 
                     indexCreateResult.AssertNoErrors();
                 }
+
+                if (!tableList.Contains("userposts"))
+                {
+                    var tableCreatedResult = await db.TableCreate("userposts")
+                        .optArg("primary_key", "key_owner_user_post")
+                        .RunResultAsync(this.connection, null, cancellationToken);
+
+                    tableCreatedResult.AssertTablesCreated(1);
+                }
+
+                var userPostsIndexList = await this.UserPosts.IndexList().RunResultAsync<IList<string>>(this.connection, null, cancellationToken);
+                if (!userPostsIndexList.Contains("owner_versionreceivedat"))
+                {
+                    var indexCreateResult = await this.UserPosts.IndexCreate("owner_versionreceivedat", r =>
+                            this.R.Branch(r.HasFields("deleted_at").Eq(null),
+                                null,
+                                new object[] { r.G("owner"), r.G("version_received_at") }))
+                        .RunResultAsync(this.connection, null, cancellationToken);
+
+                    indexCreateResult.AssertNoErrors();
+                }
+
+                if (!userPostsIndexList.Contains("owner_versionpublishedat"))
+                {
+                    var indexCreateResult = await this.UserPosts.IndexCreate("owner_versionpublishedat", r =>
+                            this.R.Branch(r.HasFields("deleted_at").Eq(null),
+                                null,
+                                new object[] { r.G("owner"), r.G("version_published_at") }))
+                        .RunResultAsync(this.connection, null, cancellationToken);
+
+                    indexCreateResult.AssertNoErrors();
+                }
+
+                if (!userPostsIndexList.Contains("owner_receivedat"))
+                {
+                    var indexCreateResult = await this.UserPosts.IndexCreate("owner_receivedat", r =>
+                            this.R.Branch(r.HasFields("deleted_at").Eq(null),
+                                null,
+                                new object[] { r.G("owner"), r.G("received_at") }))
+                        .RunResultAsync(this.connection, null, cancellationToken);
+
+                    indexCreateResult.AssertNoErrors();
+                }
+
+                if (!userPostsIndexList.Contains("owner_publishedat"))
+                {
+                    var indexCreateResult = await this.UserPosts.IndexCreate("owner_publishedat", r =>
+                            this.R.Branch(r.HasFields("deleted_at").Eq(null),
+                                null,
+                                new object[] { r.G("owner"), r.G("published_at") }))
+                        .RunResultAsync(this.connection, null, cancellationToken);
+
+                    indexCreateResult.AssertNoErrors();
+                }
+                
+                if (!tableList.Contains("userpostversions"))
+                {
+                    var tableCreatedResult = await db.TableCreate("userpostversions")
+                        .optArg("primary_key", "key_owner_user_post_version")
+                        .RunResultAsync(this.connection, null, cancellationToken);
+
+                    tableCreatedResult.AssertTablesCreated(1);
+                }
             }
             catch (Exception ex)
             {
@@ -183,6 +246,8 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
         public Table UserVersions => this.R.Db(this.dbName).Table("userversions");
         public Table Posts => this.R.Db(this.dbName).Table("posts");
         public Table PostVersions => this.R.Db(this.dbName).Table("postversions");
+        public Table UserPosts => this.R.Db(this.dbName).Table("userposts");
+        public Table UserPostVersions => this.R.Db(this.dbName).Table("userpostversions");
         public Table Attachments => this.R.Db(this.dbName).Table("attachments");
         public Table Bewits => this.R.Db(this.dbName).Table("bewits");
 

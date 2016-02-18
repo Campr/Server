@@ -1,6 +1,6 @@
 ﻿namespace Campr.Server.Lib.Models.Tent
 {
-    public class TentPostReference : ModelBase
+    public class TentPostIdentifier : ModelBase
     {
         public string UserId { get; set; }
         

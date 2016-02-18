@@ -10,6 +10,7 @@
 //using Campr.Server.Lib.Helpers;
 //using Campr.Server.Lib.Infrastructure;
 //using Campr.Server.Lib.Models.Db;
+//using Campr.Server.Lib.Models.Db.Factories;
 //using Campr.Server.Lib.Models.Other;
 //using Campr.Server.Lib.Models.Other.Factories;
 //using Campr.Server.Lib.Models.Queues;
@@ -28,42 +29,37 @@
 //        public PostLogic(IAttachmentLogic attachmentLogic,
 //            IPostRepository postRepository,
 //            IUserRepository userRepository,
-//            ITentServDbClient dbClient,
 //            ITentQueues tentQueues,
 //            ITentClient tentClient,
 //            IDiscoveryService discoveryService,
-//            IDbPostFactory dbPostFactory,
+//            ITentPostFactory postFactory,
 //            ITentPostTypeFactory postTypeFactory,
 //            ITextHelpers textHelpers,
 //            IModelHelpers modelHelpers,
 //            ICryptoHelpers cryptoHelpers,
 //            ITentConstants tentConstants,
-//            ITentServConfiguration configuration,
-//            IUnityContainer container)
+//            IGeneralConfiguration configuration)
 //        {
 //            Ensure.Argument.IsNotNull(attachmentLogic, "attachmentLogic");
 //            Ensure.Argument.IsNotNull(postRepository, "postRepository");
 //            Ensure.Argument.IsNotNull(userRepository, "userRepository");
-//            Ensure.Argument.IsNotNull(dbClient, "dbClient");
 //            Ensure.Argument.IsNotNull(tentQueues, "tentQueues");
 //            Ensure.Argument.IsNotNull(discoveryService, "discoveryService");
-//            Ensure.Argument.IsNotNull(dbPostFactory, "dbPostFactory");
+//            Ensure.Argument.IsNotNull(postFactory, nameof(postFactory));
 //            Ensure.Argument.IsNotNull(postTypeFactory, "postTypeFactory");
 //            Ensure.Argument.IsNotNull(textHelpers, "textHelpers");
 //            Ensure.Argument.IsNotNull(modelHelpers, "modelHelpers");
 //            Ensure.Argument.IsNotNull(cryptoHelpers, "cryptoHelpers");
 //            Ensure.Argument.IsNotNull(tentConstants, "tentConstants");
 //            Ensure.Argument.IsNotNull(configuration, "configuration");
-//            Ensure.Argument.IsNotNull(container, "container");
 
 //            this.attachmentLogic = attachmentLogic;
 //            this.postRepository = postRepository;
 //            this.userRepository = userRepository;
-//            this.dbClient = dbClient;
 //            this.tentQueues = tentQueues;
 //            this.tentClient = tentClient;
 //            this.discoveryService = discoveryService;
-//            this.dbPostFactory = dbPostFactory;
+//            this.postFactory = postFactory;
 //            this.postTypeFactory = postTypeFactory;
 //            this.textHelpers = textHelpers;
 //            this.modelHelpers = modelHelpers;
@@ -81,35 +77,104 @@
 //        private readonly IAttachmentLogic attachmentLogic;
 //        private readonly IPostRepository postRepository;
 //        private readonly IUserRepository userRepository;
-//        private readonly ITentServDbClient dbClient;
 //        private readonly ITentQueues tentQueues;
 //        private readonly ITentClient tentClient;
 //        private readonly IDiscoveryService discoveryService;
-//        private readonly IDbPostFactory dbPostFactory;
+//        private readonly ITentPostFactory postFactory;
 //        private readonly ITentPostTypeFactory postTypeFactory;
 //        private readonly ITextHelpers textHelpers;
 //        private readonly IModelHelpers modelHelpers;
 //        private readonly ICryptoHelpers cryptoHelpers;
 //        private readonly ITentConstants tentConstants;
-//        private readonly ITentServConfiguration configuration;
+//        private readonly IGeneralConfiguration configuration;
 
 //        private readonly Lazy<IUserLogic> userLogic;
-//        private readonly Lazy<IFollowLogic> followLogic; 
+//        private readonly Lazy<IFollowLogic> followLogic;
 //        private readonly Lazy<ITypeSpecificLogic> typeSpecificLogic;
-//        private readonly Lazy<IAppPostLogic> appPostLogic; 
+//        private readonly Lazy<IAppPostLogic> appPostLogic;
 
 //        #endregion
 
 //        #region Interface implementation.
 
-//        public Task<TentPost<T>> CreateNewPostAsync<T>(
+
+
+//        public async Task<TentPost<object>> GetPostAsync(
 //            User user, 
-//            string postType, 
-//            T postContent, 
-//            bool isPublic = true, 
-//            IEnumerable<TentMention> mentions = null, 
-//            IEnumerable<TentPostRef> postRefs = null, 
-//            IEnumerable<TentPostAttachment> attachments = null, 
+//            User targetUser, string 
+//            postId, 
+//            string versionId = null, 
+//            CacheControlValue cacheControl = CacheControlValue.ProxyIfMiss, 
+//            TentPost<TentContentCredentials> credentialsPost = null)
+//        {
+//            // Decide of the OwnerId depending on the proxy value.
+//            var ownerId = cacheControl == CacheControlValue.NoProxy
+//                ? user.Id
+//                : targetUser.Id;
+
+//            // First, try to retrieve this post internally.
+//            var query = this.dbClient.GetPostCollection<object>()
+//                .AsQueryable()
+//                .Where(p => p.OwnerId == ownerId
+//                    && p.DeletedAt == null
+//                    && p.BPost.UserId == targetUser.Id
+//                    && p.BPost.Id == postId);
+
+//            // If needed, add condition for version.
+//            if (!string.IsNullOrWhiteSpace(versionId))
+//            {
+//                query = query.Where(p => p.BPost.Version.Id == versionId);
+//            }
+
+//            // If needed, add conditions for permissions.
+//            if (user == null || user.Id != targetUser.Id)
+//            {
+//                if (user != null)
+//                {
+//                    query = query.Where(p =>
+//                        p.BPost.Permissions.Public
+//                        || p.BPost.Permissions.UserIds.Contains(user.Id));
+//                }
+//                else
+//                {
+//                    query = query.Where(p => p.BPost.Permissions.Public);
+//                }
+//            }
+
+//            // Sort and retrieve the first element.
+//            var post = query
+//                .OrderByDescending(p => p.BPost.Version.ReceivedAt)
+//                .FirstOrDefault();
+//            if (post != null)
+//            {
+//                return post;
+//            }
+
+//            // Otherwise, if this is an internal user, return now.
+//            if (targetUser.IsInternal() || user == null || cacheControl == CacheControlValue.NoProxy)
+//            {
+//                return null;
+//            }
+
+//            //// Try to retrieve this post externally.
+//            //var metaPost = (await this.GetMetaPostForUserAsync(targetUser)).Post;
+//            //var credentials = await this.followLogic.Value.GetCredentialsForUser(user, targetUser, false, credentialsPost);
+
+//            //var externalPost = await this.tentClient.RetrievePostForUserAsync<object>(metaPost, credentials, postId, versionId);
+//            //var externalDbPost = await this.CreatePostAsync(targetUser, externalPost);
+
+//            //return externalDbPost;
+//            return null;
+//        }
+
+//        public Task<TentPost<T>> CreateNewPostAsync<T>(
+//            User user,
+//            string postType,
+//            T postContent,
+//            bool isPublic = true,
+//            IEnumerable<TentMention> mentions = null,
+//            IEnumerable<TentPostRef> postRefs = null,
+//            IEnumerable<TentPostAttachment> attachments = null,
 //            bool propagate = true) where T : class
 //        {
 //            // Create the post object.
@@ -132,7 +197,10 @@
 //            return this.CreatePostAsync(user, apiPost, false, propagate);
 //        }
 
-//        public async Task<TentPost<TentContentCredentials>> CreateNewCredentialsPostAsync(User user, User targetUser, TentPost<object> targetPost)
+//        public async Task<TentPost<TentContentCredentials>> CreateNewCredentialsPostAsync(
+//            User user, 
+//            User targetUser, 
+//            TentPost<object> targetPost)
 //        {
 //            Ensure.Argument.IsNotNull(user, nameof(user));
 //            Ensure.Argument.IsNotNull(targetUser, nameof(targetUser));
@@ -153,7 +221,12 @@
 //            };
 
 //            // Create the credentials post.
-//            var credentialsPost = await this.CreateNewPostAsync(user, this.tentConstants.CredentialsPostType, credentialsContent, false, new[] { postMention }, null, null, false);
+//            var credentialsPost = await this.CreateNewPostAsync(
+//                user, 
+//                this.tentConstants.CredentialsPostType, 
+//                credentialsContent, 
+//                false, 
+//                new[] { postMention }, null, null, false);
 
 //            // Set the credentials post as passenger on the target post.
 //            targetPost.Post.PassengerCredentials = credentialsPost.Post;
@@ -162,11 +235,11 @@
 //        }
 
 //        public async Task<TentPost<T>> CreatePostAsync<T>(
-//            User user, 
-//            TentPost<T> post, 
-//            bool newVersion = false, 
-//            bool propagate = true, 
-//            bool import = false) where T: class 
+//            User user,
+//            TentPost<T> post,
+//            bool newVersion = false,
+//            bool propagate = true,
+//            bool import = false) where T : class
 //        {
 //            // If the post already has an Id, try to retrieve exisiting versions of this post.
 //            IDbPost<T> lastPostVersion = null;
@@ -198,7 +271,7 @@
 //            {
 //                return null;
 //            }
-            
+
 //            // If needed, set the entity on the post.
 //            if (string.IsNullOrEmpty(post.Entity))
 //            {
@@ -266,7 +339,7 @@
 
 //                            if (lastPostVersion != null && lastPostVersion.Post.Attachments != null)
 //                            {
-//                                return lastPostVersion.Post.Attachments.FirstOrDefault(la => 
+//                                return lastPostVersion.Post.Attachments.FirstOrDefault(la =>
 //                                    la.Digest == a.Digest
 //                                    && la.Name == a.Name
 //                                    && la.Category == a.Category
@@ -326,7 +399,7 @@
 //            }
 
 //            // If this post mentions other users, queue it for propagation.
-//            if (dbPost.Post.Mentions != null && dbPost.Post.Mentions.Any(m => 
+//            if (dbPost.Post.Mentions != null && dbPost.Post.Mentions.Any(m =>
 //                    m.UserId != dbPost.Post.UserId && m.UserId != default(ObjectId)))
 //            {
 //                await this.tentQueues.Mentions.AddMessageAsync(new QueueMentionMessage
@@ -379,7 +452,7 @@
 //                var subscription = await this.GetSubscribingPostForTypeAsync(userId, post.Post.UserId, postType);
 //                isSubscriber = subscription != null;
 //            }
-            
+
 //            // TODO: Decide if any sort of validation should be performed here.
 //            //// If our user isn't a subscriber, check for mentions.
 //            //if (!isSubscriber.Value
@@ -392,7 +465,7 @@
 //            // Create the feed item and save it to the db.
 //            var feedItem = this.dbPostFactory.CreateFeedItem(userId, post, isSubscriber.Value);
 //            this.postRepository.CreatePost(feedItem);
-            
+
 //            // If needed, propagate to apps.
 //            var appCountForType = await this.appPostLogic.Value.GetAppPostsCountForTypeAsync(userId, postType, post.Post.Permissions.Public);
 //            if (appCountForType > 0)
@@ -407,7 +480,7 @@
 //            }
 //        }
 
-//        public async Task<TentPost<T>> ImportPostFromLinkAsync<T>(User user, User targetUser, Uri uri) where T : class 
+//        public async Task<TentPost<T>> ImportPostFromLinkAsync<T>(User user, User targetUser, Uri uri) where T : class
 //        {
 //            // Retrieve the post.
 //            var externalPost = await this.tentClient.RetrievePostAtUriAsync<T>(uri);
@@ -422,67 +495,6 @@
 //            // Add a feed item to the post for our user.
 //            var feedItem = this.dbPostFactory.CreateFeedItem(user.Id, externalDbPost, false);
 //            this.postRepository.CreatePost(feedItem);
-
-//            return externalDbPost;
-//        }
-
-//        public async Task<IDbPost<object>> GetPostAsync(DbUser user, DbUser targetUser, string postId, string versionId = null, CacheControlValue cacheControl = CacheControlValue.ProxyIfMiss, ITentPost<TentContentCredentials> credentialsPost = null)
-//        {
-//            // Decide of the OwnerId depending on the proxy value.
-//            var ownerId = cacheControl == CacheControlValue.NoProxy
-//                ? user.Id
-//                : targetUser.Id;
-
-//            // First, try to retrieve this post internally.
-//            var query = this.dbClient.GetPostCollection<object>()
-//                .AsQueryable()
-//                .Where(p => p.OwnerId == ownerId
-//                    && p.DeletedAt == null
-//                    && p.BPost.UserId == targetUser.Id
-//                    && p.BPost.Id == postId);
-
-//            // If needed, add condition for version.
-//            if (!string.IsNullOrWhiteSpace(versionId))
-//            {
-//                query = query.Where(p => p.BPost.Version.Id == versionId);
-//            }
-
-//            // If needed, add conditions for permissions.
-//            if (user == null || user.Id != targetUser.Id)
-//            {
-//                if (user != null)
-//                {
-//                    query = query.Where(p =>
-//                        p.BPost.Permissions.Public
-//                        || p.BPost.Permissions.UserIds.Contains(user.Id));
-//                }
-//                else
-//                {
-//                    query = query.Where(p => p.BPost.Permissions.Public);
-//                }
-//            }
-
-//            // Sort and retrieve the first element.
-//            var post = query
-//                .OrderByDescending(p => p.BPost.Version.ReceivedAt)
-//                .FirstOrDefault();
-//            if (post != null)
-//            {
-//                return post;
-//            }
-
-//            // Otherwise, if this is an internal user, return now.
-//            if (targetUser.IsInternal() || user == null || cacheControl == CacheControlValue.NoProxy)
-//            {
-//                return null;
-//            }
-
-//            // Try to retrieve this post externally.
-//            var metaPost = (await this.GetMetaPostForUserAsync(targetUser)).Post;
-//            var credentials = await this.followLogic.Value.GetCredentialsForUser(user, targetUser, false, credentialsPost);
-
-//            var externalPost = await this.tentClient.RetrievePostForUserAsync<object>(metaPost, credentials, postId, versionId);
-//            var externalDbPost = await this.CreatePostAsync(targetUser, externalPost);
 
 //            return externalDbPost;
 //        }
@@ -523,7 +535,7 @@
 //                    .Select(p => p.Post)
 //                    .ToList();
 //            }
-            
+
 //            // If we don't have an authenticated user, return now.
 //            if (user == null)
 //            {
@@ -553,7 +565,7 @@
 //            {
 //                return this.BuildPublicationsRequest(user == null ? (ObjectId?)null : user.Id, targetUser.Id, parameters, proxy).Count();
 //            }
-            
+
 //            // If we don't have an authenticated user, return now.
 //            if (user == null)
 //            {
@@ -573,7 +585,7 @@
 //            if (targetUser.IsInternal() || !proxy)
 //            {
 //                var query = this.BuildMentionsRequest(user == null ? (ObjectId?)null : user.Id, targetUser.Id, postId, parameters, proxy);
-                
+
 //                //// TEMP: Get the JSON for this query.
 //                //var imq = (query as MongoQueryable<DbPost<object>>).GetMongoQuery();
 //                //var queryString = imq.ToString();
@@ -588,7 +600,7 @@
 //                    .Select(p =>
 //                    {
 //                        // Find the actual mention in the post.
-//                        var mention = p.BPost.Mentions.FirstOrDefault(m => 
+//                        var mention = p.BPost.Mentions.FirstOrDefault(m =>
 //                            m.UserId == targetUser.Id
 //                            && m.PostId == postId);
 
@@ -600,12 +612,12 @@
 //                            VersionId = p.Post.Version.Id,
 //                            Type = p.Post.Type,
 //                            Public = !p.Post.Permissions.Public || (mention != null && !mention.Public.GetValueOrDefault(true))
-//                                ? (bool?) false
+//                                ? (bool?)false
 //                                : null
 //                        };
 //                    });
 //            }
-            
+
 //            // If we don't have an authenticated user, return now.
 //            if (user == null)
 //            {
@@ -626,7 +638,7 @@
 //            {
 //                return this.BuildMentionsRequest(user == null ? (ObjectId?)null : user.Id, targetUser.Id, postId, parameters, proxy).Count();
 //            }
-            
+
 //            // If we don't have an authenticated user, return now.
 //            if (user == null)
 //            {
@@ -720,7 +732,7 @@
 //                    {
 //                        // Set the UserId for profile retrieval.
 //                        p.BPost.Version.UserId = p.BPost.UserId;
-                            
+
 //                        // Set the type.
 //                        p.BPost.Version.Type = p.BPost.Type;
 
@@ -887,10 +899,10 @@
 
 //        public Task<IDictionary<string, ApiMetaProfile>> GetMetaProfilesForPostAsync<T>(ITentPost<T> post, IEnumerable<ITentPost<T>> refs, RequestProfilesEnum requestedProfiles) where T : class
 //        {
-//            return this.GetMetaProfilesForPostsAsync(new[] {post}, refs, requestedProfiles);
+//            return this.GetMetaProfilesForPostsAsync(new[] { post }, refs, requestedProfiles);
 //        }
 
-//        public async Task<IDictionary<string, ApiMetaProfile>> GetMetaProfilesForPostsAsync<T>(IEnumerable<ITentPost<T>> posts, IEnumerable<ITentPost<T>> refs, RequestProfilesEnum requestedProfiles) where T : class 
+//        public async Task<IDictionary<string, ApiMetaProfile>> GetMetaProfilesForPostsAsync<T>(IEnumerable<ITentPost<T>> posts, IEnumerable<ITentPost<T>> refs, RequestProfilesEnum requestedProfiles) where T : class
 //        {
 //            var userIds = new List<ObjectId>();
 
@@ -934,7 +946,7 @@
 //                    .Select(vp => vp.UserId));
 //            }
 
-//            return userIds.Any() 
+//            return userIds.Any()
 //                ? await this.GetMetaProfilesForUsersAsync(userIds)
 //                : new Dictionary<string, ApiMetaProfile>();
 //        }
@@ -979,7 +991,7 @@
 //                        a.Digest == digest));
 //        }
 
-//        public async Task<IDbPost<T>> GetLastPostByTypeWithMentionAsync<T>(ObjectId userId, ITentPostType postType, TentPostReference mention) where T : class 
+//        public async Task<IDbPost<T>> GetLastPostByTypeWithMentionAsync<T>(ObjectId userId, ITentPostType postType, TentPostReference mention) where T : class
 //        {
 //            return this.dbClient.GetPostCollection<T>()
 //                .AsQueryable()
@@ -1015,7 +1027,7 @@
 //                .Count(p => p.BPost.UserId != userId);
 //        }
 
-//        public async Task<IDbPost<object>>  DeletePostAsync(DbUser user, IDbPost<object> post, bool specificVersion, bool createDeletePost = true)
+//        public async Task<IDbPost<object>> DeletePostAsync(DbUser user, IDbPost<object> post, bool specificVersion, bool createDeletePost = true)
 //        {
 //            IDbPost<object> deletedPost = null;
 
@@ -1025,7 +1037,7 @@
 //                var deletePostMentions = post.Post.Mentions == null
 //                    ? null
 //                    : post.Post.Mentions
-//                        .Where(m => 
+//                        .Where(m =>
 //                            m.UserId != post.Post.UserId
 //                            && m.UserId != default(ObjectId))
 //                        .Select(m => new ApiMention
@@ -1098,7 +1110,7 @@
 
 //            return this.BuildCommonRequest(userId, targetUserId, query, parameters);
 //        }
-        
+
 //        private IQueryable<DbPost<object>> BuildCommonRequest(ObjectId? userId, ObjectId targetUserId, IQueryable<DbPost<object>> query, ITentRequestParameters parameters)
 //        {
 //            // Only non-deleted posts.
@@ -1113,7 +1125,7 @@
 //                    var userOnlyMentionEntities = andMentioning.Where(m => string.IsNullOrEmpty(m.PostId) && m.User == null).Select(m => m.Entity).ToList();
 //                    var postMentions = andMentioning.Where(m => !string.IsNullOrEmpty(m.PostId) && m.User != null).Select(m => m.User.Id.ToString() + m.PostId).ToList();
 
-//                    var userOnlyIdRegex = new Regex(string.Format("^({0})", userOnlyMentionIds.Any() 
+//                    var userOnlyIdRegex = new Regex(string.Format("^({0})", userOnlyMentionIds.Any()
 //                        ? string.Join("|", userOnlyMentionIds.Select(Regex.Escape))
 //                        : "nothing"));
 //                    var userOnlyEntityRegex = new Regex(string.Format("^({0})$", userOnlyMentionEntities.Any()
@@ -1177,7 +1189,7 @@
 //                        || normalPostTypes.Contains(p.BPost.Type));
 //                }
 //            }
-            
+
 //            // Permissions.
 //            if (targetUserId != userId)
 //            {
@@ -1192,7 +1204,7 @@
 //                    query = query.Where(p => p.BPost.Permissions.Public);
 //                }
 //            }
-            
+
 //            // TODO: Add version comparison.
 //            // Condition on date.
 //            var sortPropertyName = this.GetPostSortPropertyName(parameters.SortBy);
@@ -1245,7 +1257,7 @@
 //            // Build the base query.
 //            var query = this.dbClient.GetPostCollection<object>()
 //                .AsQueryable()
-//                .Where(p => p.LastVersion 
+//                .Where(p => p.LastVersion
 //                        && p.BPost.Mentions.Any(m =>
 //                            m.UserId == targetUserId
 //                            && m.PostId == postId
@@ -1380,7 +1392,7 @@
 //        {
 //            var query = this.dbClient.GetPostCollection<object>()
 //                .AsQueryable()
-//                .Where(p => p.OwnerId == userId 
+//                .Where(p => p.OwnerId == userId
 //                    && p.LastVersion
 //                    && p.DeletedAt == null);
 
@@ -1395,7 +1407,7 @@
 //                var subscriptionPostTypes = postTypes.Select(t => this.tentConstants.SubscriptionPostType() + t.Type);
 //                query = query.Where(p => subscriptionPostTypes.Contains(p.BPost.Type));
 //            }
-            
+
 //            return query;
 //        }
 
@@ -1509,7 +1521,7 @@
 //            return metaProfiles;
 //        }
 
-//        private async Task ResolveMentionsAsync<T>(User user, TentPost<T> post) where T : class 
+//        private async Task ResolveMentionsAsync<T>(User user, TentPost<T> post) where T : class
 //        {
 //            if (post.Mentions == null || !post.Mentions.Any())
 //            {
@@ -1565,13 +1577,13 @@
 //                        mention.PostId = mention.Post.Post.Id;
 //                        mention.Type = mention.Post.Post.Type;
 //                    }
-                    
+
 //                    // If we don't have a post at this point, no need to continue.
 //                    if (mention.Post == null)
 //                    {
 //                        return;
 //                    }
-                    
+
 //                    mention.FoundPost = true;
 
 //                    // Reply chain.
@@ -1602,7 +1614,7 @@
 //            await Task.WhenAll(resolveMentionsTasks);
 //        }
 
-//        private async Task ResolvePostRefsAsync<T>(User user, TentPost<T> post) where T : class 
+//        private async Task ResolvePostRefsAsync<T>(User user, TentPost<T> post) where T : class
 //        {
 //            if (post.Refs == null || !post.Refs.Any())
 //            {
@@ -1660,7 +1672,7 @@
 //                    {
 //                        return;
 //                    }
-                    
+
 //                    postRef.FoundPost = true;
 //                    if (postRef.PostId == post.Id)
 //                    {

@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Campr.Server.Lib.Enums;
 using Campr.Server.Lib.Models.Db;
@@ -10,13 +12,18 @@ namespace Campr.Server.Lib.Logic
 {
     public interface IPostLogic
     {
-        //Task<TentPost<T>> CreateNewPostAsync<T>(User user, string postType, T postContent, bool isPublic = true, IEnumerable<TentMention> mentions = null, IEnumerable<ApiPostRef> postRefs = null, IEnumerable<ApiPostAttachment> attachments = null, bool propagate = true) where T : class;
-        //Task<TentPost<TentContentCredentials>> CreateNewCredentialsPostAsync(User user, User targetUser, TentPost<object> targetPost); 
-        //Task<TentPost<T>> CreatePostAsync<T>(User user, TentPost<T> post, bool newVersion = false, bool propagate = true, bool import = false) where T : class;
-        //Task CreateFeedItemAsync<T>(string userId, TentPost<T> post, bool? isSubscriber = null) where T : class;
-        //Task<TentPost<T>> ImportPostFromLinkAsync<T>(User user, User targetUser, Uri uri) where T : class;
+        Task<TentPost<object>> GetPostAsync(User user, User targetUser, string postId, string versionId = null, CacheControlValue cacheControl = CacheControlValue.ProxyIfMiss, TentPost<TentContentCredentials> credentialsPost = null, CancellationToken cancellationToken = default(CancellationToken));
 
-        Task<TentPost<object>> GetPostAsync(User user, User targetUser, string postId, string versionId = null, CacheControlValue cacheControl = CacheControlValue.ProxyIfMiss, TentPost<TentContentCredentials> credentialsPost = null);
+
+
+
+
+        Task<TentPost<T>> CreateNewPostAsync<T>(User user, string postType, T postContent, bool isPublic = true, IEnumerable<TentMention> mentions = null, IEnumerable<TentPostRef> postRefs = null, IEnumerable<TentPostAttachment> attachments = null, bool propagate = true) where T : class;
+        Task<TentPost<TentContentCredentials>> CreateNewCredentialsPostAsync(User user, User targetUser, TentPost<object> targetPost);
+        Task<TentPost<T>> CreatePostAsync<T>(User user, TentPost<T> post, bool newVersion = false, bool propagate = true, bool import = false) where T : class;
+        Task CreateFeedItemAsync<T>(string userId, TentPost<T> post, bool? isSubscriber = null) where T : class;
+        Task<TentPost<T>> ImportPostFromLinkAsync<T>(User user, User targetUser, Uri uri) where T : class;
+
         Task<IList<TentPost<object>>> GetPostsFromFeedAsync(string userId, ITentRequestParameters parameters);
         Task<long> GetPostsCountFromFeedAsync(string userId, ITentRequestParameters parameters);
         Task<IList<TentPost<object>>> GetPostsFromPublicationsAsync(User user, User targetUser, ITentRequestParameters parameters, bool proxy);
@@ -42,7 +49,7 @@ namespace Campr.Server.Lib.Logic
         IEnumerable<TentPost<object>> GetPostRefsForPosts<T>(IEnumerable<TentPost<T>> posts, int maxRefs) where T : class;
         
         Task<TentPost<object>> GetPostWithAttachmentAsync(string userId, string digest); 
-        Task<TentPost<T>> GetLastPostByTypeWithMentionAsync<T>(string userId, ITentPostType postType, TentPostReference mention) where T : class;
+        Task<TentPost<T>> GetLastPostByTypeWithMentionAsync<T>(string userId, ITentPostType postType, TentPostIdentifier mention) where T : class;
         
         Task<TentPost<object>> GetSubscribingPostForTypeAsync(string userId, string targetUserId, params ITentPostType[] postTypes);
         Task<IEnumerable<TentPost<object>>> GetSubscriberPostsForTypeAsync(string userId, int skip, int take, params ITentPostType[] postTypes);

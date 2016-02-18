@@ -87,7 +87,7 @@ namespace Campr.Server.Middleware
                     return AuthenticateResult.Failed("Couldn't find the corresponding user.");
 
                 // Retrieve the specified credentials post.
-                var credentialsPost = await this.postRepository.GetLastVersionAsync<TentContentCredentials>(userId, authorizationHawkSignature.Id);
+                var credentialsPost = await this.postRepository.GetAsync<TentContentCredentials>(userId, authorizationHawkSignature.Id);
                 if (credentialsPost == null)
                     return AuthenticateResult.Failed("Session not found.");
 
@@ -98,7 +98,7 @@ namespace Campr.Server.Middleware
 
                 // Retrieve the post mentioned by the credentials.
                 var credentialsTargetMention = credentialsPost.Mentions.First(m => m.FoundPost);
-                var credentialsTargetPost = await this.postRepository.GetLastVersionAsync<object>(credentialsTargetMention.UserId, credentialsTargetMention.PostId);
+                var credentialsTargetPost = await this.postRepository.GetAsync<object>(credentialsTargetMention.UserId, credentialsTargetMention.PostId);
                 if (credentialsTargetPost == null || credentialsTargetPost.UserId != userId)
                     return AuthenticateResult.Failed("Session not valid.");
 

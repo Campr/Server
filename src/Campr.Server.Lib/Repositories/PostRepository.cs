@@ -35,19 +35,21 @@ namespace Campr.Server.Lib.Repositories
         private readonly Table table;
         private readonly Table tableVersions;
 
-        public Task<TentPost<T>> GetAsync<T>(string userId, string postId, string versionId, CancellationToken cancellationToken = default(CancellationToken)) where T : class
+        public Task<TentPost<T>> GetAsync<T>(string userId, string postId, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
-            return this.db.Run(c => this.tableVersions
-                .Get(new [] { userId, postId, this.GetShortVersionId(versionId) })
+            return this.db.Run(c => this.table
+                .Get(new[] { userId, postId })
                 .Do_(r => this.db.R.Branch(r.HasFields("deleted_at"), null, r))
+                .Default_((object)null)
                 .RunResultAsync<TentPost<T>>(c, null, cancellationToken), cancellationToken);
         }
 
-        public Task<TentPost<T>> GetLastVersionAsync<T>(string userId, string postId, CancellationToken cancellationToken = default(CancellationToken)) where T : class
+        public Task<TentPost<T>> GetAsync<T>(string userId, string postId, string versionId, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
-            return this.db.Run(c => this.table
-                .Get(new [] { userId, postId })
+            return this.db.Run(c => this.tableVersions
+                .Get(new [] { userId, postId, this.modelHelpers.GetShortVersionId(versionId) })
                 .Do_(r => this.db.R.Branch(r.HasFields("deleted_at"), null, r))
+                .Default_((object)null)
                 .RunResultAsync<TentPost<T>>(c, null, cancellationToken), cancellationToken);
         }
 
@@ -71,9 +73,9 @@ namespace Campr.Server.Lib.Repositories
             }, cancellationToken);
         }
 
-        public Task<IList<TentPost<T>>> GetBulkAsync<T>(IList<TentPostReference> references, CancellationToken cancellationToken = default(CancellationToken)) where T : class
+        public Task<IList<TentPost<T>>> GetBulkAsync<T>(IList<TentPostIdentifier> references, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
-            var postIds = references.Select(r => new [] { r.UserId, r.PostId, this.GetShortVersionId(r.VersionId) });
+            var postIds = references.Select(r => new [] { r.UserId, r.PostId, this.modelHelpers.GetShortVersionId(r.VersionId) });
             return this.db.Run(c => this.tableVersions
                 .GetAll(postIds.Cast<object>().ToArray())
                 .Filter(r => this.db.R.Not(r.HasFields("deleted_at")))
@@ -104,7 +106,7 @@ namespace Campr.Server.Lib.Repositories
             {
                 // Set the key values.
                 post.KeyUserPost = null;
-                post.KeyUserPostVersion = new [] { post.UserId, post.Id, this.GetShortVersionId(post.Version.Id) };
+                post.KeyUserPostVersion = new [] { post.UserId, post.Id, this.modelHelpers.GetShortVersionId(post.Version.Id) };
 
                 // Start by saving this specific version.
                 var versionInsertResult = await this.tableVersions
@@ -195,18 +197,12 @@ namespace Campr.Server.Lib.Repositories
                             new object[] { userId, postId, this.db.R.Minval() },
                             new object[] { userId, postId, this.db.R.Maxval() })
                         .Update(new { deletedAt })
-                    : this.tableVersions.Get(new [] { userId, postId, this.GetShortVersionId(versionId) })
+                    : this.tableVersions.Get(new [] { userId, postId, this.modelHelpers.GetShortVersionId(versionId) })
                         .Update(new { deletedAt }))
                     .RunResultAsync(c, null, cancellationToken);
 
                 versionUpdateResult.AssertNoErrors();
             }, cancellationToken);
-        }
-
-        // Don't use the full version for a post's primary key.
-        private string GetShortVersionId(string versionId)
-        {
-            return versionId.Substring(versionId.Length - 32, 32);
         }
     }
 }

@@ -7,5 +7,6 @@ namespace Campr.Server.Lib.Helpers
     {
         string GetUserEntity(User user);
         string GetVersionIdFromPost<T>(TentPost<T> post) where T : class;
+        string GetShortVersionId(string versionId);
     }
 }

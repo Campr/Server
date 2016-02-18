@@ -67,7 +67,7 @@ namespace Campr.Server.Lib.Models.Tent
         }
 
         [DbProperty]
-        public List<TentPostReference> ReplyChain { get; set; }
+        public List<TentPostIdentifier> ReplyChain { get; set; }
         
         [DbProperty]
         [WebProperty]

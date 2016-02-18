@@ -17,6 +17,8 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
         Table UserVersions { get; }
         Table Posts { get; }
         Table PostVersions { get; }
+        Table UserPosts { get; }
+        Table UserPostVersions { get; }
         Table Attachments { get; }
         Table Bewits { get; }
     }

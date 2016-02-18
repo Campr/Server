@@ -50,5 +50,12 @@ namespace Campr.Server.Lib.Helpers
             
             return computedVersionId;
         }
+
+        public string GetShortVersionId(string versionId)
+        {
+            return versionId.Length > 32 
+                ? versionId.Substring(versionId.Length - 32, 32)
+                : versionId;
+        }
     }
 }
