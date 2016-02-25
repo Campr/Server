@@ -121,7 +121,7 @@ namespace Campr.Server.Lib.Repositories
 
                 // Then, conditionally update the last version.
                 var upsertResult = await this.table
-                    .Get(new [] { post.UserId, post.Id })
+                    .Get(post.KeyUserPost)
                     .Replace(r => this.db.R.Branch(r.Eq(null)
                         .Or(r.HasFields("deleted_at"))
                         .Or(r.G("version").G("received_at").Lt(post.Version.ReceivedAt)

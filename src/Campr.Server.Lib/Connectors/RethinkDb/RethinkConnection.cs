@@ -153,7 +153,7 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
                 if (!postVersionsIndexList.Contains("user_post_versionreceivedat"))
                 {
                     var indexCreateResult = await this.PostVersions.IndexCreate("user_post_versionreceivedat", r =>
-                            this.R.Branch(r.HasFields("deleted_at").Eq(null), 
+                            this.R.Branch(r.HasFields("deleted_at"), 
                                 null,
                                 new object[] { r.G("user"), r.G("id"), r.G("version").G("received_at") }))
                         .RunResultAsync(this.connection, null, cancellationToken);
@@ -174,7 +174,7 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
                 if (!userPostsIndexList.Contains("owner_versionreceivedat"))
                 {
                     var indexCreateResult = await this.UserPosts.IndexCreate("owner_versionreceivedat", r =>
-                            this.R.Branch(r.HasFields("deleted_at").Eq(null),
+                            this.R.Branch(r.HasFields("deleted_at"),
                                 null,
                                 new object[] { r.G("owner"), r.G("version_received_at") }))
                         .RunResultAsync(this.connection, null, cancellationToken);
@@ -185,7 +185,7 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
                 if (!userPostsIndexList.Contains("owner_versionpublishedat"))
                 {
                     var indexCreateResult = await this.UserPosts.IndexCreate("owner_versionpublishedat", r =>
-                            this.R.Branch(r.HasFields("deleted_at").Eq(null),
+                            this.R.Branch(r.HasFields("deleted_at"),
                                 null,
                                 new object[] { r.G("owner"), r.G("version_published_at") }))
                         .RunResultAsync(this.connection, null, cancellationToken);
@@ -196,7 +196,7 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
                 if (!userPostsIndexList.Contains("owner_receivedat"))
                 {
                     var indexCreateResult = await this.UserPosts.IndexCreate("owner_receivedat", r =>
-                            this.R.Branch(r.HasFields("deleted_at").Eq(null),
+                            this.R.Branch(r.HasFields("deleted_at"),
                                 null,
                                 new object[] { r.G("owner"), r.G("received_at") }))
                         .RunResultAsync(this.connection, null, cancellationToken);
@@ -207,7 +207,7 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
                 if (!userPostsIndexList.Contains("owner_publishedat"))
                 {
                     var indexCreateResult = await this.UserPosts.IndexCreate("owner_publishedat", r =>
-                            this.R.Branch(r.HasFields("deleted_at").Eq(null),
+                            this.R.Branch(r.HasFields("deleted_at"),
                                 null,
                                 new object[] { r.G("owner"), r.G("published_at") }))
                         .RunResultAsync(this.connection, null, cancellationToken);
@@ -222,6 +222,18 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
                         .RunResultAsync(this.connection, null, cancellationToken);
 
                     tableCreatedResult.AssertTablesCreated(1);
+                }
+
+                var userPostVersionsIndexList = await this.UserPostVersions.IndexList().RunResultAsync<IList<string>>(this.connection, null, cancellationToken);
+                if (!userPostVersionsIndexList.Contains("owner_user_post_versionreceivedat"))
+                {
+                    var indexCreatedResult = await this.UserPostVersions.IndexCreate("owner_user_post_versionreceivedat", r =>
+                            this.R.Branch(r.HasFields("deleted_at"),
+                                null,
+                                new object[] { r.G("owner"), r.G("user"), r.G("post"), r.G("version_received_at") }))
+                        .RunResultAsync(this.connection, null, cancellationToken);
+
+                    indexCreatedResult.AssertNoErrors();
                 }
             }
             catch (Exception ex)

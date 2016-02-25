@@ -45,6 +45,7 @@ namespace Campr.Server.Lib
             // Model factories.
             services.AddSingleton<IUserFactory, UserFactory>();
             services.AddSingleton<ITentPostFactory, TentPostFactory>();
+            services.AddSingleton<IUserPostFactory, UserPostFactory>();
             //services.AddSingleton<IDbSessionFactory, DbSessionFactory>();
             //services.AddSingleton<IDbPostFactory, DbPostFactory>();
             //services.AddSingleton<IDbAttachmentFactory, DbAttachmentFactory>();
@@ -69,6 +70,7 @@ namespace Campr.Server.Lib
             //services.AddSingleton<IUserMapRepository, UserMapRepository>();
             //services.AddSingleton<ISessionRepository, SessionRepository>();
             services.AddSingleton<IPostRepository, PostRepository>();
+            services.AddSingleton<IUserPostRepository, UserPostRepository>();
             //services.AddSingleton<IAttachmentRepository, AttachmentRepository>();
             //services.AddSingleton<IBewitRepository, BewitRepository>();
             //services.AddSingleton<IOauthCodeRepository, OauthCodeRepository>();

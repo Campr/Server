@@ -25,6 +25,8 @@ namespace Campr.Server.Lib.Helpers
         private readonly IJsonHelpers jsonHelpers;
         private readonly ICryptoHelpers cryptoHelpers;
 
+        private const int ShortVersionLength = 20;
+
         public string GetUserEntity(User user)
         {
             Ensure.Argument.IsNotNull(user, nameof(user));
@@ -53,8 +55,8 @@ namespace Campr.Server.Lib.Helpers
 
         public string GetShortVersionId(string versionId)
         {
-            return versionId.Length > 32 
-                ? versionId.Substring(versionId.Length - 32, 32)
+            return versionId.Length > ShortVersionLength
+                ? versionId.Substring(versionId.Length - ShortVersionLength, ShortVersionLength)
                 : versionId;
         }
     }
