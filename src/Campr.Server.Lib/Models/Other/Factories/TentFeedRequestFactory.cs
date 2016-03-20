@@ -4,25 +4,48 @@ using Campr.Server.Lib.Configuration;
 using Campr.Server.Lib.Enums;
 using Campr.Server.Lib.Extensions;
 using Campr.Server.Lib.Helpers;
+using Campr.Server.Lib.Infrastructure;
 
 namespace Campr.Server.Lib.Models.Other.Factories
 {
     class TentFeedRequestFactory : ITentFeedRequestFactory
     {
+        public TentFeedRequestFactory(
+            IUriHelpers uriHelpers,
+            ITentRequestDateFactory requestDateFactory,
+            ITentRequestPostFactory requestPostFactory,
+            ITentPostTypeFactory postTypeFactory,
+            IGeneralConfiguration configuration)
+        {
+            Ensure.Argument.IsNotNull(uriHelpers, nameof(uriHelpers));
+            Ensure.Argument.IsNotNull(requestPostFactory, nameof(requestPostFactory));
+            Ensure.Argument.IsNotNull(requestDateFactory, nameof(requestDateFactory));
+            Ensure.Argument.IsNotNull(postTypeFactory, nameof(postTypeFactory));
+            Ensure.Argument.IsNotNull(configuration, nameof(configuration));
+
+            this.uriHelpers = uriHelpers;
+            this.requestPostFactory = requestPostFactory;
+            this.requestDateFactory = requestDateFactory;
+            this.postTypeFactory = postTypeFactory;
+            this.configuration = configuration;
+        }
+
         private readonly IUriHelpers uriHelpers;
-        private readonly ITentRequestDateFactory requestDateFactory;
         private readonly ITentRequestPostFactory requestPostFactory;
+        private readonly ITentRequestDateFactory requestDateFactory;
         private readonly ITentPostTypeFactory postTypeFactory;
         private readonly IGeneralConfiguration configuration;
 
         public ITentFeedRequest<TPost> Make<TPost>()
         {
-            throw new System.NotImplementedException();
+            return new TentFeedRequest<TPost>(
+                this.requestPostFactory,
+                this.requestDateFactory);
         }
 
         public ITentFeedRequest<TPost> FromQueryParameters<TPost>(IReadOnlyDictionary<string, IList<IList<string>>> queryString)
         {
-            var feedRequest = new TentFeedRequest<TPost>();
+            var feedRequest = this.Make<TPost>();
 
             // Entities.
             var entities = queryString.TryGetValue("entities");

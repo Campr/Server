@@ -1,10 +1,12 @@
-﻿using System.Threading;
+﻿using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Campr.Server.Lib.Connectors.RethinkDb;
 using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Infrastructure;
 using Campr.Server.Lib.Models.Db;
 using Campr.Server.Lib.Models.Db.Factories;
+using Campr.Server.Lib.Models.Other;
 using Campr.Server.Lib.Models.Tent;
 using RethinkDb.Driver.Ast;
 using RethinkDb.Driver.Model;
@@ -53,6 +55,17 @@ namespace Campr.Server.Lib.Repositories
                 .Do_(r => this.db.R.Branch(r.HasFields("deleted_at"), null, r))
                 .Default_((object)null)
                 .RunResultAsync<UserPost>(c, null, cancellationToken), cancellationToken);
+        }
+
+        public Task<IList<UserPost>> GetAsync<T>(string ownerId, ITentFeedRequest<T> feedRequest, CancellationToken cancellationToken = new CancellationToken()) where T : class
+        {
+            var query = this.BuildFeedQuery(ownerId, feedRequest);
+        }
+
+        private object BuildFeedQuery<T>(string ownerId, ITentFeedRequest<T> feedRequest)
+        {
+
+            this.table.
         }
 
         public Task UpdateAsync(string ownerId, TentPost post, bool isFromFollowing, CancellationToken cancellationToken = new CancellationToken())

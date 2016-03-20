@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Campr.Server.Lib.Configuration;
 using Campr.Server.Lib.Enums;
+using Campr.Server.Lib.Extensions;
 using Campr.Server.Lib.Infrastructure;
 using Campr.Server.Lib.Models.Other.Factories;
 using Campr.Server.Lib.Models.Tent;
+using RethinkDb.Driver;
+using RethinkDb.Driver.Ast;
 
 namespace Campr.Server.Lib.Models.Other
 {
@@ -17,8 +19,8 @@ namespace Campr.Server.Lib.Models.Other
             ITentRequestPostFactory requestPostFactory,
             ITentRequestDateFactory requestDateFactory)
         {
-            Ensure.Argument.IsNotNull(requestPostFactory, "requestPostFactory");
-            Ensure.Argument.IsNotNull(requestDateFactory, "requestDateFactory");
+            Ensure.Argument.IsNotNull(requestPostFactory, nameof(requestPostFactory));
+            Ensure.Argument.IsNotNull(requestDateFactory, nameof(requestDateFactory));
             
             this.requestPostFactory = requestPostFactory;
             this.requestDateFactory = requestDateFactory;
@@ -26,7 +28,6 @@ namespace Campr.Server.Lib.Models.Other
         
         private readonly ITentRequestPostFactory requestPostFactory;
         private readonly ITentRequestDateFactory requestDateFactory;
-        private readonly IGeneralConfiguration configuration;
 
         private List<ITentPostType> types;
         private List<string> entities; 
@@ -34,8 +35,7 @@ namespace Campr.Server.Lib.Models.Other
         private List<ITentRequestPost[]> notMentions;
         private TentFeedRequestSpecialEntities specialEntities;
         private TentFeedRequestProfiles profiles;
-        private IDictionary<TentFeedRequestBoundaryType, ITentRequestDate> dateBoundaries;
-        private IDictionary<TentFeedRequestBoundaryType, ITentRequestPost> postBoundaries; 
+        private IDictionary<TentFeedRequestBoundaryType, ITentRequestDate> boundaries;
         private TentFeedRequestSort sortBy;
         private uint? limit;
         private uint? skip;
@@ -131,24 +131,24 @@ namespace Campr.Server.Lib.Models.Other
             return this;
         }
 
-        public ITentFeedRequest<T> AddBoundary(ITentRequestDate boundaryDate, TentFeedRequestBoundaryType boundaryType)
+        public ITentFeedRequest<T> AddPostBoundary(TentPost boundaryPost, TentFeedRequestBoundaryType boundaryType)
         {
-            Ensure.Argument.IsNotNull(boundaryDate, nameof(boundaryDate));
-            (this.dateBoundaries ?? (this.dateBoundaries = new Dictionary<TentFeedRequestBoundaryType, ITentRequestDate>()))[boundaryType] = boundaryDate;
-            return this;
+            Ensure.Argument.IsNotNull(boundaryPost, nameof(boundaryPost));
+            var requestPost = this.requestPostFactory.FromPost(boundaryPost);
+            return this.AddPostBoundary(requestPost, boundaryType);
         }
 
         public ITentFeedRequest<T> AddPostBoundary(ITentRequestPost boundaryPost, TentFeedRequestBoundaryType boundaryType)
         {
             Ensure.Argument.IsNotNull(boundaryPost, nameof(boundaryPost));
-            (this.postBoundaries ?? (this.postBoundaries = new Dictionary<TentFeedRequestBoundaryType, ITentRequestPost>()))[boundaryType] = boundaryPost;
-            return this;
+            var requestDate = this.requestDateFactory.FromPost(boundaryPost);
+            return this.AddBoundary(requestDate, boundaryType);
         }
 
-        public ITentFeedRequest<T> AddPostBoundary(TentPost boundaryPost, TentFeedRequestBoundaryType boundaryType)
+        public ITentFeedRequest<T> AddBoundary(ITentRequestDate boundaryDate, TentFeedRequestBoundaryType boundaryType)
         {
-            Ensure.Argument.IsNotNull(boundaryPost, nameof(boundaryPost));
-            (this.postBoundaries ?? (this.postBoundaries = new Dictionary<TentFeedRequestBoundaryType, ITentRequestPost>()))[boundaryType] = this.requestPostFactory.FromPost(boundaryPost);
+            Ensure.Argument.IsNotNull(boundaryDate, nameof(boundaryDate));
+            (this.boundaries ?? (this.boundaries = new Dictionary<TentFeedRequestBoundaryType, ITentRequestDate>()))[boundaryType] = boundaryDate;
             return this;
         }
 
@@ -156,11 +156,6 @@ namespace Campr.Server.Lib.Models.Other
         {
             this.sortBy = newSortBy;
             return this;
-        }
-
-        public Uri AsUri(string parameter = null)
-        {
-            throw new NotImplementedException();
         }
 
         public ITentHawkSignature AsCredentials()
@@ -173,9 +168,111 @@ namespace Campr.Server.Lib.Models.Other
             return this.limit;
         }
 
+        public Uri AsUri(string parameter = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ReqlExpr AsTableQuery(RethinkDB rdb, Table table, string ownerId)
+        {
+            // Find the name of the index to use.
+            var index = this.TableIndex();
+
+            // Find the date boundary values.
+            var lowerDateBound = this.boundaries.TryGetValue(TentFeedRequestBoundaryType.Since)?.Date?.ToUnixTime()
+                ?? this.boundaries.TryGetValue(TentFeedRequestBoundaryType.Until)?.Date?.ToUnixTime();
+            var upperDateBound = this.boundaries.TryGetValue(TentFeedRequestBoundaryType.Before)?.Date?.ToUnixTime();
+
+            // Filter by owner and date.
+            var query = (ReqlExpr)table.Between(
+                new object[] { ownerId, (object)lowerDateBound ?? rdb.Minval() },
+                new object[] { ownerId, (object)upperDateBound ?? rdb.Maxval() })[new { index }];
+
+            var filters = new List<Func<ReqlExpr, ReqlExpr>>();
+
+            // Entities.
+
+
+            // Post type filter.
+            if (this.types != null && this.types.Any())
+            {
+                // Condition on a single type.
+                var typeCondition = new Func<ReqlExpr, ITentPostType, ReqlExpr>((r, type) => type.WildCard
+                    ? (ReqlExpr)r.Match("^" + type.Type)
+                    : r.Eq(type.ToString()));
+
+                // Combine the type conditions as part of an OR expression.
+                filters.Add(r => r.BetterOr(this.types.Select(type => typeCondition(r, type)).Cast<object>().ToArray()));
+            }
+
+            // Mentions.
+            if (this.mentions != null && this.mentions.Any())
+            {
+                // Condition on a single mention.
+                var mentionCondition = new Func<ReqlExpr, ITentRequestPost, ReqlExpr>((r, mention) => r.And(
+                    r.G("user").Eq(mention.User.Id),
+                    string.IsNullOrWhiteSpace(mention.PostId) ? (object)true : r.G("post").Eq(mention.PostId)
+                ));
+
+                // Combine the mention conditions, first by AND, then by OR.
+                filters.Add(r => r.And(this.mentions.Select(andMentions => 
+                    r.BetterOr(andMentions.Select(mention => 
+                        mentionCondition(r, mention)).Cast<object>().ToArray()))));
+            }
+
+            // Not mentions.
+            if (this.notMentions != null && this.notMentions.Any())
+            {
+                // Condition on a single not mention.
+                var notMentionCondition = new Func<ReqlExpr, ITentRequestPost, ReqlExpr>((r, notMention) => r.And(
+                    r.G("user").Eq(notMention.User.Id),
+                    string.IsNullOrWhiteSpace(notMention.PostId) ? (object)true : r.G("post").Eq(notMention.PostId)
+                ).Not());
+
+                // Combine the not mention conditions, first by AND, then by OR.
+                filters.Add(r => r.And(this.notMentions.Select(andNotMentions =>
+                    r.BetterOr(andNotMentions.Select(notMention =>
+                        notMentionCondition(r, notMention)).Cast<object>().ToArray()))));
+            }
+
+            // Apply all the filters as part of an AND expression.
+            query = query.Filter(r => r.And(filters.Select(f => f(r)).Cast<object>().ToArray()));
+
+            // Set the order-by depending on the boundary type.
+            query = query.OrderBy(new { index = this.boundaries.ContainsKey(TentFeedRequestBoundaryType.Since) ? R.Desc(index) : (object)index });
+            
+            // Apply the skip.
+            if (this.skip.HasValue)
+                query = query.Skip(this.skip.Value);
+
+            // Apply the limit.
+            if (this.limit.HasValue)
+                query = query.Limit(this.limit.Value);
+
+            return query;
+        }
+
         #endregion
 
         #region Private methods.
+
+        private string TableIndex()
+        {
+            switch (this.sortBy)
+            {
+                case TentFeedRequestSort.PublishedAt:
+                    return "owner_publishedat";
+
+                case TentFeedRequestSort.ReceivedAt:
+                    return "owner_receivedat";
+
+                case TentFeedRequestSort.VersionPublishedAt:
+                    return "owner_versionpublishedat";
+
+                default:
+                    return "owner_versionreceivedat";
+            }
+        }
 
         private IEnumerable<KeyValuePair<string, object>> ToDictionary()
         {
@@ -207,6 +304,14 @@ namespace Campr.Server.Lib.Models.Other
             if (this.limit.HasValue)
                 result.Add("limit", this.limit.Value);
 
+            // Skip.
+            if (this.skip.HasValue)
+                result.Add("skip", this.skip.Value);
+
+            // Max refs.
+            if (this.maxRefs.HasValue)
+                result.Add("max_refs", this.maxRefs.Value);
+
             // Profiles.
             if (this.profiles != TentFeedRequestProfiles.None)
             {
@@ -231,8 +336,8 @@ namespace Campr.Server.Lib.Models.Other
             }
 
             // Boundaries.
-            if (this.dateBoundaries != null && this.dateBoundaries.Any())
-                foreach (var boundary in this.dateBoundaries)
+            if (this.boundaries != null && this.boundaries.Any())
+                foreach (var boundary in this.boundaries)
                 {
                     // Get the query string key for this boundary.
                     string boundaryKey;
@@ -251,32 +356,6 @@ namespace Campr.Server.Lib.Models.Other
 
                     // Add it to the dictionary.
                     result.Add(boundaryKey, boundary.Value.ToString());
-                }
-            else if (this.postBoundaries != null && this.postBoundaries.Any())
-                foreach (var boundary in this.postBoundaries)
-                {
-                    // Get the query string key for this boundary.
-                    string boundaryKey;
-                    switch (boundary.Key)
-                    {
-                        case TentFeedRequestBoundaryType.Since:
-                            boundaryKey = "since_post";
-                            break;
-
-                        case TentFeedRequestBoundaryType.Until:
-                            boundaryKey = "until_post";
-                            break;
-
-                        default:
-                            boundaryKey = "before_post";
-                            break;
-                    }
-
-                    // Create the RequestDate object.
-                    var requestDate = this.requestDateFactory.FromPost(boundary.Value, this.sortBy);
-
-                    // Add it to the dictionary.
-                    result.Add(boundaryKey, requestDate.ToString());
                 }
 
             // Sort.

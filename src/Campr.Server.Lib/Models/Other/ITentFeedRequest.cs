@@ -17,7 +17,9 @@ namespace Campr.Server.Lib.Models.Other
         ITentFeedRequest<TPost> AddLimit(uint newLimit);
         ITentFeedRequest<TPost> AddSkip(uint newSkip);
         ITentFeedRequest<TPost> AddMaxRefs(uint newMaxRefs);
-        ITentFeedRequest<TPost> AddBoundary(ITentRequestDate boundaryPost, TentFeedRequestBoundaryType boundaryType);
+        ITentFeedRequest<TPost> AddPostBoundary(TentPost boundaryPost, TentFeedRequestBoundaryType boundaryType);
+        ITentFeedRequest<TPost> AddPostBoundary(ITentRequestPost boundaryPost, TentFeedRequestBoundaryType boundaryType);
+        ITentFeedRequest<TPost> AddBoundary(ITentRequestDate boundaryDate, TentFeedRequestBoundaryType boundaryType);
         ITentFeedRequest<TPost> SortBy(TentFeedRequestSort newSortBy);
 
         Uri AsUri(string parameter = null);

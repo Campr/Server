@@ -73,7 +73,7 @@ namespace Campr.Server.Lib.Repositories
             }, cancellationToken);
         }
 
-        public async Task<IList<TentPost<T>>> GetBulkAsync<T>(IList<TentPostIdentifier> references, CancellationToken cancellationToken = default(CancellationToken)) where T : class
+        public async Task<IList<TentPost<T>>> GetAsync<T>(IList<TentPostIdentifier> references, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
             var postIds = references.Select(r => new [] { r.UserId, r.PostId, this.modelHelpers.GetShortVersionId(r.VersionId) });
             var results = await this.db.Run(c => this.tableVersions
@@ -124,10 +124,13 @@ namespace Campr.Server.Lib.Repositories
                 // Then, conditionally update the last version.
                 var upsertResult = await this.table
                     .Get(post.KeyUserPost)
-                    .Replace(r => this.db.R.Branch(r.Eq(null)
-                        .Or(r.HasFields("deleted_at"))
-                        .Or(r.G("version").G("received_at").Lt(post.Version.ReceivedAt)
-                            .Or(r.G("version").G("received_at").Eq(post.Version.ReceivedAt).And(r.G("version").G("id").Lt(post.Version.Id)))),
+                    .Replace(r => this.db.R.Branch(r.Or(
+                        r.Eq(null),
+                        r.HasFields("deleted_at"), 
+                        r.G("version").G("received_at").Lt(post.Version.ReceivedAt),
+                        r.And(
+                            r.G("version").G("received_at").Eq(post.Version.ReceivedAt), 
+                            r.G("version").G("id").Lt(post.Version.Id))),
                         post, r))
                     .RunResultAsync(c, null, cancellationToken);
 
