@@ -18,7 +18,7 @@ namespace Campr.Server.Lib.Configuration
         public string AzureQueuesConnectionString => this.externalConfiguration.AzureQueuesConnectionString;
         public string AzureBlobsConnectionString => this.externalConfiguration.AzureBlobsConnectionString;
         public string EncryptionKey => this.externalConfiguration.EncryptionKey;
-        public EnvironmentEnum Environment => this.externalConfiguration.Environment;
+        public AppEnvironment AppEnvironment => this.externalConfiguration.AppEnvironment;
         public IEnumerable<Uri> CouchBaseServers => this.externalConfiguration.CouchBaseServers;
         public bool ConfigureBucket => this.externalConfiguration.ConfigureBucket;
         public string BucketConfigurationPath => this.externalConfiguration.BucketConfigurationPath;

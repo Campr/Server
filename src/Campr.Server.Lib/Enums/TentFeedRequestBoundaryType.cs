@@ -1,6 +1,6 @@
 ﻿namespace Campr.Server.Lib.Enums
 {
-    public enum RequestRangeEnum
+    public enum TentFeedRequestBoundaryType
     {
         Before,
         Since,

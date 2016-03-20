@@ -1,4 +1,5 @@
 ﻿using System;
+using Campr.Server.Lib.Models.Other;
 
 namespace Campr.Server.Lib.Configuration
 {

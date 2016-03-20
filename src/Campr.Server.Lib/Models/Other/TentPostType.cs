@@ -2,11 +2,21 @@
 {
     public class TentPostType : ITentPostType
     {
+        public TentPostType(
+            string type,
+            string subType,
+            bool wildcard)
+        {
+            this.Type = type;
+            this.SubType = subType;
+            this.WildCard = wildcard;
+        }
+
         #region Public properties.
 
-        public string Type { get; set; }
-        public string SubType { get; set; }
-        public bool WildCard { get; set; }
+        public string Type { get; }
+        public string SubType { get; }
+        public bool WildCard { get; }
 
         #endregion
 

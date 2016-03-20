@@ -8,7 +8,7 @@ namespace Campr.Server.Lib.Models.Queues
         public string UserId { get; set; }
         public string PostId { get; set; }
         public string VersionId { get; set; }
-        public RetryNotificationTypeEnum NotificationType { get; set; }
+        public RetryNotificationType NotificationType { get; set; }
         public string TargetId { get; set; }
         public string DeliveryFailureId { get; set; }
         public int Retries { get; set; }

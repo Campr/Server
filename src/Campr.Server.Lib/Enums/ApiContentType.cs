@@ -1,6 +1,6 @@
 ﻿namespace Campr.Server.Lib.Enums
 {
-    public enum ApiContentTypeEnum
+    public enum ApiContentType
     {
         Post,
         Feed,

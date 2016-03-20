@@ -12,7 +12,7 @@ namespace Campr.Server.Lib.Models.Other
         string ContentHash { get; }
         string Extension { get; }
         string App { get; }
-        HawkMacTypeEnum Type { get; }
+        HawkMacType Type { get; }
 
         bool Validate(string verb, Uri targetUri, byte[] key);
         string ToHeader(string verb, Uri targetUri);

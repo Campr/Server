@@ -1,6 +1,6 @@
 ﻿namespace Campr.Server.Lib.Enums
 {
-    public enum HttpRequestMethodEnum
+    public enum HttpRequestMethod
     {
         Get,
         Put,

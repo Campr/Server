@@ -47,7 +47,7 @@ namespace Campr.Server.Lib.Helpers
             // Hash and truncate the resulting JSON.
             var computedVersionId = this.cryptoHelpers.ConvertToSha512TruncatedWithPrefix(stringJson);
 
-            if (!string.IsNullOrEmpty(post.Version?.Id) && post.Version.Id != computedVersionId)
+            if (!string.IsNullOrWhiteSpace(post.Version?.Id) && post.Version.Id != computedVersionId)
                 throw new VersionMismatchException(post.Version.Id, computedVersionId);
             
             return computedVersionId;

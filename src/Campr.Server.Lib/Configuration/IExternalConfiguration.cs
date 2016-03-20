@@ -9,7 +9,7 @@ namespace Campr.Server.Lib.Configuration
         string AzureQueuesConnectionString { get; }
         string AzureBlobsConnectionString { get; }
         string EncryptionKey { get; }
-        EnvironmentEnum Environment { get; }
+        AppEnvironment AppEnvironment { get; }
         IEnumerable<Uri> CouchBaseServers { get; }
         bool ConfigureBucket { get; }
         string BucketConfigurationPath { get; }

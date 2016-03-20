@@ -1,6 +1,6 @@
 ﻿namespace Campr.Server.Lib.Enums
 {
-    public enum PostKnownTypeEnum
+    public enum PostKnownType
     {
         None,
         Meta,

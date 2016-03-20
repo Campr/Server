@@ -9,7 +9,8 @@ namespace Campr.Server.Lib.Models.Other.Factories
 {
     class TentRequestDateFactory : ITentRequestDateFactory
     {
-        public TentRequestDateFactory(IServiceProvider serviceProvider, 
+        public TentRequestDateFactory(
+            IServiceProvider serviceProvider, 
             IUriHelpers uriHelpers)
         {
             Ensure.Argument.IsNotNull(serviceProvider, nameof(serviceProvider));
@@ -29,26 +30,24 @@ namespace Campr.Server.Lib.Models.Other.Factories
 
         public ITentRequestDate FromString(string date)
         {
+            Ensure.Argument.IsNotNullOrWhiteSpace(date, nameof(date));
+
             var result = this.serviceProvider.Resolve<TentRequestDate>();
             var requestDateParts = date.Split('+', ' ');
 
             // Make sure we have something in the array.
             if (!requestDateParts.Any())
-            {
-                return null;
-            }
+                throw new ArgumentOutOfRangeException(nameof(date), "The provided Tent date isn't valid.");
 
             // Try to extract the date.
-            long dateValue;
-            if (long.TryParse(requestDateParts[0], out dateValue))
+            var dateValue = requestDateParts[0].TryParseLong();
+            if (dateValue.HasValue)
             {
-                result.Date = dateValue.FromUnixTime();
+                result.Date = dateValue.Value.FromUnixTime();
 
                 // Extract the version, if any.
-                if (requestDateParts.Count() > 1)
-                {
+                if (requestDateParts.Length > 1)
                     result.Version = this.uriHelpers.UrlDecode(requestDateParts[1]);
-                }
             }
             // Otherwise, this may be entity + postId situation.
             else if (requestDateParts.Length > 1)

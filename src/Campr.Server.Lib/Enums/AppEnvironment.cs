@@ -1,6 +1,6 @@
 ﻿namespace Campr.Server.Lib.Enums
 {
-    public enum EnvironmentEnum
+    public enum AppEnvironment
     {
         Development,
         Test,

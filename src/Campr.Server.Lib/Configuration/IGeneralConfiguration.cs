@@ -17,9 +17,10 @@ namespace Campr.Server.Lib.Configuration
         TimeSpan OutgoingRequestTimeout { get; }
         TimeSpan[] NotificationRetryDelays { get; }
 
-        int SubscriptionsBatchSize { get; }
-        int MaxPostLimit { get; }
-        int DefaultPostLimit { get; }
+        uint SubscriptionsBatchSize { get; }
+        uint MaxPostLimit { get; }
+        uint DefaultPostLimit { get; }
+        uint MaxRefs { get; }
         int MaxBatchRequests { get; }
         int MaxAttachmentImageSize { get; }
         int MinAttachmentImageSize { get; }

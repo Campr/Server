@@ -63,7 +63,7 @@ namespace Campr.Server.Lib.Models.Tent
         [WebProperty]
         public IList<TentPost<object>> PostRefs { get; set; }
 
-        public ApiContentTypeEnum? ContentType { get; set; }
+        public ApiContentType? ContentType { get; set; }
 
         public int? Count { get; set; }
     }

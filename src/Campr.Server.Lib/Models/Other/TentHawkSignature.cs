@@ -41,7 +41,7 @@ namespace Campr.Server.Lib.Models.Other
         public string ContentHash { get; set; }
         public string Extension { get; set; }
         public string App { get; set; }
-        public HawkMacTypeEnum Type { get; set; }
+        public HawkMacType Type { get; set; }
         public byte[] Key { get; set; }
 
         public bool Validate(string verb, Uri targetUri, byte[] key)
@@ -98,7 +98,7 @@ namespace Campr.Server.Lib.Models.Other
 
         private string MacHeaderFromType()
         {
-            return this.Type == HawkMacTypeEnum.Bewit ? "bewit" : "header";
+            return this.Type == HawkMacType.Bewit ? "bewit" : "header";
         }
 
         #endregion

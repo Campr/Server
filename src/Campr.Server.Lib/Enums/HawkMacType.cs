@@ -1,6 +1,6 @@
 ﻿namespace Campr.Server.Lib.Enums
 {
-    public enum HawkMacTypeEnum
+    public enum HawkMacType
     {
         Header,
         Timestamp,

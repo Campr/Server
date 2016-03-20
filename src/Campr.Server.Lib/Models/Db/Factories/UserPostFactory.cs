@@ -1,11 +1,12 @@
 ﻿using System.Linq;
+using System.Threading;
 using Campr.Server.Lib.Models.Tent;
 
 namespace Campr.Server.Lib.Models.Db.Factories
 {
     class UserPostFactory : IUserPostFactory
     {
-        public UserPost FromPost(string ownerId, TentPost post)
+        public UserPost FromPost(string ownerId, TentPost post, bool isFromFollowing)
         {
             return new UserPost
             {

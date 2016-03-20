@@ -1,5 +1,6 @@
 ﻿using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Json;
+using Campr.Server.Lib.Models.Db;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -54,6 +55,7 @@ namespace Campr.Server.Lib.Models.Tent
         [WebProperty]
         public string VersionId { get; set; }
         
+        public User User { get; set; }
         public TentPost<object> Post { get; set; }
     }
 }

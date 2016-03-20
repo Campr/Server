@@ -20,16 +20,11 @@ namespace Campr.Server.Lib.Json
         /// <param name="value">The value.</param><param name="serializer">The calling serializer.</param>
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            long val;
-            if (value is DateTime)
-            {
-                val = ((DateTime)value).ToUnixTime();
-            }
-            else
-            {
+            var dateValue = value as DateTime?;
+            if (dateValue == null)
                 throw new Exception("Expected date object value.");
-            }
-            writer.WriteValue(val);
+
+            writer.WriteValue(dateValue.Value.ToUnixTime());
         }
 
         /// <summary>
@@ -42,11 +37,11 @@ namespace Campr.Server.Lib.Json
         /// <returns>The object value.</returns>
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
-            if (reader.TokenType != JsonToken.Integer)
+            var ticks = reader.ReadAsDouble();
+            if (!ticks.HasValue)
                 throw new Exception("Wrong Token Type");
 
-            var ticks = (long)reader.Value;
-            return ticks.FromUnixTime();
+            return ((long)ticks.Value).FromUnixTime();
         }
     }
 }

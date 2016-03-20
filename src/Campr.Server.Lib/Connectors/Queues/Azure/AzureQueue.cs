@@ -23,6 +23,11 @@ namespace Campr.Server.Lib.Connectors.Queues.Azure
         private readonly CloudQueue baseQueue;
         private readonly IJsonHelpers jsonHelpers;
 
+        public Task<IQueueMessage<T>> GetMessageAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return this.GetMessageAsync(null, cancellationToken);
+        }
+
         public async Task<IQueueMessage<T>> GetMessageAsync(TimeSpan? visibilityTimeout, CancellationToken cancellationToken = default(CancellationToken))
         {
             // Try to retrieve a message from the underlying queue.
@@ -34,7 +39,12 @@ namespace Campr.Server.Lib.Connectors.Queues.Azure
             return new AzureQueueMessage<T>(message, this.jsonHelpers);
         }
 
-        public async Task AddMessageAsync(T message, TimeSpan? initialVisilityDelay = null, CancellationToken cancellationToken = default(CancellationToken))
+        public Task AddMessageAsync(T message, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return this.AddMessageAsync(message, null, cancellationToken);
+        }
+
+        public async Task AddMessageAsync(T message, TimeSpan? initialVisilityDelay, CancellationToken cancellationToken = default(CancellationToken))
         {
             // Serialize the message.
             var stringMessage = this.jsonHelpers.ToJsonString(message);

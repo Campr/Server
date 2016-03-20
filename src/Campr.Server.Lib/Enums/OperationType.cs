@@ -1,6 +1,6 @@
 ﻿namespace Campr.Server.Lib.Enums
 {
-    public enum OperationTypeEnum
+    public enum OperationType
     {
         Create,
         Update,

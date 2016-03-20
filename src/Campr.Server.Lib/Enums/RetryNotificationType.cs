@@ -1,6 +1,6 @@
 ﻿namespace Campr.Server.Lib.Enums
 {
-    public enum RetryNotificationTypeEnum
+    public enum RetryNotificationType
     {
         Mention,
         Subscription,

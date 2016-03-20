@@ -58,7 +58,7 @@ namespace Campr.Server.Lib.Models.Other.Factories
                 ContentHash = matchDictionary.TryGetValue("hash"),
                 Extension = matchDictionary.TryGetValue("ext", string.Empty),
                 App = matchDictionary.TryGetValue("app"),
-                Type = HawkMacTypeEnum.Header
+                Type = HawkMacType.Header
             }; 
         }
 
@@ -94,7 +94,7 @@ namespace Campr.Server.Lib.Models.Other.Factories
                 Nonce = string.Empty,
                 Mac = bewitParts[2],
                 Extension = bewitParts[3],
-                Type = HawkMacTypeEnum.Bewit
+                Type = HawkMacType.Bewit
             };
         }
 
@@ -104,7 +104,7 @@ namespace Campr.Server.Lib.Models.Other.Factories
             {
                 Id = credentials.Id,
                 Key = Encoding.UTF8.GetBytes(credentials.Content.HawkKey),
-                Type = HawkMacTypeEnum.Header
+                Type = HawkMacType.Header
             };
         }
     }

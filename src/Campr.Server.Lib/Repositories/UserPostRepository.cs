@@ -55,10 +55,10 @@ namespace Campr.Server.Lib.Repositories
                 .RunResultAsync<UserPost>(c, null, cancellationToken), cancellationToken);
         }
 
-        public Task UpdateAsync(string ownerId, TentPost post, CancellationToken cancellationToken = new CancellationToken())
+        public Task UpdateAsync(string ownerId, TentPost post, bool isFromFollowing, CancellationToken cancellationToken = new CancellationToken())
         {
             // Create a new UserPost from the provided post.
-            var userPost = this.userPostFactory.FromPost(ownerId, post);
+            var userPost = this.userPostFactory.FromPost(ownerId, post, isFromFollowing);
 
             return this.db.Run(async c =>
             {

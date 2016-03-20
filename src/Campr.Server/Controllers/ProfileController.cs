@@ -13,19 +13,23 @@ namespace Campr.Server.Controllers
     {
         public ProfileController(
             IUserLogic userLogic,
+            IPostLogic postLogic,
             IUriHelpers uriHelpers, 
             ITentConstants tentConstants)
         {
             Ensure.Argument.IsNotNull(userLogic, nameof(userLogic));
+            Ensure.Argument.IsNotNull(postLogic, nameof(postLogic));
             Ensure.Argument.IsNotNull(uriHelpers, nameof(uriHelpers));
             Ensure.Argument.IsNotNull(tentConstants, nameof(tentConstants));
 
+            this.userLogic = userLogic;
+            this.postLogic = postLogic;
             this.uriHelpers = uriHelpers;
             this.tentConstants = tentConstants;
-            this.userLogic = userLogic;
         }
 
         private readonly IUserLogic userLogic;
+        private readonly IPostLogic postLogic;
         private readonly IUriHelpers uriHelpers;
         private readonly ITentConstants tentConstants;
     
@@ -60,14 +64,14 @@ namespace Campr.Server.Controllers
             if (user == null)
                 throw new ApiException(HttpStatusCode.NotFound);
 
-            //// Retrieve the meta post for this user.
-            //var metaPost = this.postLogic.GetMetaPostForUser(user.Id);
-            //if (metaPost == null)
-            //    throw new ApiException(HttpStatusCode.NotFound);
+            // Retrieve the meta post for this user.
+            var metaPost = await this.postLogic.GetMetaPostForUserAsync(user);
+            if (metaPost == null)
+                throw new ApiException(HttpStatusCode.NotFound);
 
-            //// Add link headers to the response.
-            //this.Response.Headers.Add("Link", $"<{this.uriHelpers.GetCamprPostUri(userHandle, metaPost.Post.Id).AbsoluteUri}>; " +
-            //                                  $"rel=\"{this.tentConstants.MetaPostRel}\"");
+            // Add link headers to the response.
+            this.Response.Headers.Add("Link", $"<{this.uriHelpers.GetCamprPostUri(userHandle, metaPost.Id).AbsoluteUri}>; " +
+                                              $"rel=\"{this.tentConstants.MetaPostRel}\"");
         }
     }
 }

@@ -11,7 +11,7 @@ namespace Campr.Server.Tests.Infrastructure
         public string AzureQueuesConnectionString { get; } = "";
         public string AzureBlobsConnectionString { get; } = "";
         public string EncryptionKey { get; } = "";
-        public EnvironmentEnum Environment { get; } = EnvironmentEnum.Test;
+        public AppEnvironment AppEnvironment { get; } = AppEnvironment.Test;
 
         public IEnumerable<Uri> CouchBaseServers { get; } = new []
         {

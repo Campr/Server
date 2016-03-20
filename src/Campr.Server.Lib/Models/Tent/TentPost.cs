@@ -5,6 +5,7 @@ using System.Net.Http;
 using Campr.Server.Lib.Extensions;
 using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Json;
+using Campr.Server.Lib.Models.Other;
 using Campr.Server.Lib.Models.Tent.PostContent;
 using Newtonsoft.Json.Linq;
 
@@ -37,7 +38,7 @@ namespace Campr.Server.Lib.Models.Tent
             {
                 {"id", this.Id},
                 {"entity", string.IsNullOrEmpty(this.OriginalEntity) ? this.Entity : this.OriginalEntity},
-                {"type", this.Type},
+                {"type", this.Type.ToString()},
                 {"published_at", this.PublishedAt.GetValueOrDefault().ToUnixTime()}
             };
 
@@ -154,7 +155,7 @@ namespace Campr.Server.Lib.Models.Tent
 
         [DbProperty]
         [WebProperty]
-        public string Type { get; set; }
+        public ITentPostType Type { get; set; }
         
         [DbProperty]
         [WebProperty]
@@ -166,19 +167,19 @@ namespace Campr.Server.Lib.Models.Tent
         
         [DbProperty]
         [WebProperty]
-        public List<TentMention> Mentions { get; set; }
+        public IList<TentMention> Mentions { get; set; }
         
         [DbProperty]
         [WebProperty]
-        public List<TentPostRef> Refs { get; set; }
+        public IList<TentPostRef> Refs { get; set; }
         
         [DbProperty]
         [WebProperty]
-        public List<TentPostAttachment> Attachments { get; set; }
+        public IList<TentPostAttachment> Attachments { get; set; }
         
         [DbProperty]
         [WebProperty]
-        public List<TentLicense> Licenses { get; set; }
+        public IList<TentLicense> Licenses { get; set; }
         
         [DbProperty]
         [WebProperty]
@@ -186,7 +187,7 @@ namespace Campr.Server.Lib.Models.Tent
 
         #region Transient properties.
 
-        public List<HttpContent> NewAttachments { get; set; }
+        public IList<HttpContent> PassengerAttachments { get; set; }
         public TentPost<TentContentCredentials> PassengerCredentials { get; set; }
 
         #endregion

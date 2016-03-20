@@ -28,7 +28,7 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
 
             this.loggingService = loggingService;
 
-            this.dbName = this.GetDbName(configuration.Environment);
+            this.dbName = this.GetDbName(configuration.AppEnvironment);
             this.R = new RethinkDB();
             this.initializer = new TaskRunner(this.InitializeOnceAsync);
 
@@ -269,13 +269,13 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
             this.connection.Dispose();
         }
 
-        private string GetDbName(EnvironmentEnum environment)
+        private string GetDbName(AppEnvironment appEnvironment)
         {
-            switch (environment)
+            switch (appEnvironment)
             {
-                case EnvironmentEnum.Production:
+                case AppEnvironment.Production:
                     return "camprprod";
-                case EnvironmentEnum.Test:
+                case AppEnvironment.Test:
                     return "camprtest";
                 default:
                     return "camprdev";

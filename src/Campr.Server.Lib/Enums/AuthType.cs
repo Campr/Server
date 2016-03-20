@@ -1,6 +1,6 @@
 ﻿namespace Campr.Server.Lib.Enums
 {
-    public enum AuthTypeEnum
+    public enum AuthType
     {
         None,
         User,
