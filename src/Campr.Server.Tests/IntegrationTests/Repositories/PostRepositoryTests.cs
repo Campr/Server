@@ -19,12 +19,12 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
     {
         public PostRepositoryTests()
         {
-            this.tentPostFactory = ServiceProvider.Current.GetService<ITentPostFactory>();
+            this.postFactory = ServiceProvider.Current.GetService<ITentPostFactory>();
             this.postTypeFactory = ServiceProvider.Current.GetService<ITentPostTypeFactory>();
             this.postRepository = ServiceProvider.Current.GetService<IPostRepository>();
         }
 
-        private readonly ITentPostFactory tentPostFactory;
+        private readonly ITentPostFactory postFactory;
         private readonly ITentPostTypeFactory postTypeFactory;
         private readonly IPostRepository postRepository;
 
@@ -36,7 +36,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             var user = new User { Id = Guid.NewGuid().ToString("N") };
 
             // Create a new post and add it to the db.
-            var newPost = this.tentPostFactory.FromContent(user, new TentContentMeta
+            var newPost = this.postFactory.FromContent(user, new TentContentMeta
             {
                 Entity = entity1
             }, this.postTypeFactory.FromString("https://test.com/type")).Post();
@@ -87,12 +87,12 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             var user = new User { Id = Guid.NewGuid().ToString("N") };
 
             // Create two new posts of the same type.
-            var newPost1 = this.tentPostFactory.FromContent(user, new TentContentMeta
+            var newPost1 = this.postFactory.FromContent(user, new TentContentMeta
             {
                 Entity = entity1
             }, type1).Post();
 
-            var newPost2 = this.tentPostFactory.FromContent(user, new TentContentMeta
+            var newPost2 = this.postFactory.FromContent(user, new TentContentMeta
             {
                 Entity = entity2
             }, type1).Post();
@@ -126,7 +126,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             Assert.Equal(entity3, lastPostVersionOfType2.Content.Entity);
 
             // Create a new post with a different subtype.
-            var newPost3 = this.tentPostFactory.FromContent(user, new TentContentMeta
+            var newPost3 = this.postFactory.FromContent(user, new TentContentMeta
             {
                 Entity = entity4
             }, type2).Post();
@@ -158,12 +158,12 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             var user = new User { Id = Guid.NewGuid().ToString("N") };
 
             // Create two new posts of the same type.
-            var newPost1 = this.tentPostFactory.FromContent(user, new TentContentMeta
+            var newPost1 = this.postFactory.FromContent(user, new TentContentMeta
             {
                 Entity = entity1
             }, type).Post();
 
-            var newPost2 = this.tentPostFactory.FromContent(user, new TentContentMeta
+            var newPost2 = this.postFactory.FromContent(user, new TentContentMeta
             {
                 Entity = entity2
             }, type).Post();
@@ -196,7 +196,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             var user = new User { Id = Guid.NewGuid().ToString("N") };
 
             // Create a new post and save it.
-            var newPost = this.tentPostFactory.FromContent(user, new TentContentMeta
+            var newPost = this.postFactory.FromContent(user, new TentContentMeta
             {
                 Entity = "http://external1.tent.is"
             }, type).Post();
@@ -221,7 +221,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             var user = new User { Id = Guid.NewGuid().ToString("N") };
 
             // Create a new post and save it.
-            var newPost = this.tentPostFactory.FromContent(user, new TentContentMeta
+            var newPost = this.postFactory.FromContent(user, new TentContentMeta
             {
                 Entity = "http://external1.tent.is"
             }, type).Post();
@@ -249,7 +249,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             var user = new User { Id = Guid.NewGuid().ToString("N") };
 
             // Create a new post and save it.
-            var newPost = this.tentPostFactory.FromContent(user, new TentContentMeta
+            var newPost = this.postFactory.FromContent(user, new TentContentMeta
             {
                 Entity = entity1
             }, type).Post();

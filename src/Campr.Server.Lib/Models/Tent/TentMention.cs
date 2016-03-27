@@ -2,7 +2,6 @@
 using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Json;
 using Campr.Server.Lib.Models.Db;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Campr.Server.Lib.Models.Tent
@@ -48,7 +47,7 @@ namespace Campr.Server.Lib.Models.Tent
         public bool Validate()
         {
             return true;
-        }
+        }  
         
         [DbProperty]
         public string UserId { get; set; }
@@ -69,11 +68,9 @@ namespace Campr.Server.Lib.Models.Tent
         [DbProperty]
         public List<TentPostIdentifier> ReplyChain { get; set; }
         
-        [DbProperty]
         [WebProperty]
         public string Entity { get; set; }
         
-        [DbProperty]
         [WebProperty]
         public string OriginalEntity { get; set; }
         

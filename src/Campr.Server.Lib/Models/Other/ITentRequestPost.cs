@@ -1,13 +1,13 @@
 ﻿using System.Threading.Tasks;
 using Campr.Server.Lib.Models.Db;
+using Campr.Server.Lib.Models.Tent;
 
 namespace Campr.Server.Lib.Models.Other
 {
     public interface ITentRequestPost
     {
-        string Entity { get; }
-        string PostId { get; }
         User User { get; }
-        Task ResolveEntity();
+        TentPost Post { get; }
+        Task Resolve();
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Campr.Server.Lib.Extensions
 {
@@ -11,6 +12,11 @@ namespace Campr.Server.Lib.Extensions
             {
                 action(item);
             }
+        }
+
+        public static IEnumerable<T> Compact<T>(this IEnumerable<T> enumerable)
+        {
+            return enumerable.Where(e => e != null);
         }
     }
 }

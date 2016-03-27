@@ -22,11 +22,13 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             this.postFactory = ServiceProvider.Current.GetService<ITentPostFactory>();
             this.postTypeFactory = ServiceProvider.Current.GetService<ITentPostTypeFactory>();
             this.modelHelpers = ServiceProvider.Current.GetService<IModelHelpers>();
+            this.feedRequestFactory = ServiceProvider.Current.GetService<ITentFeedRequestFactory>();
         }
 
         private readonly IUserPostRepository userPostRepository;
         private readonly ITentPostFactory postFactory;
         private readonly ITentPostTypeFactory postTypeFactory;
+        private readonly ITentFeedRequestFactory feedRequestFactory;
         private readonly IModelHelpers modelHelpers;
 
         [Fact]
@@ -44,11 +46,11 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             }, this.postTypeFactory.FromString("https://test.com/type")).Post();
 
             // Compute the VersionId for this post.
-            newPost.Version.Id = this.modelHelpers.GetVersionIdFromPost(newPost);
             newPost.Version.ReceivedAt = date1;
             newPost.Version.PublishedAt = date1;
             newPost.ReceivedAt = date1;
             newPost.PublishedAt = date1;
+            newPost.Version.Id = this.modelHelpers.GetVersionIdFromPost(newPost);
 
             // Save the user post.
             await this.userPostRepository.UpdateAsync(ownerId, newPost, false);
@@ -79,6 +81,24 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
 
             Assert.NotNull(userPostVersion1);
             Assert.Equal(versionId1, userPostVersion1.VersionId);
+        }
+
+        [Fact]
+        public async Task UserPostFeedRequest()
+        {
+            var ownerId = Guid.NewGuid().ToString("N");
+
+            var user1 = new User { Id = Guid.NewGuid().ToString("N") };
+            var user2 = new User { Id = Guid.NewGuid().ToString("N") };
+            var user3 = new User { Id = Guid.NewGuid().ToString("N") };
+
+            var type1 = this.postTypeFactory.FromString("https://test.com/type#type1");
+            var type2 = this.postTypeFactory.FromString("https://test.com/type#type2");
+
+            // Create three new posts and use them to update the corresponding user posts.
+            var newPost1 = this.postFactory.FromContent(user1, new TentContentMeta(), type1).Post();
+            var newPost2 = this.postFactory.FromContent(user2, new TentContentMeta(), type1).Post();
+            var newPost3 = this.postFactory.FromContent(user3, new TentContentMeta(), type1).Post();
         }
 
         [Fact]

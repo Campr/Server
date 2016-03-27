@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Campr.Server.Lib.Enums;
 using Campr.Server.Lib.Extensions;
 using Campr.Server.Lib.Infrastructure;
+using Campr.Server.Lib.Logic;
+using Campr.Server.Lib.Models.Db;
 using Campr.Server.Lib.Models.Other.Factories;
 using Campr.Server.Lib.Models.Tent;
 using RethinkDb.Driver;
@@ -24,13 +28,16 @@ namespace Campr.Server.Lib.Models.Other
             
             this.requestPostFactory = requestPostFactory;
             this.requestDateFactory = requestDateFactory;
+            this.resolveDependenciesRunner = new TaskRunner(this.ResolveDependenciesAsync);
         }
-        
+
+        private readonly IUserLogic userLogic;
         private readonly ITentRequestPostFactory requestPostFactory;
         private readonly ITentRequestDateFactory requestDateFactory;
+        private readonly TaskRunner resolveDependenciesRunner;
 
         private List<ITentPostType> types;
-        private List<string> entities; 
+        private List<User> users; 
         private List<ITentRequestPost[]> mentions;
         private List<ITentRequestPost[]> notMentions;
         private TentFeedRequestSpecialEntities specialEntities;
@@ -41,20 +48,31 @@ namespace Campr.Server.Lib.Models.Other
         private uint? skip;
         private uint? maxRefs;
 
+        private List<string> temporaryEntities;
+        private IDictionary<TentFeedRequestBoundaryType, ITentRequestPost> temporaryBoundaryPosts;
+
         #endregion
 
         #region Interface implementation.
         
         public ITentFeedRequest AddTypes(params ITentPostType[] newTypes)
         {
+            Ensure.Argument.IsNotNull(newTypes, nameof(newTypes));
             (this.types ?? (this.types = new List<ITentPostType>())).AddRange(newTypes);
+            return this;
+        }
+
+        public ITentFeedRequest AddUsers(params User[] newUsers)
+        {
+            Ensure.Argument.IsNotNull(newUsers, nameof(newUsers));
+            (this.users ?? (this.users = new List<User>())).AddRange(newUsers);
             return this;
         }
 
         public ITentFeedRequest AddEntities(params string[] newEntities)
         {
             Ensure.Argument.IsNotNull(newEntities, nameof(newEntities));
-            (this.entities ?? (this.entities = new List<string>())).AddRange(newEntities);
+            (this.temporaryEntities ?? (this.temporaryEntities = new List<string>())).AddRange(newEntities);
             return this;
         }
 
@@ -67,9 +85,6 @@ namespace Campr.Server.Lib.Models.Other
         public ITentFeedRequest AddMentions(params string[] mentionedEntities)
         {
             Ensure.Argument.IsNotNull(mentionedEntities, nameof(mentionedEntities));
-            if (mentionedEntities.Length == 0)
-                throw new ArgumentOutOfRangeException(nameof(mentionedEntities), "The list of mentioned entities is empty.");
-
             (this.mentions ?? (this.mentions = new List<ITentRequestPost[]>())).Add(mentionedEntities.Select(this.requestPostFactory.FromString).ToArray());
             return this;
         }
@@ -77,30 +92,21 @@ namespace Campr.Server.Lib.Models.Other
         public ITentFeedRequest AddMentions(params ITentRequestPost[] mentionedPosts)
         {
             Ensure.Argument.IsNotNull(mentionedPosts, nameof(mentionedPosts));
-            if (mentionedPosts.Length == 0)
-                throw new ArgumentOutOfRangeException(nameof(mentionedPosts), "The list of mentioned posts is empty.");
-
             (this.mentions ?? (this.mentions = new List<ITentRequestPost[]>())).Add(mentionedPosts);
             return this;
         }
 
-        public ITentFeedRequest AddNotMentions(params string[] mentionedEntities)
+        public ITentFeedRequest AddNotMentions(params string[] notMentionedEntities)
         {
-            Ensure.Argument.IsNotNull(mentionedEntities, nameof(mentionedEntities));
-            if (mentionedEntities.Length == 0)
-                throw new ArgumentOutOfRangeException(nameof(mentionedEntities), "The list of mentioned entities is empty.");
-
-            (this.notMentions ?? (this.notMentions = new List<ITentRequestPost[]>())).Add(mentionedEntities.Select(this.requestPostFactory.FromString).ToArray());
+            Ensure.Argument.IsNotNull(notMentionedEntities, nameof(notMentionedEntities));
+            (this.notMentions ?? (this.notMentions = new List<ITentRequestPost[]>())).Add(notMentionedEntities.Select(this.requestPostFactory.FromString).ToArray());
             return this;
         }
 
-        public ITentFeedRequest AddNotMentions(params ITentRequestPost[] mentionedPosts)
+        public ITentFeedRequest AddNotMentions(params ITentRequestPost[] notMentionedPosts)
         {
-            Ensure.Argument.IsNotNull(mentionedPosts, nameof(mentionedPosts));
-            if (mentionedPosts.Length == 0)
-                throw new ArgumentOutOfRangeException(nameof(mentionedPosts), "The list of mentioned posts is empty.");
-
-            (this.notMentions ?? (this.notMentions = new List<ITentRequestPost[]>())).Add(mentionedPosts);
+            Ensure.Argument.IsNotNull(notMentionedPosts, nameof(notMentionedPosts));
+            (this.notMentions ?? (this.notMentions = new List<ITentRequestPost[]>())).Add(notMentionedPosts);
             return this;
         }
 
@@ -141,8 +147,8 @@ namespace Campr.Server.Lib.Models.Other
         public ITentFeedRequest AddPostBoundary(ITentRequestPost boundaryPost, TentFeedRequestBoundaryType boundaryType)
         {
             Ensure.Argument.IsNotNull(boundaryPost, nameof(boundaryPost));
-            var requestDate = this.requestDateFactory.FromPost(boundaryPost);
-            return this.AddBoundary(requestDate, boundaryType);
+            (this.temporaryBoundaryPosts ?? (this.temporaryBoundaryPosts = new Dictionary<TentFeedRequestBoundaryType, ITentRequestPost>()))[boundaryType] = boundaryPost;
+            return this;
         }
 
         public ITentFeedRequest AddBoundary(ITentRequestDate boundaryDate, TentFeedRequestBoundaryType boundaryType)
@@ -168,13 +174,20 @@ namespace Campr.Server.Lib.Models.Other
             return this.limit;
         }
 
-        public Uri AsUri(string parameter = null)
+        public async Task<Uri> AsUriAsync(string parameter = null, CancellationToken cancellationToken = default(CancellationToken))
         {
+            // Make sure we have all the data we need.
+            await this.resolveDependenciesRunner.RunOnce(cancellationToken);
+
+            // TODO.
             throw new NotImplementedException();
         }
 
-        public ReqlExpr AsTableQuery(RethinkDB rdb, Table table, string ownerId)
+        public async Task<ReqlExpr> AsTableQueryAsync(RethinkDB rdb, Table table, string ownerId, CancellationToken cancellationToken = default(CancellationToken))
         {
+            // Make sure we have all the data we need.
+            await this.resolveDependenciesRunner.RunOnce(cancellationToken);
+
             // Find the name of the index to use.
             var index = this.TableIndex();
 
@@ -255,6 +268,40 @@ namespace Campr.Server.Lib.Models.Other
         #endregion
 
         #region Private methods.
+
+        private async Task ResolveDependenciesAsync(CancellationToken cancellationToken)
+        {
+            // Entities -> Users.
+            var resolveEntitiesTasks = this.temporaryEntities?.Select(e => this.userLogic.GetUserAsync(e, cancellationToken)).ToList();
+
+            // Resolve mentions and not mentions posts and users.
+            var resolveMentions = this.mentions?.SelectMany(ms => ms.Select(m => m.Resolve())).ToList();
+            var resolveNotMentions = this.notMentions?.SelectMany(ms => ms.Select(m => m.Resolve())).ToList();
+
+            // Resolve boundary posts.
+            var resolveBoundaryPosts = this.temporaryBoundaryPosts?.Values.Select(bp => bp.Resolve()).ToList();
+
+            // Wait for tasks to complete.
+            var resolveTasks = new List<IEnumerable<Task>>
+            {
+                resolveEntitiesTasks,
+                resolveMentions,
+                resolveNotMentions,
+                resolveBoundaryPosts
+            };
+
+            await Task.WhenAll(resolveTasks.Compact().SelectMany(l => l));
+
+            // Assign new users.
+            if (resolveEntitiesTasks != null)
+                (this.users ?? (this.users = new List<User>())).AddRange(resolveEntitiesTasks.Where(t => t.Result != null).Select(t => t.Result));
+
+            // Assign new boundary dates.
+            this.temporaryBoundaryPosts?
+                .ToDictionary(kv => kv.Key, kv => this.requestDateFactory.FromPost(kv.Value, this.sortBy))
+                .Where(kv => kv.Value != null)
+                .ForEach(kv => (this.boundaries ?? (this.boundaries = new Dictionary<TentFeedRequestBoundaryType, ITentRequestDate>()))[kv.Key] = kv.Value);
+        }
 
         private string TableIndex()
         {

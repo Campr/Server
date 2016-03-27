@@ -7,17 +7,23 @@ namespace Campr.Server.Lib.Models.Db.Factories
 {
     class TentPostFactory : ITentPostFactory
     {
-        public TentPostFactory(ITextHelpers textHelpers)
+        public TentPostFactory(
+            IModelHelpers modelHelpers, 
+            ITextHelpers textHelpers)
         {
+            Ensure.Argument.IsNotNull(modelHelpers, nameof(modelHelpers));
             Ensure.Argument.IsNotNull(textHelpers, nameof(textHelpers));
+
+            this.modelHelpers = modelHelpers;
             this.textHelpers = textHelpers;
         }
 
         private readonly ITextHelpers textHelpers;
+        private readonly IModelHelpers modelHelpers;
         
         public ITentPostFactoryBuilder<T> FromContent<T>(User user, T content, ITentPostType type) where T : ModelBase
         {
-            return new TentPostFactoryBuilder<T>(new TentPost<T>
+            return new TentPostFactoryBuilder<T>(this.modelHelpers, new TentPost<T>
             {
                 Id = this.textHelpers.GenerateUniqueId(),
                 UserId = user.Id,

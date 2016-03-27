@@ -20,6 +20,10 @@ namespace Campr.Server.Lib.Infrastructure
 
         public async Task RunOnce(CancellationToken cancellationToken = default(CancellationToken))
         {
+            // Avoid "using" when possible.
+            if (this.ranToCompletion)
+                return;
+
             // Don't run this in parallel.
             using (await this.concurrencyLock.LockAsync(cancellationToken))
             {
