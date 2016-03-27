@@ -1,6 +1,8 @@
-﻿namespace Campr.Server.Lib.Models.Other
+﻿using System;
+
+namespace Campr.Server.Lib.Models.Other
 {
-    public interface ITentPostType
+    public interface ITentPostType : IEquatable<ITentPostType>
     {
         string Type { get; }
         string SubType { get; }

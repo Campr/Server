@@ -1,4 +1,5 @@
 ﻿using System;
+using Campr.Server.Lib.Models.Other;
 
 namespace Campr.Server.Lib.Configuration
 {
@@ -50,15 +51,15 @@ namespace Campr.Server.Lib.Configuration
             "application/xml"
         };
 
-        public string MetaPostType { get; } = "https://tent.io/types/meta/v0#";
-        public string AppPostType { get; } = "https://tent.io/types/app/v0#";
-        public string AppAuthorizationPostType { get; } = "https://tent.io/types/app-auth/v0#";
-        public string RelationshipPostType { get; } = "https://tent.io/types/relationship/v0#";
-        public string SubscriptionPostType { get; } = "https://tent.io/types/subscription/v0#";
-        public string CredentialsPostType { get; } = "https://tent.io/types/credentials/v0#";
-        public string DeletePostType { get; } = "https://tent.io/types/delete/v0#";
-        public string DeliveryFailurePostType { get; } = "https://tent.io/types/delivery-failure/v0#";
-        public string CamprProfilePostType { get; } = "https://campr.me/types/profile/v0#";
+        public ITentPostType MetaPostType { get; } = new TentPostType("https://tent.io/types/meta/v0");
+        public ITentPostType AppPostType { get; } = new TentPostType("https://tent.io/types/app/v0");
+        public ITentPostType AppAuthorizationPostType { get; } = new TentPostType("https://tent.io/types/app-auth/v0#");
+        public ITentPostType RelationshipPostType { get; } = new TentPostType("https://tent.io/types/relationship/v0#");
+        public ITentPostType SubscriptionPostType { get; } = new TentPostType("https://tent.io/types/subscription/v0#");
+        public ITentPostType CredentialsPostType { get; } = new TentPostType("https://tent.io/types/credentials/v0#");
+        public ITentPostType DeletePostType { get; } = new TentPostType("https://tent.io/types/delete/v0#");
+        public ITentPostType DeliveryFailurePostType { get; } = new TentPostType("https://tent.io/types/delivery-failure/v0#");
+        public ITentPostType CamprProfilePostType { get; } = new TentPostType("https://campr.me/types/profile/v0#");
         public string CredentialsRel { get; } = "https://tent.io/rels/credentials";
         public string NotificationRel { get; } = "https://tent.io/rels/notification";
         public string ImportRel { get; } = "https://tent.io/rels/import";

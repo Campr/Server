@@ -59,19 +59,11 @@ namespace Campr.Server.Lib.Models.Other.Factories
             return result;
         }
 
-        public ITentRequestDate FromPost(TentPost post, Func<TentPost, DateTime?> dateProperty)
+        public ITentRequestDate FromPost(ITentRequestPost post)
         {
-            Ensure.Argument.IsNotNull(post, "post");
-            Ensure.Argument.IsNotNull(dateProperty, "dateProperty");
-
-            // Extract the date from the post.
-            var result = this.serviceProvider.Resolve<TentRequestDate>();
-            result.Date = dateProperty(post);
-
-            // Extract the version from the post.
-            result.Version = post.Version.Id;
-
-            return result;
+            Ensure.Argument.IsNotNull(post, nameof(post));
+            // TODO.
+            return null;
         }
 
         public ITentRequestDate MinValue()

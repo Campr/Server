@@ -1,6 +1,7 @@
 ﻿using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Infrastructure;
 using Campr.Server.Lib.Logic;
+using Campr.Server.Lib.Models.Tent;
 
 namespace Campr.Server.Lib.Models.Other.Factories
 {
@@ -32,6 +33,17 @@ namespace Campr.Server.Lib.Models.Other.Factories
             // And the post id. 
             if (requestPostParts.Length > 1)
                 result.PostId = this.uriHelpers.UrlDecode(requestPostParts[1]);
+
+            return result;
+        }
+
+        public ITentRequestPost FromPost(TentPost post)
+        {
+            var result = new TentRequestPost(this.userLogic, this.uriHelpers)
+            {
+                UserId = post.UserId,
+                PostId = post.Id
+            };
 
             return result;
         }

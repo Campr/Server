@@ -22,15 +22,15 @@ namespace Campr.Server.Lib.Configuration
         string[] ApiContentTypes { get; }
         string[] WebContentTypes { get; }
 
-        string MetaPostType { get; }
-        string AppPostType { get; }
-        string AppAuthorizationPostType { get; }
-        string RelationshipPostType { get; }
-        string SubscriptionPostType { get; }
-        string CredentialsPostType { get; }
-        string DeletePostType { get; }
-        string DeliveryFailurePostType { get; }
-        string CamprProfilePostType { get; }
+        ITentPostType MetaPostType { get; }
+        ITentPostType AppPostType { get; }
+        ITentPostType AppAuthorizationPostType { get; }
+        ITentPostType RelationshipPostType { get; }
+        ITentPostType SubscriptionPostType { get; }
+        ITentPostType CredentialsPostType { get; }
+        ITentPostType DeletePostType { get; }
+        ITentPostType DeliveryFailurePostType { get; }
+        ITentPostType CamprProfilePostType { get; }
 
         string CredentialsRel { get; }
         string NotificationRel { get; }

@@ -4,6 +4,7 @@ using System.Linq;
 using Campr.Server.Lib.Extensions;
 using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Json;
+using Campr.Server.Lib.Models.Other;
 using Newtonsoft.Json.Linq;
 
 namespace Campr.Server.Lib.Models.Tent
@@ -60,7 +61,7 @@ namespace Campr.Server.Lib.Models.Tent
 
         [DbProperty]
         [WebProperty]
-        public string Type { get; set; }
+        public ITentPostType Type { get; set; }
 
         [DbProperty]
         [WebProperty]

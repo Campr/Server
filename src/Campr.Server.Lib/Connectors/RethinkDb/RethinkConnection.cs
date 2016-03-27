@@ -20,11 +20,13 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
         public RethinkConnection(
             ILoggingService loggingService, 
             IDbContractResolver dbContractResolver,
-            IGeneralConfiguration configuration)
+            IGeneralConfiguration configuration,
+            TentPostTypeConverter postTypeConverter)
         {
             Ensure.Argument.IsNotNull(loggingService, nameof(loggingService));
             Ensure.Argument.IsNotNull(dbContractResolver, nameof(dbContractResolver));
             Ensure.Argument.IsNotNull(configuration, nameof(configuration));
+            Ensure.Argument.IsNotNull(postTypeConverter, nameof(postTypeConverter));
 
             this.loggingService = loggingService;
 
@@ -38,6 +40,7 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
             Converter.Serializer.MissingMemberHandling = MissingMemberHandling.Ignore;
             Converter.Serializer.NullValueHandling = NullValueHandling.Ignore;
             Converter.Serializer.TypeNameHandling = TypeNameHandling.None;
+            Converter.Serializer.Converters.Add(postTypeConverter);
         }
 
         private readonly ILoggingService loggingService;

@@ -1,8 +1,4 @@
-﻿using System;
-using Campr.Server.Lib.Enums;
-using Campr.Server.Lib.Models.Tent;
-
-namespace Campr.Server.Lib.Models.Other.Factories
+﻿namespace Campr.Server.Lib.Models.Other.Factories
 {
     public interface ITentRequestDateFactory
     {

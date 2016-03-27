@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Campr.Server.Lib.Connectors.RethinkDb;
@@ -57,15 +58,24 @@ namespace Campr.Server.Lib.Repositories
                 .RunResultAsync<UserPost>(c, null, cancellationToken), cancellationToken);
         }
 
-        public Task<IList<UserPost>> GetAsync<T>(string ownerId, ITentFeedRequest<T> feedRequest, CancellationToken cancellationToken = new CancellationToken()) where T : class
+        public async Task<IList<UserPost>> GetAsync(string ownerId, ITentFeedRequest feedRequest, CancellationToken cancellationToken = new CancellationToken())
         {
-            var query = this.BuildFeedQuery(ownerId, feedRequest);
+            // Build and run the query using the provided Feed Request.
+            var results = await this.db.Run(c => feedRequest.AsTableQuery(this.db.R, this.table, ownerId)
+                .Filter(r => this.db.R.Not(r.HasFields("deleted_at")))
+                .RunResultAsync<IList<UserPost>>(c, null, cancellationToken), cancellationToken);
+
+            // Filter the results and return.
+            return results.Where(p => p != null).ToList();
         }
 
-        private object BuildFeedQuery<T>(string ownerId, ITentFeedRequest<T> feedRequest)
+        public Task<long> CountAsync(string ownerId, ITentFeedRequest feedRequest, CancellationToken cancellationToken = new CancellationToken())
         {
-
-            this.table.
+            // Build and run the query using the provided Feed Request.
+            return this.db.Run(c => feedRequest.AsTableQuery(this.db.R, this.table, ownerId)
+                .Filter(r => this.db.R.Not(r.HasFields("deleted_at")))
+                .Count()
+                .RunResultAsync<long>(c, null, cancellationToken), cancellationToken);
         }
 
         public Task UpdateAsync(string ownerId, TentPost post, bool isFromFollowing, CancellationToken cancellationToken = new CancellationToken())

@@ -34,7 +34,5 @@ namespace Campr.Server.Lib.Configuration
         string CamprBaseDomain { get; }
         string CamprBaseUrl { get; }
         string CdnBaseUrl { get; }
-
-        IDictionary<string, PostKnownTypeEnum> KnownPostTypes { get; }
     }
 }

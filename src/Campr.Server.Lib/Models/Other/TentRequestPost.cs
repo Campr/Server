@@ -27,6 +27,7 @@ namespace Campr.Server.Lib.Models.Other
 
         #region Public properties.
 
+        public string UserId { get; set; }
         public string Entity { get; set; }
         public string PostId { get; set; }
         public User User { get; private set; }

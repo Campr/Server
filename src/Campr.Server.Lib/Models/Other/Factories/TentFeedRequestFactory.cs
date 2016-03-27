@@ -36,16 +36,16 @@ namespace Campr.Server.Lib.Models.Other.Factories
         private readonly ITentPostTypeFactory postTypeFactory;
         private readonly IGeneralConfiguration configuration;
 
-        public ITentFeedRequest<TPost> Make<TPost>()
+        public ITentFeedRequest Make()
         {
-            return new TentFeedRequest<TPost>(
+            return new TentFeedRequest(
                 this.requestPostFactory,
                 this.requestDateFactory);
         }
 
-        public ITentFeedRequest<TPost> FromQueryParameters<TPost>(IReadOnlyDictionary<string, IList<IList<string>>> queryString)
+        public ITentFeedRequest FromQueryParameters(IReadOnlyDictionary<string, IList<IList<string>>> queryString)
         {
-            var feedRequest = this.Make<TPost>();
+            var feedRequest = this.Make();
 
             // Entities.
             var entities = queryString.TryGetValue("entities");

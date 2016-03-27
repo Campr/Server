@@ -22,15 +22,14 @@ namespace Campr.Server.Middleware
 
         public Task Invoke(
             IQueryStringHelpers queryStringHelpers,
-            ITentRequestParametersFactory requestParametersFactory,
+            ITentFeedRequestFactory feedRequestFactory,
             IGeneralConfiguration configuration,
             HttpContext context)
         {
             // Read the request parameters from the request.
             var query = queryStringHelpers.ParseQueryString(context.Request.QueryString.Value);
-            context.Items[RequestItemEnum.TentParameters] = requestParametersFactory.FromQueryString(
-                query, 
-                this.ReadCacheControl(configuration, context.Request));
+            context.Items[RequestItemEnum.FeedRequest] = feedRequestFactory.FromQueryParameters(query);
+            context.Items[RequestItemEnum.CacheControl] = this.ReadCacheControl(configuration, context.Request);
 
             // Continue on to the next middleware.
             return this.next(context);

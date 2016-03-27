@@ -25,7 +25,7 @@ namespace Campr.Server.Lib.Json
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
             // Read and validate the value.
-            var stringValue = reader.ReadAsString();
+            var stringValue = reader.Value as string;
             if (string.IsNullOrWhiteSpace(stringValue))
                 return null;
 

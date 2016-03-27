@@ -14,7 +14,8 @@ namespace Campr.Server.Lib.Models.Other
     {
         #region Constructor.
 
-        public TentRequestDate(IUserLogic userLogic, 
+        public TentRequestDate(
+            IUserLogic userLogic, 
             IPostRepository postRepository,
             IUriHelpers uriHelpers)
         {

@@ -37,11 +37,11 @@ namespace Campr.Server.Lib.Json
         /// <returns>The object value.</returns>
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
-            var ticks = reader.ReadAsDouble();
-            if (!ticks.HasValue)
+            if (reader.TokenType != JsonToken.Integer)
                 throw new Exception("Wrong Token Type");
 
-            return ((long)ticks.Value).FromUnixTime();
+            var ticks = (long)reader.Value;
+            return ticks.FromUnixTime();
         }
     }
 }

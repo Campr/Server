@@ -39,7 +39,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             var newPost = this.tentPostFactory.FromContent(user, new TentContentMeta
             {
                 Entity = entity1
-            }, this.postTypeFactory.FromString("https://test.com/type"));
+            }, this.postTypeFactory.FromString("https://test.com/type")).Post();
 
             // Save the post to the db.
             await this.postRepository.UpdateAsync(newPost);
@@ -90,12 +90,12 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             var newPost1 = this.tentPostFactory.FromContent(user, new TentContentMeta
             {
                 Entity = entity1
-            }, type1);
+            }, type1).Post();
 
             var newPost2 = this.tentPostFactory.FromContent(user, new TentContentMeta
             {
                 Entity = entity2
-            }, type1);
+            }, type1).Post();
 
             // Save the posts to the db.
             await this.postRepository.UpdateAsync(newPost1);
@@ -105,7 +105,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             var lastPostVersionOfType1 = await this.postRepository.GetLastVersionOfTypeAsync<TentContentMeta>(user.Id, type1);
 
             Assert.NotNull(lastPostVersionOfType1);
-            Assert.Equal(type1.ToString(), lastPostVersionOfType1.Type);
+            Assert.Equal(type1.ToString(), lastPostVersionOfType1.Type.ToString());
             Assert.Equal(entity2, lastPostVersionOfType1.Content.Entity);
 
             // Update this first post.
@@ -113,7 +113,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             newPost1.Version = new TentVersion
             {
                 UserId = user.Id,
-                Type = type1.ToString()
+                Type = type1
             };
 
             await this.postRepository.UpdateAsync(newPost1);
@@ -122,14 +122,14 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             var lastPostVersionOfType2 = await this.postRepository.GetLastVersionOfTypeAsync<TentContentMeta>(user.Id, type1);
 
             Assert.NotNull(lastPostVersionOfType2);
-            Assert.Equal(type1.ToString(), lastPostVersionOfType2.Type);
+            Assert.Equal(type1.ToString(), lastPostVersionOfType2.Type.ToString());
             Assert.Equal(entity3, lastPostVersionOfType2.Content.Entity);
 
             // Create a new post with a different subtype.
             var newPost3 = this.tentPostFactory.FromContent(user, new TentContentMeta
             {
                 Entity = entity4
-            }, type2);
+            }, type2).Post();
 
             await this.postRepository.UpdateAsync(newPost3);
 
@@ -137,14 +137,14 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             var lastPostVersionOfType3 = await this.postRepository.GetLastVersionOfTypeAsync<TentContentMeta>(user.Id, type1);
 
             Assert.NotNull(lastPostVersionOfType3);
-            Assert.Equal(type1.ToString(), lastPostVersionOfType3.Type);
+            Assert.Equal(type1.ToString(), lastPostVersionOfType3.Type.ToString());
             Assert.Equal(entity3, lastPostVersionOfType3.Content.Entity);
 
             // Perform a wildcard request, and make sure we get the new post.
             var lastPostVersionOfType4 = await this.postRepository.GetLastVersionOfTypeAsync<TentContentMeta>(user.Id, typeWildcard);
 
             Assert.NotNull(lastPostVersionOfType4);
-            Assert.Equal(type2.ToString(), lastPostVersionOfType4.Type);
+            Assert.Equal(type2.ToString(), lastPostVersionOfType4.Type.ToString());
             Assert.Equal(entity4, lastPostVersionOfType4.Content.Entity);
         }
 
@@ -161,12 +161,12 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             var newPost1 = this.tentPostFactory.FromContent(user, new TentContentMeta
             {
                 Entity = entity1
-            }, type);
+            }, type).Post();
 
             var newPost2 = this.tentPostFactory.FromContent(user, new TentContentMeta
             {
                 Entity = entity2
-            }, type);
+            }, type).Post();
 
             // Save the posts to the db.
             await this.postRepository.UpdateAsync(newPost1);
@@ -179,7 +179,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
                 new TentPostIdentifier { UserId = newPost2.UserId, PostId = newPost2.Id, VersionId = newPost2.Version.Id }
             };
 
-            var posts = await this.postRepository.GetBulkAsync<TentContentMeta>(references);
+            var posts = await this.postRepository.GetAsync<TentContentMeta>(references);
 
             // Check that the right posts were returned, in the correct order.
             Assert.NotNull(posts);
@@ -199,7 +199,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             var newPost = this.tentPostFactory.FromContent(user, new TentContentMeta
             {
                 Entity = "http://external1.tent.is"
-            }, type);
+            }, type).Post();
 
             await this.postRepository.UpdateAsync(newPost);
 
@@ -224,7 +224,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             var newPost = this.tentPostFactory.FromContent(user, new TentContentMeta
             {
                 Entity = "http://external1.tent.is"
-            }, type);
+            }, type).Post();
 
             await this.postRepository.UpdateAsync(newPost);
 
@@ -252,7 +252,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             var newPost = this.tentPostFactory.FromContent(user, new TentContentMeta
             {
                 Entity = entity1
-            }, type);
+            }, type).Post();
 
             await this.postRepository.UpdateAsync(newPost);
 

@@ -35,25 +35,26 @@ namespace Campr.Server.Lib.Services
 
         public async Task<TentPost<T>> DiscoverUriAsync<T>(Uri targetUri) where T: class 
         {
-            // Perform a GET request on the specified Uri.
-            var httpClient = this.serviceProvider.Resolve<IHttpClient>();
-            var request = this.requestFactory.Head(targetUri);
-            var targetUriResponse = await httpClient.SendAsync(request);
-            if (targetUriResponse == null)
-            {
-                return null;
-            }
+            //// Perform a GET request on the specified Uri.
+            //var httpClient = this.serviceProvider.Resolve<IHttpClient>();
+            //var request = this.requestFactory.Head(targetUri);
+            //var targetUriResponse = await httpClient.SendAsync(request);
+            //if (targetUriResponse == null)
+            //{
+            //    return null;
+            //}
 
-            // Extract the Uri of the Meta post from this response.
-            var metaPostUri = targetUriResponse.FindLinkInHeader(this.tentConstants.MetaPostRel);
+            //// Extract the Uri of the Meta post from this response.
+            //var metaPostUri = targetUriResponse.FindLinkInHeader(this.tentConstants.MetaPostRel);
 
-            // If needed, combine this Uri to get the absolute Meta post Uri.
-            var absoluteMetaPostUri = metaPostUri.IsAbsoluteUri
-                ? metaPostUri
-                : new Uri(targetUri, metaPostUri);
+            //// If needed, combine this Uri to get the absolute Meta post Uri.
+            //var absoluteMetaPostUri = metaPostUri.IsAbsoluteUri
+            //    ? metaPostUri
+            //    : new Uri(targetUri, metaPostUri);
 
-            // Use the TentClient to retrieve the meta post.
-            return await this.tentClient.RetrievePostAtUriAsync<T>(absoluteMetaPostUri);
+            //// Use the TentClient to retrieve the meta post.
+            //return await this.tentClient.RetrievePostAtUriAsync<T>(absoluteMetaPostUri);
+            throw new NotImplementedException();
         }
     }
 }

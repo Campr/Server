@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Infrastructure;
@@ -41,7 +42,7 @@ namespace Campr.Server.Lib.Logic
         private readonly IUriHelpers uriHelpers;
         private readonly ICryptoHelpers cryptoHelpers;
 
-        public Task<string> GetUserIdAsync(string entityOrHandle)
+        public Task<string> GetUserIdAsync(string entityOrHandle, CancellationToken cancellationToken = default(CancellationToken))
         {
             // Make sure we have something to work with.
             if (string.IsNullOrWhiteSpace(entityOrHandle))
@@ -50,13 +51,13 @@ namespace Campr.Server.Lib.Logic
             // If this is a Campr handle or entity, search by handle.
             string camprHandle = null;
             if (this.uriHelpers.IsCamprHandle(entityOrHandle) || this.uriHelpers.IsCamprEntity(entityOrHandle, out camprHandle))
-                return this.userRepository.GetIdFromHandleAsync(camprHandle ?? entityOrHandle);
+                return this.userRepository.GetIdFromHandleAsync(camprHandle ?? entityOrHandle, cancellationToken);
 
             // Otherwise, search by entity.
-            return this.userRepository.GetIdFromEntityAsync(entityOrHandle);
+            return this.userRepository.GetIdFromEntityAsync(entityOrHandle, cancellationToken);
         }
 
-        public async Task<User> GetUserAsync(string entityOrHandle)
+        public async Task<User> GetUserAsync(string entityOrHandle, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrWhiteSpace(entityOrHandle))
                 return null;
@@ -67,9 +68,9 @@ namespace Campr.Server.Lib.Logic
                 try
                 {
                     // First, try to retrieve the user internally.
-                    var userId = await this.GetUserIdAsync(entityOrHandle);
+                    var userId = await this.GetUserIdAsync(entityOrHandle, cancellationToken);
                     if (!string.IsNullOrWhiteSpace(userId))
-                        return await this.userRepository.GetAsync(userId);
+                        return await this.userRepository.GetAsync(userId, cancellationToken);
 
                     // If this is a Campr handle, and we didn't find a user, return now.
                     if (this.uriHelpers.IsCamprHandle(entityOrHandle))
@@ -82,9 +83,9 @@ namespace Campr.Server.Lib.Logic
                         // If the actual entity was different, Try to find the corresponding user in our db.
                         if (metaPost.Content.Entity != entityOrHandle)
                         {
-                            userId = await this.GetUserIdAsync(metaPost.Entity);
+                            userId = await this.GetUserIdAsync(metaPost.Entity, cancellationToken);
                             if (!string.IsNullOrWhiteSpace(userId))
-                                return await this.userRepository.GetAsync(userId);
+                                return await this.userRepository.GetAsync(userId, cancellationToken);
 
                             entityOrHandle = metaPost.Entity;
                         }
@@ -94,7 +95,7 @@ namespace Campr.Server.Lib.Logic
                     var newUser = this.userFactory.CreateUserFromEntity(entityOrHandle);
 
                     // Save both.
-                    await this.userRepository.UpdateAsync(newUser);
+                    await this.userRepository.UpdateAsync(newUser, cancellationToken);
 
                     // If needed, create the first metaPost for this user.
                     //if (metaPost != null)
@@ -109,7 +110,7 @@ namespace Campr.Server.Lib.Logic
                     this.loggerService.Exception(ex, "Failed to retrieve user: {0}", entityOrHandle);
                 }
 
-                await Task.Delay(TimeSpan.FromMilliseconds(200));
+                await Task.Delay(TimeSpan.FromMilliseconds(200), cancellationToken);
             }
 
             return null;

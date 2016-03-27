@@ -2,7 +2,8 @@
 {
     public enum RequestItemEnum
     {
-        TentParameters,
+        FeedRequest,
+        CacheControl,
         AllowedPostTypes
     }
 }

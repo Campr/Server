@@ -33,9 +33,10 @@ namespace Campr.Server.Lib.Configuration
         public string CamprBaseUrl { get; } = "https://campr.me";
         public string CdnBaseUrl { get; } = "https://az557631.vo.msecnd.net";
 
-        public int SubscriptionsBatchSize { get; } = 1000;
-        public int MaxPostLimit { get; } = 200;
-        public int DefaultPostLimit { get; } = 25;
+        public uint SubscriptionsBatchSize { get; } = 1000;
+        public uint MaxPostLimit { get; } = 200;
+        public uint DefaultPostLimit { get; } = 25;
+        public uint MaxRefs { get; } = 200;
         public int MaxBatchRequests { get; } = 50;
         public int MaxAttachmentImageSize { get; } = 2000;
         public int MinAttachmentImageSize { get; } = 10;
@@ -60,19 +61,19 @@ namespace Campr.Server.Lib.Configuration
             TimeSpan.FromMinutes(5)
         };
 
-        public IDictionary<string, PostKnownTypeEnum> KnownPostTypes { get; } = new Dictionary<string, PostKnownTypeEnum>
-        {
-            { "https://tent.io/types/app/v0" , PostKnownTypeEnum.Application },
-            { "https://tent.io/types/credentials/v0", PostKnownTypeEnum.Credentials },
-            { "https://tent.io/types/cursor/v0", PostKnownTypeEnum.Cursor },
-            { "https://tent.io/types/delete/v0", PostKnownTypeEnum.Delete },
-            { "https://tent.io/types/essay/v0", PostKnownTypeEnum.Essay },
-            { "https://tent.io/types/meta/v0", PostKnownTypeEnum.Meta },
-            { "https://tent.io/types/relationship/v0", PostKnownTypeEnum.Relationship },
-            { "https://tent.io/types/repost/v0", PostKnownTypeEnum.Repost },
-            { "https://tent.io/types/status/v0", PostKnownTypeEnum.Status },
-            { "https://tent.io/types/subscription/v0", PostKnownTypeEnum.Subscription },
-            { "https://tent.io/types/tag/v0", PostKnownTypeEnum.Tag }
-        };
+        //public IDictionary<string, PostKnownTypeEnum> KnownPostTypes { get; } = new Dictionary<string, PostKnownTypeEnum>
+        //{
+        //    { "https://tent.io/types/app/v0" , PostKnownTypeEnum.Application },
+        //    { "https://tent.io/types/credentials/v0", PostKnownTypeEnum.Credentials },
+        //    { "https://tent.io/types/cursor/v0", PostKnownTypeEnum.Cursor },
+        //    { "https://tent.io/types/delete/v0", PostKnownTypeEnum.Delete },
+        //    { "https://tent.io/types/essay/v0", PostKnownTypeEnum.Essay },
+        //    { "https://tent.io/types/meta/v0", PostKnownTypeEnum.Meta },
+        //    { "https://tent.io/types/relationship/v0", PostKnownTypeEnum.Relationship },
+        //    { "https://tent.io/types/repost/v0", PostKnownTypeEnum.Repost },
+        //    { "https://tent.io/types/status/v0", PostKnownTypeEnum.Status },
+        //    { "https://tent.io/types/subscription/v0", PostKnownTypeEnum.Subscription },
+        //    { "https://tent.io/types/tag/v0", PostKnownTypeEnum.Tag }
+        //};
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Campr.Server.Lib.Json;
+using Campr.Server.Lib.Models.Other;
 using Campr.Server.Lib.Models.Tent;
 
 namespace Campr.Server.Lib.Models.Db
@@ -41,7 +42,7 @@ namespace Campr.Server.Lib.Models.Db
         public DateTime? DeletedAt { get; set; }
 
         [DbProperty]
-        public string Type { get; set; }
+        public ITentPostType Type { get; set; }
 
         [DbProperty]
         public IList<UserPostMention> Mentions { get; set; }

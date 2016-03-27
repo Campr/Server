@@ -41,7 +41,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             var newPost = this.postFactory.FromContent(user, new TentContentMeta
             {
                 Entity = "http://external1.tent.is"
-            }, this.postTypeFactory.FromString("https://test.com/type"));
+            }, this.postTypeFactory.FromString("https://test.com/type")).Post();
 
             // Compute the VersionId for this post.
             newPost.Version.Id = this.modelHelpers.GetVersionIdFromPost(newPost);
@@ -51,7 +51,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             newPost.PublishedAt = date1;
 
             // Save the user post.
-            await this.userPostRepository.UpdateAsync(ownerId, newPost);
+            await this.userPostRepository.UpdateAsync(ownerId, newPost, false);
 
             // Create a new version of the same post.
             var versionId1 = newPost.Version.Id;
@@ -66,7 +66,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             newPost.Version.Id = this.modelHelpers.GetVersionIdFromPost(newPost);
 
             // Update the user post.
-            await this.userPostRepository.UpdateAsync(ownerId, newPost);
+            await this.userPostRepository.UpdateAsync(ownerId, newPost, false);
 
             // Retrieve the last version for this user post.
             var userPostLastVersion = await this.userPostRepository.GetAsync(ownerId, user.Id, newPost.Id);
@@ -92,7 +92,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             var newPost = this.postFactory.FromContent(user, new TentContentMeta
             {
                 Entity = "http://external1.tent.is"
-            }, this.postTypeFactory.FromString("https://test.com/type"));
+            }, this.postTypeFactory.FromString("https://test.com/type")).Post();
 
             // Compute the VersionId for this post.
             newPost.Version.Id = this.modelHelpers.GetVersionIdFromPost(newPost);
@@ -102,7 +102,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             newPost.PublishedAt = date;
 
             // Save the user post.
-            await this.userPostRepository.UpdateAsync(ownerId, newPost);
+            await this.userPostRepository.UpdateAsync(ownerId, newPost, false);
 
             // Delete this user post and all its versions.
             await this.userPostRepository.DeleteAsync(ownerId, newPost);
@@ -126,7 +126,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             var newPost = this.postFactory.FromContent(user, new TentContentMeta
             {
                 Entity = "http://external1.tent.is"
-            }, this.postTypeFactory.FromString("https://test.com/type"));
+            }, this.postTypeFactory.FromString("https://test.com/type")).Post();
 
             // Compute the VersionId for this post.
             newPost.Version.Id = this.modelHelpers.GetVersionIdFromPost(newPost);
@@ -136,7 +136,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             newPost.PublishedAt = date;
 
             // Save the user post.
-            await this.userPostRepository.UpdateAsync(ownerId, newPost);
+            await this.userPostRepository.UpdateAsync(ownerId, newPost, false);
 
             // Delete this user post and all its versions.
             await this.userPostRepository.DeleteAsync(ownerId, newPost, true);
@@ -161,7 +161,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             var newPost = this.postFactory.FromContent(user, new TentContentMeta
             {
                 Entity = "http://external1.tent.is"
-            }, this.postTypeFactory.FromString("https://test.com/type"));
+            }, this.postTypeFactory.FromString("https://test.com/type")).Post();
 
             // Compute the VersionId for this post.
             newPost.Version.Id = this.modelHelpers.GetVersionIdFromPost(newPost);
@@ -171,7 +171,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             newPost.PublishedAt = date1;
 
             // Save the user post.
-            await this.userPostRepository.UpdateAsync(ownerId, newPost);
+            await this.userPostRepository.UpdateAsync(ownerId, newPost, false);
 
             // Create a new version of the same post.
             var versionId1 = newPost.Version.Id;
@@ -186,7 +186,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             newPost.Version.Id = this.modelHelpers.GetVersionIdFromPost(newPost);
 
             // Update the user post.
-            await this.userPostRepository.UpdateAsync(ownerId, newPost);
+            await this.userPostRepository.UpdateAsync(ownerId, newPost, false);
 
             // Delete the last version for this user post.
             await this.userPostRepository.DeleteAsync(ownerId, newPost, true);

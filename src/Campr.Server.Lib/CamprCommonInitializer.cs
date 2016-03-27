@@ -34,6 +34,7 @@ namespace Campr.Server.Lib
             services.AddSingleton<IDbContractResolver, DbContractResolver>();
             services.AddSingleton<IWebJsonHelpers>(s => new JsonHelpers(s.GetService<IWebContractResolver>()));
             services.AddSingleton<IDbJsonHelpers>(s => new JsonHelpers(s.GetService<IDbContractResolver>()));
+            services.AddSingleton<TentPostTypeConverter, TentPostTypeConverter>();
             services.AddSingleton<IJsonHelpers>(s => s.GetService<IWebJsonHelpers>());
 
             // Network.

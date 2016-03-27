@@ -11,7 +11,7 @@ using RethinkDb.Driver.Ast;
 
 namespace Campr.Server.Lib.Models.Other
 {
-    class TentFeedRequest<T> : ITentFeedRequest<T>
+    class TentFeedRequest : ITentFeedRequest
     {
         #region Constructors & Private fields.
 
@@ -45,26 +45,26 @@ namespace Campr.Server.Lib.Models.Other
 
         #region Interface implementation.
         
-        public ITentFeedRequest<T> AddTypes(params ITentPostType[] newTypes)
+        public ITentFeedRequest AddTypes(params ITentPostType[] newTypes)
         {
             (this.types ?? (this.types = new List<ITentPostType>())).AddRange(newTypes);
             return this;
         }
 
-        public ITentFeedRequest<T> AddEntities(params string[] newEntities)
+        public ITentFeedRequest AddEntities(params string[] newEntities)
         {
             Ensure.Argument.IsNotNull(newEntities, nameof(newEntities));
             (this.entities ?? (this.entities = new List<string>())).AddRange(newEntities);
             return this;
         }
 
-        public ITentFeedRequest<T> AddSpecialEntities(TentFeedRequestSpecialEntities newSpecialEntities)
+        public ITentFeedRequest AddSpecialEntities(TentFeedRequestSpecialEntities newSpecialEntities)
         {
             this.specialEntities |= newSpecialEntities;
             return this;
         }
 
-        public ITentFeedRequest<T> AddMentions(params string[] mentionedEntities)
+        public ITentFeedRequest AddMentions(params string[] mentionedEntities)
         {
             Ensure.Argument.IsNotNull(mentionedEntities, nameof(mentionedEntities));
             if (mentionedEntities.Length == 0)
@@ -74,7 +74,7 @@ namespace Campr.Server.Lib.Models.Other
             return this;
         }
 
-        public ITentFeedRequest<T> AddMentions(params ITentRequestPost[] mentionedPosts)
+        public ITentFeedRequest AddMentions(params ITentRequestPost[] mentionedPosts)
         {
             Ensure.Argument.IsNotNull(mentionedPosts, nameof(mentionedPosts));
             if (mentionedPosts.Length == 0)
@@ -84,7 +84,7 @@ namespace Campr.Server.Lib.Models.Other
             return this;
         }
 
-        public ITentFeedRequest<T> AddNotMentions(params string[] mentionedEntities)
+        public ITentFeedRequest AddNotMentions(params string[] mentionedEntities)
         {
             Ensure.Argument.IsNotNull(mentionedEntities, nameof(mentionedEntities));
             if (mentionedEntities.Length == 0)
@@ -94,7 +94,7 @@ namespace Campr.Server.Lib.Models.Other
             return this;
         }
 
-        public ITentFeedRequest<T> AddNotMentions(params ITentRequestPost[] mentionedPosts)
+        public ITentFeedRequest AddNotMentions(params ITentRequestPost[] mentionedPosts)
         {
             Ensure.Argument.IsNotNull(mentionedPosts, nameof(mentionedPosts));
             if (mentionedPosts.Length == 0)
@@ -104,13 +104,13 @@ namespace Campr.Server.Lib.Models.Other
             return this;
         }
 
-        public ITentFeedRequest<T> AddProfiles(TentFeedRequestProfiles newProfiles)
+        public ITentFeedRequest AddProfiles(TentFeedRequestProfiles newProfiles)
         {
             this.profiles |= newProfiles;
             return this;
         }
 
-        public ITentFeedRequest<T> AddLimit(uint newLimit)
+        public ITentFeedRequest AddLimit(uint newLimit)
         {
             if (newLimit == 0)
                 throw new ArgumentOutOfRangeException(nameof(newLimit), "The limit can't be 0.");
@@ -119,40 +119,40 @@ namespace Campr.Server.Lib.Models.Other
             return this;
         }
 
-        public ITentFeedRequest<T> AddSkip(uint newSkip)
+        public ITentFeedRequest AddSkip(uint newSkip)
         {
             this.skip = newSkip;
             return this;
         }
 
-        public ITentFeedRequest<T> AddMaxRefs(uint newMaxRefs)
+        public ITentFeedRequest AddMaxRefs(uint newMaxRefs)
         { 
             this.maxRefs = newMaxRefs;
             return this;
         }
 
-        public ITentFeedRequest<T> AddPostBoundary(TentPost boundaryPost, TentFeedRequestBoundaryType boundaryType)
+        public ITentFeedRequest AddPostBoundary(TentPost boundaryPost, TentFeedRequestBoundaryType boundaryType)
         {
             Ensure.Argument.IsNotNull(boundaryPost, nameof(boundaryPost));
             var requestPost = this.requestPostFactory.FromPost(boundaryPost);
             return this.AddPostBoundary(requestPost, boundaryType);
         }
 
-        public ITentFeedRequest<T> AddPostBoundary(ITentRequestPost boundaryPost, TentFeedRequestBoundaryType boundaryType)
+        public ITentFeedRequest AddPostBoundary(ITentRequestPost boundaryPost, TentFeedRequestBoundaryType boundaryType)
         {
             Ensure.Argument.IsNotNull(boundaryPost, nameof(boundaryPost));
             var requestDate = this.requestDateFactory.FromPost(boundaryPost);
             return this.AddBoundary(requestDate, boundaryType);
         }
 
-        public ITentFeedRequest<T> AddBoundary(ITentRequestDate boundaryDate, TentFeedRequestBoundaryType boundaryType)
+        public ITentFeedRequest AddBoundary(ITentRequestDate boundaryDate, TentFeedRequestBoundaryType boundaryType)
         {
             Ensure.Argument.IsNotNull(boundaryDate, nameof(boundaryDate));
             (this.boundaries ?? (this.boundaries = new Dictionary<TentFeedRequestBoundaryType, ITentRequestDate>()))[boundaryType] = boundaryDate;
             return this;
         }
 
-        public ITentFeedRequest<T> SortBy(TentFeedRequestSort newSortBy)
+        public ITentFeedRequest SortBy(TentFeedRequestSort newSortBy)
         {
             this.sortBy = newSortBy;
             return this;
@@ -205,15 +205,15 @@ namespace Campr.Server.Lib.Models.Other
                 filters.Add(r => r.BetterOr(this.types.Select(type => typeCondition(r, type)).Cast<object>().ToArray()));
             }
 
+            // Condition on a single mention.
+            var mentionCondition = new Func<ReqlExpr, ITentRequestPost, ReqlExpr>((r, mention) => r.And(
+                r.G("user").Eq(mention.User.Id),
+                string.IsNullOrWhiteSpace(mention.PostId) ? (object)true : r.G("post").Eq(mention.PostId)
+            ));
+
             // Mentions.
             if (this.mentions != null && this.mentions.Any())
             {
-                // Condition on a single mention.
-                var mentionCondition = new Func<ReqlExpr, ITentRequestPost, ReqlExpr>((r, mention) => r.And(
-                    r.G("user").Eq(mention.User.Id),
-                    string.IsNullOrWhiteSpace(mention.PostId) ? (object)true : r.G("post").Eq(mention.PostId)
-                ));
-
                 // Combine the mention conditions, first by AND, then by OR.
                 filters.Add(r => r.And(this.mentions.Select(andMentions => 
                     r.BetterOr(andMentions.Select(mention => 
@@ -223,23 +223,23 @@ namespace Campr.Server.Lib.Models.Other
             // Not mentions.
             if (this.notMentions != null && this.notMentions.Any())
             {
-                // Condition on a single not mention.
-                var notMentionCondition = new Func<ReqlExpr, ITentRequestPost, ReqlExpr>((r, notMention) => r.And(
-                    r.G("user").Eq(notMention.User.Id),
-                    string.IsNullOrWhiteSpace(notMention.PostId) ? (object)true : r.G("post").Eq(notMention.PostId)
-                ).Not());
-
                 // Combine the not mention conditions, first by AND, then by OR.
                 filters.Add(r => r.And(this.notMentions.Select(andNotMentions =>
                     r.BetterOr(andNotMentions.Select(notMention =>
-                        notMentionCondition(r, notMention)).Cast<object>().ToArray()))));
+                        mentionCondition(r, notMention).Not()).Cast<object>().ToArray()))));
             }
+
+            // Permissions.
+            filters.Add(r => r.Or(
+                r.G("user").Eq(ownerId),
+                r.G("permissions").G("public").Eq(true),  
+                r.G("permissions").G("users").Contains(ownerId)));
 
             // Apply all the filters as part of an AND expression.
             query = query.Filter(r => r.And(filters.Select(f => f(r)).Cast<object>().ToArray()));
 
             // Set the order-by depending on the boundary type.
-            query = query.OrderBy(new { index = this.boundaries.ContainsKey(TentFeedRequestBoundaryType.Since) ? R.Desc(index) : (object)index });
+            query = query.OrderBy(new { index = this.boundaries.ContainsKey(TentFeedRequestBoundaryType.Since) ? rdb.Desc(index) : (object)index });
             
             // Apply the skip.
             if (this.skip.HasValue)

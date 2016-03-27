@@ -104,7 +104,7 @@ namespace Campr.Server.Middleware
 
 
                 // If this is an app authorization post, authenticate as the user.
-                if (credentialsTargetPost.Type == this.tentConstants.AppAuthorizationPostType
+                if (credentialsTargetPost.Type.Type == this.tentConstants.AppAuthorizationPostType.Type
                   && credentialsTargetPost.Mentions != null)
                 {
                     // Extract the first mention of the App Authorization to get the App Id.
@@ -138,7 +138,7 @@ namespace Campr.Server.Middleware
                 }
                 
                 // If this is an App post, authenticate as an app.
-                if (credentialsTargetPost.Type == this.tentConstants.AppPostType)
+                if (credentialsTargetPost.Type.Type == this.tentConstants.AppPostType.Type)
                 {
                     var identity = new ClaimsIdentity(new[]
                     {
@@ -150,7 +150,7 @@ namespace Campr.Server.Middleware
                 }
                 
                 // If this is a relationship post, authenticate as a remote server.
-                if (credentialsTargetPost.Type.StartsWith(this.tentConstants.RelationshipPostType)
+                if (credentialsTargetPost.Type.Type == this.tentConstants.RelationshipPostType.Type
                     && credentialsTargetPost.Mentions != null)
                 {
                     // Extract the first mention of the Relationship to get our user's Id.

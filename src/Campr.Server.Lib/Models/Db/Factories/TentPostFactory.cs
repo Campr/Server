@@ -1,5 +1,6 @@
 ﻿using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Infrastructure;
+using Campr.Server.Lib.Models.Other;
 using Campr.Server.Lib.Models.Tent;
 
 namespace Campr.Server.Lib.Models.Db.Factories
@@ -14,7 +15,7 @@ namespace Campr.Server.Lib.Models.Db.Factories
 
         private readonly ITextHelpers textHelpers;
         
-        public ITentPostFactoryBuilder<T> FromContent<T>(User user, T content, string type) where T : ModelBase
+        public ITentPostFactoryBuilder<T> FromContent<T>(User user, T content, ITentPostType type) where T : ModelBase
         {
             return new TentPostFactoryBuilder<T>(new TentPost<T>
             {

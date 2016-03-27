@@ -4,8 +4,8 @@
     {
         public TentPostType(
             string type,
-            string subType,
-            bool wildcard)
+            string subType = null,
+            bool wildcard = false)
         {
             this.Type = type;
             this.SubType = subType;
@@ -29,9 +29,14 @@
                 : $"{this.Type}#{this.SubType}";
         }
 
-        public override bool Equals(object obj)
+        public bool Equals(ITentPostType other)
         {
-            return this.ToString() == obj.ToString();
+            return this.ToString() == other.ToString();
+        }
+
+        public override bool Equals(object other)
+        {
+            return this.Equals(other as ITentPostType);
         }
 
         public override int GetHashCode()
