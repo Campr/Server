@@ -1,39 +1,33 @@
 ﻿using System;
 using System.Linq;
+using Campr.Server.Lib.Enums;
 using Campr.Server.Lib.Extensions;
 using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Infrastructure;
-using Campr.Server.Lib.Models.Tent;
 
 namespace Campr.Server.Lib.Models.Other.Factories
 {
     class TentRequestDateFactory : ITentRequestDateFactory
     {
-        public TentRequestDateFactory(
-            IServiceProvider serviceProvider, 
-            IUriHelpers uriHelpers)
+        public TentRequestDateFactory(IUriHelpers uriHelpers)
         {
-            Ensure.Argument.IsNotNull(serviceProvider, nameof(serviceProvider));
-            Ensure.Argument.IsNotNull(uriHelpers, nameof(serviceProvider));
-
-            this.serviceProvider = serviceProvider;
+            Ensure.Argument.IsNotNull(uriHelpers, nameof(uriHelpers));
             this.uriHelpers = uriHelpers;
 
             // Build the MinValue TentRequestDate.
-            this.minValue = this.serviceProvider.Resolve<TentRequestDate>();
-            this.minValue.Date = DateTime.MinValue;
+            this.minValue = new TentRequestDate(uriHelpers)
+            {
+                Date = DateTime.MinValue
+            };
         }
-
-        private readonly IServiceProvider serviceProvider;
+        
         private readonly IUriHelpers uriHelpers;
         private readonly TentRequestDate minValue;
 
         public ITentRequestDate FromString(string date)
         {
             Ensure.Argument.IsNotNullOrWhiteSpace(date, nameof(date));
-
-            var result = this.serviceProvider.Resolve<TentRequestDate>();
-            var requestDateParts = date.Split('+', ' ');
+            var requestDateParts = date.Split('+');
 
             // Make sure we have something in the array.
             if (!requestDateParts.Any())
@@ -41,29 +35,51 @@ namespace Campr.Server.Lib.Models.Other.Factories
 
             // Try to extract the date.
             var dateValue = requestDateParts[0].TryParseLong();
-            if (dateValue.HasValue)
-            {
-                result.Date = dateValue.Value.FromUnixTime();
+            if (!dateValue.HasValue)
+                throw new ArgumentOutOfRangeException(nameof(date), "The provided Tent date isn't valid.");
 
-                // Extract the version, if any.
-                if (requestDateParts.Length > 1)
-                    result.Version = this.uriHelpers.UrlDecode(requestDateParts[1]);
-            }
-            // Otherwise, this may be entity + postId situation.
-            else if (requestDateParts.Length > 1)
+            // Create the resulting Request Date object.
+            var result = new TentRequestDate(this.uriHelpers)
             {
-                result.Entity = this.uriHelpers.UrlDecode(requestDateParts[0]);
-                result.PostId = this.uriHelpers.UrlDecode(requestDateParts[1]);
-            }
+                Date = dateValue.Value.FromUnixTime()
+            };
+
+            // Extract the version, if any.
+            if (requestDateParts.Length > 1)
+                result.Version = this.uriHelpers.UrlDecode(requestDateParts[1]);
 
             return result;
         }
 
-        public ITentRequestDate FromPost(ITentRequestPost post)
+        public ITentRequestDate FromPost(ITentRequestPost post, TentFeedRequestSort sortBy)
         {
             Ensure.Argument.IsNotNull(post, nameof(post));
-            // TODO.
-            return null;
+            Ensure.Argument.IsNotNull(post.Post, nameof(post.Post));
+
+            // Create the resulting Request Date object.
+            var result = new TentRequestDate(this.uriHelpers)
+            {
+                Version = post.Post.Version.Id
+            };
+
+            // Pick the correct date on the specified post.
+            switch (sortBy)
+            {
+                case TentFeedRequestSort.PublishedAt:
+                    result.Date = post.Post.PublishedAt.GetValueOrDefault();
+                    break;
+                case TentFeedRequestSort.ReceivedAt:
+                    result.Date = post.Post.ReceivedAt.GetValueOrDefault();
+                    break;
+                case TentFeedRequestSort.VersionPublishedAt:
+                    result.Date = post.Post.Version.PublishedAt.GetValueOrDefault();
+                    break;
+                default:
+                    result.Date = post.Post.Version.ReceivedAt.GetValueOrDefault();
+                    break;
+            }
+
+            return result;
         }
 
         public ITentRequestDate MinValue()

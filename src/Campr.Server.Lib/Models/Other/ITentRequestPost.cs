@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading;
+using System.Threading.Tasks;
 using Campr.Server.Lib.Models.Db;
 using Campr.Server.Lib.Models.Tent;
 
@@ -8,6 +9,6 @@ namespace Campr.Server.Lib.Models.Other
     {
         User User { get; }
         TentPost Post { get; }
-        Task Resolve();
+        Task Resolve(CancellationToken cancellationToken = default(CancellationToken));
     }
 }

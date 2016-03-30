@@ -192,9 +192,9 @@ namespace Campr.Server.Lib.Models.Other
             var index = this.TableIndex();
 
             // Find the date boundary values.
-            var lowerDateBound = this.boundaries.TryGetValue(TentFeedRequestBoundaryType.Since)?.Date?.ToUnixTime()
-                ?? this.boundaries.TryGetValue(TentFeedRequestBoundaryType.Until)?.Date?.ToUnixTime();
-            var upperDateBound = this.boundaries.TryGetValue(TentFeedRequestBoundaryType.Before)?.Date?.ToUnixTime();
+            var lowerDateBound = this.boundaries.TryGetValue(TentFeedRequestBoundaryType.Since)?.Date.ToUnixTime()
+                ?? this.boundaries.TryGetValue(TentFeedRequestBoundaryType.Until)?.Date.ToUnixTime();
+            var upperDateBound = this.boundaries.TryGetValue(TentFeedRequestBoundaryType.Before)?.Date.ToUnixTime();
 
             // Filter by owner and date.
             var query = (ReqlExpr)table.Between(
@@ -204,7 +204,8 @@ namespace Campr.Server.Lib.Models.Other
             var filters = new List<Func<ReqlExpr, ReqlExpr>>();
 
             // Entities.
-
+            if (this.users != null && this.users.Any())
+                filters.Add(r => r.BetterOr(this.users.Select(u => r.G("user").Eq(u.Id)).Cast<object>().ToArray()));
 
             // Post type filter.
             if (this.types != null && this.types.Any())
@@ -221,7 +222,7 @@ namespace Campr.Server.Lib.Models.Other
             // Condition on a single mention.
             var mentionCondition = new Func<ReqlExpr, ITentRequestPost, ReqlExpr>((r, mention) => r.And(
                 r.G("user").Eq(mention.User.Id),
-                string.IsNullOrWhiteSpace(mention.PostId) ? (object)true : r.G("post").Eq(mention.PostId)
+                mention.Post == null ? (object)true : r.G("post").Eq(mention.Post.Id)
             ));
 
             // Mentions.
@@ -275,11 +276,11 @@ namespace Campr.Server.Lib.Models.Other
             var resolveEntitiesTasks = this.temporaryEntities?.Select(e => this.userLogic.GetUserAsync(e, cancellationToken)).ToList();
 
             // Resolve mentions and not mentions posts and users.
-            var resolveMentions = this.mentions?.SelectMany(ms => ms.Select(m => m.Resolve())).ToList();
-            var resolveNotMentions = this.notMentions?.SelectMany(ms => ms.Select(m => m.Resolve())).ToList();
+            var resolveMentions = this.mentions?.SelectMany(ms => ms.Select(m => m.Resolve(cancellationToken))).ToList();
+            var resolveNotMentions = this.notMentions?.SelectMany(ms => ms.Select(m => m.Resolve(cancellationToken))).ToList();
 
             // Resolve boundary posts.
-            var resolveBoundaryPosts = this.temporaryBoundaryPosts?.Values.Select(bp => bp.Resolve()).ToList();
+            var resolveBoundaryPosts = this.temporaryBoundaryPosts?.Values.Select(bp => bp.Resolve(cancellationToken)).ToList();
 
             // Wait for tasks to complete.
             var resolveTasks = new List<IEnumerable<Task>>
@@ -330,8 +331,8 @@ namespace Campr.Server.Lib.Models.Other
                 result.Add("types", new List<IEnumerable<string>> { this.types.Select(t => t.ToString()) });
 
             // Entities.
-            if (this.entities != null && this.entities.Any())
-                result.Add("entities", this.entities);
+            if (this.users != null && this.users.Any())
+                result.Add("entities", this.users.Select(u => u.Entity));
             else if (this.specialEntities.HasFlag(TentFeedRequestSpecialEntities.Followings))
                 result.Add("entities", "followings");
             else if (this.specialEntities.HasFlag(TentFeedRequestSpecialEntities.Followers))

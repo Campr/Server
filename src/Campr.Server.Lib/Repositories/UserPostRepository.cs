@@ -61,7 +61,8 @@ namespace Campr.Server.Lib.Repositories
         public async Task<IList<UserPost>> GetAsync(string ownerId, ITentFeedRequest feedRequest, CancellationToken cancellationToken = new CancellationToken())
         {
             // Build and run the query using the provided Feed Request.
-            var results = await this.db.Run(c => feedRequest.AsTableQuery(this.db.R, this.table, ownerId)
+            var tableQuery = await feedRequest.AsTableQueryAsync(this.db.R, this.table, ownerId, cancellationToken);
+            var results = await this.db.Run(c => tableQuery
                 .Filter(r => this.db.R.Not(r.HasFields("deleted_at")))
                 .RunResultAsync<IList<UserPost>>(c, null, cancellationToken), cancellationToken);
 
@@ -69,10 +70,11 @@ namespace Campr.Server.Lib.Repositories
             return results.Where(p => p != null).ToList();
         }
 
-        public Task<long> CountAsync(string ownerId, ITentFeedRequest feedRequest, CancellationToken cancellationToken = new CancellationToken())
+        public async Task<long> CountAsync(string ownerId, ITentFeedRequest feedRequest, CancellationToken cancellationToken = new CancellationToken())
         {
             // Build and run the query using the provided Feed Request.
-            return this.db.Run(c => feedRequest.AsTableQuery(this.db.R, this.table, ownerId)
+            var tableQuery = await feedRequest.AsTableQueryAsync(this.db.R, this.table, ownerId, cancellationToken);
+            return await this.db.Run(c => tableQuery
                 .Filter(r => this.db.R.Not(r.HasFields("deleted_at")))
                 .Count()
                 .RunResultAsync<long>(c, null, cancellationToken), cancellationToken);
