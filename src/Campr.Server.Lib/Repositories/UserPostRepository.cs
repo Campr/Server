@@ -63,7 +63,6 @@ namespace Campr.Server.Lib.Repositories
             // Build and run the query using the provided Feed Request.
             var tableQuery = await feedRequest.AsTableQueryAsync(this.db.R, this.table, ownerId, cancellationToken);
             var results = await this.db.Run(c => tableQuery
-                .Filter(r => this.db.R.Not(r.HasFields("deleted_at")))
                 .RunResultAsync<IList<UserPost>>(c, null, cancellationToken), cancellationToken);
 
             // Filter the results and return.
@@ -75,7 +74,6 @@ namespace Campr.Server.Lib.Repositories
             // Build and run the query using the provided Feed Request.
             var tableQuery = await feedRequest.AsTableQueryAsync(this.db.R, this.table, ownerId, cancellationToken);
             return await this.db.Run(c => tableQuery
-                .Filter(r => this.db.R.Not(r.HasFields("deleted_at")))
                 .Count()
                 .RunResultAsync<long>(c, null, cancellationToken), cancellationToken);
         }

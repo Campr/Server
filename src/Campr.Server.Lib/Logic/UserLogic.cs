@@ -13,23 +13,24 @@ namespace Campr.Server.Lib.Logic
 {
     class UserLogic : IUserLogic
     {
-        public UserLogic(IUserRepository userRepository,
+        public UserLogic(
+            IUserRepository userRepository,
             IUserFactory userFactory,
-            IDiscoveryService discoveryService,
+            //IDiscoveryService discoveryService,
             ILoggingService loggerService,
             IUriHelpers uriHelpers,
             ICryptoHelpers cryptoHelpers)
         {
             Ensure.Argument.IsNotNull(userRepository, nameof(userRepository));
             Ensure.Argument.IsNotNull(userFactory, nameof(userFactory));
-            Ensure.Argument.IsNotNull(discoveryService, nameof(discoveryService));
+            //Ensure.Argument.IsNotNull(discoveryService, nameof(discoveryService));
             Ensure.Argument.IsNotNull(loggerService, nameof(loggerService));
             Ensure.Argument.IsNotNull(uriHelpers, nameof(uriHelpers));
             Ensure.Argument.IsNotNull(cryptoHelpers, nameof(cryptoHelpers));
             
             this.userRepository = userRepository;
             this.userFactory = userFactory;
-            this.discoveryService = discoveryService;
+            //this.discoveryService = discoveryService;
             this.loggerService = loggerService;
             this.uriHelpers = uriHelpers;
             this.cryptoHelpers = cryptoHelpers;
@@ -37,7 +38,7 @@ namespace Campr.Server.Lib.Logic
         
         private readonly IUserRepository userRepository;
         private readonly IUserFactory userFactory;
-        private readonly IDiscoveryService discoveryService;
+        //private readonly IDiscoveryService discoveryService;
         private readonly ILoggingService loggerService;
         private readonly IUriHelpers uriHelpers;
         private readonly ICryptoHelpers cryptoHelpers;
@@ -76,20 +77,20 @@ namespace Campr.Server.Lib.Logic
                     if (this.uriHelpers.IsCamprHandle(entityOrHandle))
                         return null;
 
-                    // Otherwise, retrieve the entity's profile (with discovery).
-                    var metaPost = await this.discoveryService.DiscoverUriAsync<TentContentMeta>(new Uri(entityOrHandle, UriKind.Absolute));
-                    if (metaPost != null)
-                    {
-                        // If the actual entity was different, Try to find the corresponding user in our db.
-                        if (metaPost.Content.Entity != entityOrHandle)
-                        {
-                            userId = await this.GetUserIdAsync(metaPost.Entity, cancellationToken);
-                            if (!string.IsNullOrWhiteSpace(userId))
-                                return await this.userRepository.GetAsync(userId, cancellationToken);
+                    //// Otherwise, retrieve the entity's profile (with discovery).
+                    //var metaPost = await this.discoveryService.DiscoverUriAsync<TentContentMeta>(new Uri(entityOrHandle, UriKind.Absolute));
+                    //if (metaPost != null)
+                    //{
+                    //    // If the actual entity was different, Try to find the corresponding user in our db.
+                    //    if (metaPost.Content.Entity != entityOrHandle)
+                    //    {
+                    //        userId = await this.GetUserIdAsync(metaPost.Entity, cancellationToken);
+                    //        if (!string.IsNullOrWhiteSpace(userId))
+                    //            return await this.userRepository.GetAsync(userId, cancellationToken);
 
-                            entityOrHandle = metaPost.Entity;
-                        }
-                    }
+                    //        entityOrHandle = metaPost.Entity;
+                    //    }
+                    //}
 
                     // Otherwise, create the user.
                     var newUser = this.userFactory.CreateUserFromEntity(entityOrHandle);

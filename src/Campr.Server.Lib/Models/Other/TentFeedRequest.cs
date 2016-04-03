@@ -192,14 +192,17 @@ namespace Campr.Server.Lib.Models.Other
             var index = this.TableIndex();
 
             // Find the date boundary values.
-            var lowerDateBound = this.boundaries.TryGetValue(TentFeedRequestBoundaryType.Since)?.Date.ToUnixTime()
-                ?? this.boundaries.TryGetValue(TentFeedRequestBoundaryType.Until)?.Date.ToUnixTime();
-            var upperDateBound = this.boundaries.TryGetValue(TentFeedRequestBoundaryType.Before)?.Date.ToUnixTime();
+            var lowerDateBound = this.boundaries?.TryGetValue(TentFeedRequestBoundaryType.Since)?.Date.ToUnixTime()
+                ?? this.boundaries?.TryGetValue(TentFeedRequestBoundaryType.Until)?.Date.ToUnixTime();
+            var upperDateBound = this.boundaries?.TryGetValue(TentFeedRequestBoundaryType.Before)?.Date.ToUnixTime();
 
             // Filter by owner and date.
             var query = (ReqlExpr)table.Between(
                 new object[] { ownerId, (object)lowerDateBound ?? rdb.Minval() },
                 new object[] { ownerId, (object)upperDateBound ?? rdb.Maxval() })[new { index }];
+
+            // Set the order-by depending on the boundary type.
+            query = query.OrderBy()[new { index = this.boundaries != null && this.boundaries.ContainsKey(TentFeedRequestBoundaryType.Since) ? (object)rdb.Asc(index) : (object)rdb.Desc(index) }];
 
             var filters = new List<Func<ReqlExpr, ReqlExpr>>();
 
@@ -212,15 +215,15 @@ namespace Campr.Server.Lib.Models.Other
             {
                 // Condition on a single type.
                 var typeCondition = new Func<ReqlExpr, ITentPostType, ReqlExpr>((r, type) => type.WildCard
-                    ? (ReqlExpr)r.Match("^" + type.Type)
-                    : r.Eq(type.ToString()));
+                    ? (ReqlExpr)r.G("type").Match("^" + type.Type)
+                    : r.G("type").Eq(type.ToString()));
 
                 // Combine the type conditions as part of an OR expression.
                 filters.Add(r => r.BetterOr(this.types.Select(type => typeCondition(r, type)).Cast<object>().ToArray()));
             }
 
             // Condition on a single mention.
-            var mentionCondition = new Func<ReqlExpr, ITentRequestPost, ReqlExpr>((r, mention) => r.And(
+            var mentionCondition = new Func<ReqlExpr, ITentRequestPost, ReqlExpr>((r, mention) => r.BetterAnd(
                 r.G("user").Eq(mention.User.Id),
                 mention.Post == null ? (object)true : r.G("post").Eq(mention.Post.Id)
             ));
@@ -229,7 +232,7 @@ namespace Campr.Server.Lib.Models.Other
             if (this.mentions != null && this.mentions.Any())
             {
                 // Combine the mention conditions, first by AND, then by OR.
-                filters.Add(r => r.And(this.mentions.Select(andMentions => 
+                filters.Add(r => r.BetterAnd(this.mentions.Select(andMentions => 
                     r.BetterOr(andMentions.Select(mention => 
                         mentionCondition(r, mention)).Cast<object>().ToArray()))));
             }
@@ -238,23 +241,15 @@ namespace Campr.Server.Lib.Models.Other
             if (this.notMentions != null && this.notMentions.Any())
             {
                 // Combine the not mention conditions, first by AND, then by OR.
-                filters.Add(r => r.And(this.notMentions.Select(andNotMentions =>
+                filters.Add(r => r.BetterAnd(this.notMentions.Select(andNotMentions =>
                     r.BetterOr(andNotMentions.Select(notMention =>
                         mentionCondition(r, notMention).Not()).Cast<object>().ToArray()))));
             }
 
-            // Permissions.
-            filters.Add(r => r.Or(
-                r.G("user").Eq(ownerId),
-                r.G("permissions").G("public").Eq(true),  
-                r.G("permissions").G("users").Contains(ownerId)));
-
             // Apply all the filters as part of an AND expression.
-            query = query.Filter(r => r.And(filters.Select(f => f(r)).Cast<object>().ToArray()));
+            if (filters.Any())
+                query = query.Filter(r => r.BetterAnd(filters.Select(f => f(r)).Cast<object>().ToArray()));
 
-            // Set the order-by depending on the boundary type.
-            query = query.OrderBy(new { index = this.boundaries.ContainsKey(TentFeedRequestBoundaryType.Since) ? rdb.Desc(index) : (object)index });
-            
             // Apply the skip.
             if (this.skip.HasValue)
                 query = query.Skip(this.skip.Value);
@@ -308,17 +303,17 @@ namespace Campr.Server.Lib.Models.Other
         {
             switch (this.sortBy)
             {
-                case TentFeedRequestSort.PublishedAt:
-                    return "owner_publishedat";
-
-                case TentFeedRequestSort.ReceivedAt:
-                    return "owner_receivedat";
-
                 case TentFeedRequestSort.VersionPublishedAt:
                     return "owner_versionpublishedat";
 
-                default:
+                case TentFeedRequestSort.VersionReceivedAt:
                     return "owner_versionreceivedat";
+
+                case TentFeedRequestSort.PublishedAt:
+                    return "owner_publishedat";
+
+                default:
+                    return "owner_receivedat";
             }
         }
 

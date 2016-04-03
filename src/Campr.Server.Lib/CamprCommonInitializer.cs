@@ -6,9 +6,11 @@ using Campr.Server.Lib.Connectors.Queues.Azure;
 using Campr.Server.Lib.Connectors.RethinkDb;
 using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Json;
+using Campr.Server.Lib.Logic;
 using Campr.Server.Lib.Models.Db.Factories;
 using Campr.Server.Lib.Models.Other.Factories;
 using Campr.Server.Lib.Repositories;
+using Campr.Server.Lib.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Campr.Server.Lib
@@ -41,12 +43,15 @@ namespace Campr.Server.Lib
             //services.AddTransient<IHttpClient, HttpClientWrapper>();
             //services.AddSingleton<IHttpRequestFactory, HttpRequestFactory>();
             //services.AddSingleton<ITentClient, TentClient>();
-            //services.AddSingleton<IDiscoveryService, DiscoveryService>();
+            services.AddSingleton<IDiscoveryService, DiscoveryService>();
 
             // Model factories.
             services.AddSingleton<IUserFactory, UserFactory>();
             services.AddSingleton<ITentPostFactory, TentPostFactory>();
             services.AddSingleton<IUserPostFactory, UserPostFactory>();
+            services.AddSingleton<ITentRequestPostFactory, TentRequestPostFactory>();
+            services.AddSingleton<ITentRequestDateFactory, TentRequestDateFactory>();
+            services.AddSingleton<ITentFeedRequestFactory, TentFeedRequestFactory>();
             //services.AddSingleton<IDbSessionFactory, DbSessionFactory>();
             //services.AddSingleton<IDbPostFactory, DbPostFactory>();
             //services.AddSingleton<IDbAttachmentFactory, DbAttachmentFactory>();
@@ -78,7 +83,7 @@ namespace Campr.Server.Lib
 
             //// App logic.
             //services.AddSingleton<IBewitLogic, BewitLogic>();
-            //services.AddSingleton<IUserLogic, UserLogic>();
+            services.AddSingleton<IUserLogic, UserLogic>();
             //services.AddSingleton<IFollowLogic, FollowLogic>();
             //services.AddSingleton<ITypeSpecificLogic, TypeSpecificLogic>();
             //services.AddSingleton<IPostLogic, PostLogic>();

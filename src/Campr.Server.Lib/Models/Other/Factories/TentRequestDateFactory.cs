@@ -65,17 +65,17 @@ namespace Campr.Server.Lib.Models.Other.Factories
             // Pick the correct date on the specified post.
             switch (sortBy)
             {
-                case TentFeedRequestSort.PublishedAt:
-                    result.Date = post.Post.PublishedAt.GetValueOrDefault();
-                    break;
-                case TentFeedRequestSort.ReceivedAt:
-                    result.Date = post.Post.ReceivedAt.GetValueOrDefault();
-                    break;
                 case TentFeedRequestSort.VersionPublishedAt:
                     result.Date = post.Post.Version.PublishedAt.GetValueOrDefault();
                     break;
-                default:
+                case TentFeedRequestSort.VersionReceivedAt:
                     result.Date = post.Post.Version.ReceivedAt.GetValueOrDefault();
+                    break;
+                case TentFeedRequestSort.PublishedAt:
+                    result.Date = post.Post.PublishedAt.GetValueOrDefault();
+                    break;
+                default:
+                    result.Date = post.Post.ReceivedAt.GetValueOrDefault();
                     break;
             }
 
