@@ -30,6 +30,7 @@ namespace Campr.Server.Lib.Models.Other
 
         Task<Uri> AsUriAsync(string parameter = null, CancellationToken cancellationToken = default(CancellationToken));
         Task<ReqlExpr> AsTableQueryAsync(RethinkDB rdb, Table table, string ownerId, CancellationToken cancellationToken = default(CancellationToken));
+        Task<ReqlExpr> AsCountTableQueryAsync(RethinkDB rdb, Table table, string ownerId, CancellationToken cancellationToken = default(CancellationToken));
         ITentHawkSignature AsCredentials();
         uint? AsLimit();
     }

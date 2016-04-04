@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Linq;
+using Campr.Server.Lib.Extensions;
 using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Infrastructure;
 using Campr.Server.Lib.Models.Tent;
@@ -20,23 +21,26 @@ namespace Campr.Server.Lib.Models.Db.Factories
         }
 
         private readonly IModelHelpers modelHelpers;
-        private readonly TentPost<T> post; 
+        private readonly TentPost<T> post;
 
-        public ITentPostFactoryBuilder<T> WithMentions(IList<TentMention> mentions)
+        public ITentPostFactoryBuilder<T> WithMentions(params TentMention[] mentions)
         {
-            this.post.Mentions = mentions;
+            Ensure.Argument.IsNotNull(mentions, nameof(mentions));
+            this.post.Mentions = mentions.ToList();
             return this;
         }
 
-        public ITentPostFactoryBuilder<T> WithPostRefs(IList<TentPostRef> postRefs)
+        public ITentPostFactoryBuilder<T> WithPostRefs(params TentPostRef[] postRefs)
         {
-            this.post.Refs = postRefs;
+            Ensure.Argument.IsNotNull(postRefs, nameof(postRefs));
+            this.post.Refs = postRefs.ToList();
             return this;
         }
 
-        public ITentPostFactoryBuilder<T> WithAttachments(IList<TentPostAttachment> attachments)
+        public ITentPostFactoryBuilder<T> WithAttachments(params TentPostAttachment[] attachments)
         {
-            this.post.Attachments = attachments;
+            Ensure.Argument.IsNotNull(attachments, nameof(attachments));
+            this.post.Attachments = attachments.ToList();
             return this;
         }
 
@@ -61,6 +65,12 @@ namespace Campr.Server.Lib.Models.Db.Factories
 
             if (!this.post.ReceivedAt.HasValue)
                 this.post.ReceivedAt = date;
+
+            // Normalize dates to milliseconds.
+            this.post.Version.PublishedAt = this.post.Version.PublishedAt.Value.TruncateToMilliseconds();
+            this.post.Version.ReceivedAt = this.post.Version.ReceivedAt.Value.TruncateToMilliseconds();
+            this.post.PublishedAt = this.post.PublishedAt.Value.TruncateToMilliseconds();
+            this.post.ReceivedAt = this.post.ReceivedAt.Value.TruncateToMilliseconds();
 
             // Compute the Version Id and set the dates.
             this.post.Version.Id = this.modelHelpers.GetVersionIdFromPost(this.post);

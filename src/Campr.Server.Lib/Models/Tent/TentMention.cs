@@ -54,16 +54,6 @@ namespace Campr.Server.Lib.Models.Tent
         
         [DbProperty]
         public bool FoundPost { get; set; }
-        
-        public string MentionId
-        {
-            get
-            {
-                return this.UserId != null
-                  ? this.UserId + this.PostId
-                  : null;
-            }
-        }
 
         [DbProperty]
         public List<TentPostIdentifier> ReplyChain { get; set; }

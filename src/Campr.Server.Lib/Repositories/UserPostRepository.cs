@@ -72,7 +72,7 @@ namespace Campr.Server.Lib.Repositories
         public async Task<long> CountAsync(string ownerId, ITentFeedRequest feedRequest, CancellationToken cancellationToken = new CancellationToken())
         {
             // Build and run the query using the provided Feed Request.
-            var tableQuery = await feedRequest.AsTableQueryAsync(this.db.R, this.table, ownerId, cancellationToken);
+            var tableQuery = await feedRequest.AsCountTableQueryAsync(this.db.R, this.table, ownerId, cancellationToken);
             return await this.db.Run(c => tableQuery
                 .Count()
                 .RunResultAsync<long>(c, null, cancellationToken), cancellationToken);

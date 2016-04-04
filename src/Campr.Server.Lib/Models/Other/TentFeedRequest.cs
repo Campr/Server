@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Campr.Server.Lib.Enums;
@@ -183,7 +184,7 @@ namespace Campr.Server.Lib.Models.Other
             throw new NotImplementedException();
         }
 
-        public async Task<ReqlExpr> AsTableQueryAsync(RethinkDB rdb, Table table, string ownerId, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<ReqlExpr> AsCountTableQueryAsync(RethinkDB rdb, Table table, string ownerId, CancellationToken cancellationToken = new CancellationToken())
         {
             // Make sure we have all the data we need.
             await this.resolveDependenciesRunner.RunOnce(cancellationToken);
@@ -192,14 +193,19 @@ namespace Campr.Server.Lib.Models.Other
             var index = this.TableIndex();
 
             // Find the date boundary values.
-            var lowerDateBound = this.boundaries?.TryGetValue(TentFeedRequestBoundaryType.Since)?.Date.ToUnixTime()
-                ?? this.boundaries?.TryGetValue(TentFeedRequestBoundaryType.Until)?.Date.ToUnixTime();
-            var upperDateBound = this.boundaries?.TryGetValue(TentFeedRequestBoundaryType.Before)?.Date.ToUnixTime();
+            var lowerDateBound = this.boundaries?.TryGetValue(TentFeedRequestBoundaryType.Since)?.Date
+                ?? this.boundaries?.TryGetValue(TentFeedRequestBoundaryType.Until)?.Date;
+            var upperDateBound = this.boundaries?.TryGetValue(TentFeedRequestBoundaryType.Before)?.Date;
 
             // Filter by owner and date.
             var query = (ReqlExpr)table.Between(
-                new object[] { ownerId, (object)lowerDateBound ?? rdb.Minval() },
-                new object[] { ownerId, (object)upperDateBound ?? rdb.Maxval() })[new { index }];
+                new object[] { ownerId, lowerDateBound != null ? rdb.Expr(lowerDateBound) : rdb.Minval() },
+                new object[] { ownerId, upperDateBound != null ? rdb.Expr(upperDateBound) : rdb.Maxval() })[new
+                {
+                    index,
+                    left_bound = "open",
+                    right_bound = "open"
+                }];
 
             // Set the order-by depending on the boundary type.
             query = query.OrderBy()[new { index = this.boundaries != null && this.boundaries.ContainsKey(TentFeedRequestBoundaryType.Since) ? (object)rdb.Asc(index) : (object)rdb.Desc(index) }];
@@ -215,7 +221,7 @@ namespace Campr.Server.Lib.Models.Other
             {
                 // Condition on a single type.
                 var typeCondition = new Func<ReqlExpr, ITentPostType, ReqlExpr>((r, type) => type.WildCard
-                    ? (ReqlExpr)r.G("type").Match("^" + type.Type)
+                    ? (ReqlExpr)r.G("type").Match($"^{Regex.Escape(type.Type)}#")
                     : r.G("type").Eq(type.ToString()));
 
                 // Combine the type conditions as part of an OR expression.
@@ -223,32 +229,48 @@ namespace Campr.Server.Lib.Models.Other
             }
 
             // Condition on a single mention.
-            var mentionCondition = new Func<ReqlExpr, ITentRequestPost, ReqlExpr>((r, mention) => r.BetterAnd(
-                r.G("user").Eq(mention.User.Id),
-                mention.Post == null ? (object)true : r.G("post").Eq(mention.Post.Id)
-            ));
+            var mentionCondition = new Func<ReqlExpr, ITentRequestPost, ReqlExpr>((r, mention) => r.G("mentions")
+                // Map each mention for the current row to a boolean.
+                .Map(m => mention.Post == null
+                    ? m.G("user").Eq(mention.User.Id)
+                    : m.BetterAnd(m.G("user").Eq(mention.User.Id), m.G("post").Eq(mention.Post.Id)))
+                // Reduce the resulting booleans to just one (any).
+                .Reduce((b1, b2) => r.BetterOr(b1, b2))
+                .Default_(false));
 
             // Mentions.
             if (this.mentions != null && this.mentions.Any())
             {
                 // Combine the mention conditions, first by AND, then by OR.
-                filters.Add(r => r.BetterAnd(this.mentions.Select(andMentions => 
-                    r.BetterOr(andMentions.Select(mention => 
-                        mentionCondition(r, mention)).Cast<object>().ToArray()))));
+                filters.Add(r => r.BetterAnd(this.mentions
+                    .Select(andMentions =>
+                        r.BetterOr(andMentions.Select(mention =>
+                            mentionCondition(r, mention)).Cast<object>().ToArray()))
+                    .Cast<object>().ToArray()));
             }
 
             // Not mentions.
             if (this.notMentions != null && this.notMentions.Any())
             {
                 // Combine the not mention conditions, first by AND, then by OR.
-                filters.Add(r => r.BetterAnd(this.notMentions.Select(andNotMentions =>
-                    r.BetterOr(andNotMentions.Select(notMention =>
-                        mentionCondition(r, notMention).Not()).Cast<object>().ToArray()))));
+                filters.Add(r => r.BetterAnd(this.notMentions
+                    .Select(andNotMentions =>
+                        r.BetterOr(andNotMentions.Select(notMention =>
+                            mentionCondition(r, notMention).Not()).Cast<object>().ToArray()))
+                    .Cast<object>().ToArray()));
             }
 
             // Apply all the filters as part of an AND expression.
             if (filters.Any())
                 query = query.Filter(r => r.BetterAnd(filters.Select(f => f(r)).Cast<object>().ToArray()));
+
+            return query;
+        }
+
+        public async Task<ReqlExpr> AsTableQueryAsync(RethinkDB rdb, Table table, string ownerId, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            // Build the base query.
+            var query = await this.AsCountTableQueryAsync(rdb, table, ownerId, cancellationToken);
 
             // Apply the skip.
             if (this.skip.HasValue)

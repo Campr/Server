@@ -30,9 +30,7 @@ namespace Campr.Server.Lib.Extensions
         public static long ToUnixTime(this DateTime self)
         {
             if (self == DateTime.MinValue)
-            {
                 return 0;
-            }
 
             var epoc = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             var delta = self - epoc;
@@ -48,9 +46,7 @@ namespace Campr.Server.Lib.Extensions
         public static long ToSecondTime(this DateTime self)
         {
             if (self == DateTime.MinValue)
-            {
                 return 0;
-            }
 
             var epoc = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             var delta = self - epoc;
@@ -58,6 +54,16 @@ namespace Campr.Server.Lib.Extensions
             if (delta.TotalSeconds < 0) throw new ArgumentOutOfRangeException(InvalidUnixEpochErrorMessage);
 
             return (long)delta.TotalSeconds;
+        }
+
+        /// <summary>
+        ///     Round DateTime to the lower Millisecond bound.
+        /// </summary>
+        /// <param name="self">The DateTime to truncate.</param>
+        /// <returns>The truncated DateTime/</returns>
+        public static DateTime TruncateToMilliseconds(this DateTime self)
+        {
+            return self.AddTicks(-(self.Ticks % TimeSpan.TicksPerMillisecond));
         }
     }
 }
