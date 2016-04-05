@@ -70,6 +70,13 @@ namespace Campr.Server.Lib.Models.Other
             return this;
         }
 
+        public ITentFeedRequest ReplaceUsers(params User[] newUsers)
+        {
+            Ensure.Argument.IsNotNull(newUsers, nameof(newUsers));
+            this.users = newUsers.ToList();
+            return this;
+        }
+
         public ITentFeedRequest AddEntities(params string[] newEntities)
         {
             Ensure.Argument.IsNotNull(newEntities, nameof(newEntities));
@@ -184,7 +191,7 @@ namespace Campr.Server.Lib.Models.Other
             throw new NotImplementedException();
         }
 
-        public async Task<ReqlExpr> AsCountTableQueryAsync(RethinkDB rdb, Table table, string ownerId, CancellationToken cancellationToken = new CancellationToken())
+        public async Task<ReqlExpr> AsCountTableQueryAsync(RethinkDB rdb, Table table, string requesterId, string feedOwnerId, CancellationToken cancellationToken = default(CancellationToken))
         {
             // Make sure we have all the data we need.
             await this.resolveDependenciesRunner.RunOnce(cancellationToken);
@@ -199,8 +206,8 @@ namespace Campr.Server.Lib.Models.Other
 
             // Filter by owner and date.
             var query = (ReqlExpr)table.Between(
-                new object[] { ownerId, lowerDateBound != null ? rdb.Expr(lowerDateBound) : rdb.Minval() },
-                new object[] { ownerId, upperDateBound != null ? rdb.Expr(upperDateBound) : rdb.Maxval() })[new
+                new object[] { feedOwnerId, lowerDateBound != null ? rdb.Expr(lowerDateBound) : rdb.Minval() },
+                new object[] { feedOwnerId, upperDateBound != null ? rdb.Expr(upperDateBound) : rdb.Maxval() })[new
                 {
                     index,
                     left_bound = "open",
@@ -213,8 +220,10 @@ namespace Campr.Server.Lib.Models.Other
             var filters = new List<Func<ReqlExpr, ReqlExpr>>();
 
             // Entities.
-            if (this.users != null && this.users.Any())
-                filters.Add(r => r.BetterOr(this.users.Select(u => r.G("user").Eq(u.Id)).Cast<object>().ToArray()));
+            if (this.specialEntities == TentFeedRequestSpecialEntities.Followings)
+                filters.Add(r => r.G("is_from_following").Eq(true));
+            else if (this.users != null && this.users.Any())
+                filters.Add(r => rdb.BetterOr(this.users.Select(u => r.G("user").Eq(u.Id)).Cast<object>().ToArray()));
 
             // Post type filter.
             if (this.types != null && this.types.Any())
@@ -225,7 +234,7 @@ namespace Campr.Server.Lib.Models.Other
                     : r.G("type").Eq(type.ToString()));
 
                 // Combine the type conditions as part of an OR expression.
-                filters.Add(r => r.BetterOr(this.types.Select(type => typeCondition(r, type)).Cast<object>().ToArray()));
+                filters.Add(r => rdb.BetterOr(this.types.Select(type => typeCondition(r, type)).Cast<object>().ToArray()));
             }
 
             // Condition on a single mention.
@@ -233,18 +242,18 @@ namespace Campr.Server.Lib.Models.Other
                 // Map each mention for the current row to a boolean.
                 .Map(m => mention.Post == null
                     ? m.G("user").Eq(mention.User.Id)
-                    : m.BetterAnd(m.G("user").Eq(mention.User.Id), m.G("post").Eq(mention.Post.Id)))
+                    : rdb.BetterAnd(m.G("user").Eq(mention.User.Id), m.G("post").Eq(mention.Post.Id)))
                 // Reduce the resulting booleans to just one (any).
-                .Reduce((b1, b2) => r.BetterOr(b1, b2))
+                .Reduce((b1, b2) => rdb.BetterOr(b1, b2))
                 .Default_(false));
 
             // Mentions.
             if (this.mentions != null && this.mentions.Any())
             {
                 // Combine the mention conditions, first by AND, then by OR.
-                filters.Add(r => r.BetterAnd(this.mentions
+                filters.Add(r => rdb.BetterAnd(this.mentions
                     .Select(andMentions =>
-                        r.BetterOr(andMentions.Select(mention =>
+                        rdb.BetterOr(andMentions.Select(mention =>
                             mentionCondition(r, mention)).Cast<object>().ToArray()))
                     .Cast<object>().ToArray()));
             }
@@ -253,24 +262,34 @@ namespace Campr.Server.Lib.Models.Other
             if (this.notMentions != null && this.notMentions.Any())
             {
                 // Combine the not mention conditions, first by AND, then by OR.
-                filters.Add(r => r.BetterAnd(this.notMentions
+                filters.Add(r => rdb.BetterAnd(this.notMentions
                     .Select(andNotMentions =>
-                        r.BetterOr(andNotMentions.Select(notMention =>
+                        rdb.BetterOr(andNotMentions.Select(notMention =>
                             mentionCondition(r, notMention).Not()).Cast<object>().ToArray()))
                     .Cast<object>().ToArray()));
             }
 
+            // Permissions.
+            if (requesterId != feedOwnerId)
+            {
+                filters.Add(r => rdb.BetterAnd(
+                    r.G("user").Eq(feedOwnerId),
+                    rdb.BetterOr(
+                        r.G("permissions").G("public").Eq(true),
+                        r.G("permissions").G("users").Contains(requesterId))));
+            }
+
             // Apply all the filters as part of an AND expression.
             if (filters.Any())
-                query = query.Filter(r => r.BetterAnd(filters.Select(f => f(r)).Cast<object>().ToArray()));
+                query = query.Filter(r => rdb.BetterAnd(filters.Select(f => f(r)).Cast<object>().ToArray()));
 
             return query;
         }
 
-        public async Task<ReqlExpr> AsTableQueryAsync(RethinkDB rdb, Table table, string ownerId, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<ReqlExpr> AsTableQueryAsync(RethinkDB rdb, Table table, string requesterId, string feedOwnerId, CancellationToken cancellationToken = default(CancellationToken))
         {
             // Build the base query.
-            var query = await this.AsCountTableQueryAsync(rdb, table, ownerId, cancellationToken);
+            var query = await this.AsCountTableQueryAsync(rdb, table, requesterId, feedOwnerId, cancellationToken);
 
             // Apply the skip.
             if (this.skip.HasValue)

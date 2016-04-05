@@ -58,10 +58,10 @@ namespace Campr.Server.Lib.Repositories
                 .RunResultAsync<UserPost>(c, null, cancellationToken), cancellationToken);
         }
 
-        public async Task<IList<UserPost>> GetAsync(string ownerId, ITentFeedRequest feedRequest, CancellationToken cancellationToken = new CancellationToken())
+        public async Task<IList<UserPost>> GetAsync(string requesterId, string feedOwnerId, ITentFeedRequest feedRequest, CancellationToken cancellationToken = new CancellationToken())
         {
             // Build and run the query using the provided Feed Request.
-            var tableQuery = await feedRequest.AsTableQueryAsync(this.db.R, this.table, ownerId, cancellationToken);
+            var tableQuery = await feedRequest.AsTableQueryAsync(this.db.R, this.table, requesterId, feedOwnerId, cancellationToken);
             var results = await this.db.Run(c => tableQuery
                 .RunResultAsync<IList<UserPost>>(c, null, cancellationToken), cancellationToken);
 
@@ -69,10 +69,10 @@ namespace Campr.Server.Lib.Repositories
             return results.Where(p => p != null).ToList();
         }
 
-        public async Task<long> CountAsync(string ownerId, ITentFeedRequest feedRequest, CancellationToken cancellationToken = new CancellationToken())
+        public async Task<long> CountAsync(string requesterId, string feedOwnerId, ITentFeedRequest feedRequest, CancellationToken cancellationToken = new CancellationToken())
         {
             // Build and run the query using the provided Feed Request.
-            var tableQuery = await feedRequest.AsCountTableQueryAsync(this.db.R, this.table, ownerId, cancellationToken);
+            var tableQuery = await feedRequest.AsCountTableQueryAsync(this.db.R, this.table, requesterId, feedOwnerId, cancellationToken);
             return await this.db.Run(c => tableQuery
                 .Count()
                 .RunResultAsync<long>(c, null, cancellationToken), cancellationToken);

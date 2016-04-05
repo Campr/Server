@@ -13,6 +13,8 @@ namespace Campr.Server.Lib.Models.Other
     {
         ITentFeedRequest AddTypes(params ITentPostType[] newTypes);
         ITentFeedRequest AddUsers(params User[] newUsers);
+        ITentFeedRequest ReplaceUsers(params User[] newUsers);
+
         ITentFeedRequest AddEntities(params string[] newEntities);
         ITentFeedRequest AddSpecialEntities(TentFeedRequestSpecialEntities specialEntities); 
         ITentFeedRequest AddMentions(params string[] mentionedEntities);
@@ -29,8 +31,8 @@ namespace Campr.Server.Lib.Models.Other
         ITentFeedRequest SortBy(TentFeedRequestSort newSortBy);
 
         Task<Uri> AsUriAsync(string parameter = null, CancellationToken cancellationToken = default(CancellationToken));
-        Task<ReqlExpr> AsTableQueryAsync(RethinkDB rdb, Table table, string ownerId, CancellationToken cancellationToken = default(CancellationToken));
-        Task<ReqlExpr> AsCountTableQueryAsync(RethinkDB rdb, Table table, string ownerId, CancellationToken cancellationToken = default(CancellationToken));
+        Task<ReqlExpr> AsTableQueryAsync(RethinkDB rdb, Table table, string requesterId, string feedOwnerId, CancellationToken cancellationToken = default(CancellationToken));
+        Task<ReqlExpr> AsCountTableQueryAsync(RethinkDB rdb, Table table, string requesterId, string feedOwnerId, CancellationToken cancellationToken = default(CancellationToken));
         ITentHawkSignature AsCredentials();
         uint? AsLimit();
     }

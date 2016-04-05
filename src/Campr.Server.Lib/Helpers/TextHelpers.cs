@@ -42,6 +42,10 @@ namespace Campr.Server.Lib.Helpers
             if (src != "Id" && src.EndsWith("Id"))
                 src = src.Substring(0, src.Length - 2);
 
+            // If it ends with "Ids" remove it but keep the "s".
+            if (src.EndsWith("Ids"))
+                src = src.Substring(0, src.Length - 3) + 's';
+
             // Insert an underscore before all uppercase chars.
             src = string.Concat(src.Select((c, i) => 
                 i > 0 && char.IsUpper(c) ? "_" + c.ToString() : c.ToString()));

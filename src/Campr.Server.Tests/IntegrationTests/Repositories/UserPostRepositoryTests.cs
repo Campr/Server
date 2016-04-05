@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Campr.Server.Lib.Enums;
+using Campr.Server.Lib.Extensions;
 using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Models.Db;
 using Campr.Server.Lib.Models.Db.Factories;
@@ -41,8 +42,6 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
         {
             var ownerId = Guid.NewGuid().ToString("N");
             var user = new User { Id = Guid.NewGuid().ToString("N") };
-            var date1 = DateTime.UtcNow;
-            var date2 = DateTime.UtcNow.AddSeconds(1);
 
             // Create a new post and use it to update the corresponding user post.
             var newPost = this.postFactory.FromContent(user, new TentContentMeta
@@ -50,18 +49,13 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
                 Entity = "http://external1.tent.is"
             }, this.postTypeFactory.FromString("https://test.com/type")).Post();
 
-            // Compute the VersionId for this post.
-            newPost.Version.ReceivedAt = date1;
-            newPost.Version.PublishedAt = date1;
-            newPost.ReceivedAt = date1;
-            newPost.PublishedAt = date1;
-            newPost.Version.Id = this.modelHelpers.GetVersionIdFromPost(newPost);
-
             // Save the user post.
             await this.userPostRepository.UpdateAsync(ownerId, newPost, false);
 
             // Create a new version of the same post.
             var versionId1 = newPost.Version.Id;
+            var date2 = DateTime.UtcNow.AddSeconds(2).TruncateToMilliseconds();
+
             newPost.Content.Entity = "http://external2.tent.is";
             newPost.Version = new TentVersion
             {
@@ -130,7 +124,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
 
             // Create a feed request to retrieve all the posts.
             var feedRequestAll = this.feedRequestFactory.Make();
-            var feedResultAll = await this.userPostRepository.GetAsync(ownerId, feedRequestAll);
+            var feedResultAll = await this.userPostRepository.GetAsync(ownerId, ownerId, feedRequestAll);
 
             Assert.Equal(3, feedResultAll.Count);
             Assert.Equal(newPost3.Id, feedResultAll[0].PostId);
@@ -139,16 +133,24 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             // Create a feed request to retrieve all the posts by User2.
             var feedRequestFromUser2 = this.feedRequestFactory.Make()
                 .AddUsers(user2);
-            var feedResultFromUser2 = await this.userPostRepository.GetAsync(ownerId, feedRequestFromUser2);
+            var feedResultFromUser2 = await this.userPostRepository.GetAsync(ownerId, ownerId, feedRequestFromUser2);
 
             Assert.Equal(2, feedResultFromUser2.Count);
             Assert.Equal(newPost3.Id, feedResultFromUser2[0].PostId);
             Assert.Equal(newPost2.Id, feedResultFromUser2[1].PostId);
 
+            // Create a feed request to retrieve all the posts from followings.
+            var feedRequestFromFollowings = this.feedRequestFactory.Make()
+                .AddSpecialEntities(TentFeedRequestSpecialEntities.Followings);
+            var feedResultFromFollowings = await this.userPostRepository.GetAsync(ownerId, ownerId, feedRequestFromFollowings);
+
+            Assert.Equal(1, feedResultFromFollowings.Count);
+            Assert.Equal(newPost2.Id, feedResultFromFollowings[0].PostId);
+
             // Create a feed request to retrieve all the posts of Type1.
             var feedRequestOfType1 = this.feedRequestFactory.Make()
                 .AddTypes(type1);
-            var feedResultOfType1 = await this.userPostRepository.GetAsync(ownerId, feedRequestOfType1);
+            var feedResultOfType1 = await this.userPostRepository.GetAsync(ownerId, ownerId, feedRequestOfType1);
 
             Assert.Equal(2, feedResultOfType1.Count);
             Assert.Equal(newPost2.Id, feedResultOfType1[0].PostId);
@@ -157,7 +159,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             // Create a feed request to retrieve all the posts of a wildcard type.
             var feedRequestOfWildcardType1 = this.feedRequestFactory.Make()
                 .AddTypes(this.postTypeFactory.FromString(type1.Type));
-            var feedResultOfWildcardType1 = await this.userPostRepository.GetAsync(ownerId, feedRequestOfWildcardType1);
+            var feedResultOfWildcardType1 = await this.userPostRepository.GetAsync(ownerId, ownerId, feedRequestOfWildcardType1);
 
             Assert.Equal(2, feedResultOfWildcardType1.Count);
             Assert.Equal(newPost2.Id, feedResultOfWildcardType1[0].PostId);
@@ -167,7 +169,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             var feedRequestUserAndType = this.feedRequestFactory.Make()
                 .AddUsers(user2)
                 .AddTypes(type1);
-            var feedResultUserAndType = await this.userPostRepository.GetAsync(ownerId, feedRequestUserAndType);
+            var feedResultUserAndType = await this.userPostRepository.GetAsync(ownerId, ownerId, feedRequestUserAndType);
 
             Assert.Equal(1, feedResultUserAndType.Count);
             Assert.Equal(newPost2.Id, feedResultUserAndType[0].PostId);
@@ -175,7 +177,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             // Create a feed request that skips the first item.
             var feedRequestSkip = this.feedRequestFactory.Make()
                 .AddSkip(1);
-            var feedResultSkip = await this.userPostRepository.GetAsync(ownerId, feedRequestSkip);
+            var feedResultSkip = await this.userPostRepository.GetAsync(ownerId, ownerId, feedRequestSkip);
 
             Assert.Equal(2, feedResultSkip.Count);
             Assert.Equal(newPost2.Id, feedResultSkip[0].PostId);
@@ -184,7 +186,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             // Create a feed request that limits the results to 2.
             var feedRequestLimit = this.feedRequestFactory.Make()
                 .AddLimit(2);
-            var feedResultLimit = await this.userPostRepository.GetAsync(ownerId, feedRequestLimit);
+            var feedResultLimit = await this.userPostRepository.GetAsync(ownerId, ownerId, feedRequestLimit);
 
             Assert.Equal(2, feedResultLimit.Count);
             Assert.Equal(newPost3.Id, feedResultLimit[0].PostId);
@@ -194,7 +196,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             var feedRequestSkipAndLimit = this.feedRequestFactory.Make()
                 .AddSkip(1)
                 .AddLimit(1);
-            var feedResultSkipAndLimit = await this.userPostRepository.GetAsync(ownerId, feedRequestSkipAndLimit);
+            var feedResultSkipAndLimit = await this.userPostRepository.GetAsync(ownerId, ownerId, feedRequestSkipAndLimit);
 
             Assert.Equal(1, feedResultSkipAndLimit.Count);
             Assert.Equal(newPost2.Id, feedResultSkipAndLimit[0].PostId);
@@ -202,7 +204,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             // Create a feed request to find all the posts until Post1.
             var feedRequestUntilPost1 = this.feedRequestFactory.Make()
                 .AddPostBoundary(this.requestPostFactory.FromPost(newPost1), TentFeedRequestBoundaryType.Until);
-            var feedResultUntilPost1 = await this.userPostRepository.GetAsync(ownerId, feedRequestUntilPost1);
+            var feedResultUntilPost1 = await this.userPostRepository.GetAsync(ownerId, ownerId, feedRequestUntilPost1);
 
             Assert.Equal(2, feedResultUntilPost1.Count);  
             Assert.Equal(newPost3.Id, feedResultUntilPost1[0].PostId);
@@ -211,7 +213,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             // Create a feed request to find all posts since Post1.
             var feedRequestSincePost1 = this.feedRequestFactory.Make()
                 .AddPostBoundary(this.requestPostFactory.FromPost(newPost1), TentFeedRequestBoundaryType.Since);
-            var feedResultSincePost1 = await this.userPostRepository.GetAsync(ownerId, feedRequestSincePost1);
+            var feedResultSincePost1 = await this.userPostRepository.GetAsync(ownerId, ownerId, feedRequestSincePost1);
 
             Assert.Equal(2, feedResultSincePost1.Count);
             Assert.Equal(newPost2.Id, feedResultSincePost1[0].PostId); // Notice the inverted order here.
@@ -221,7 +223,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             var feedRequestFirstSincePost1 = this.feedRequestFactory.Make()
                 .AddPostBoundary(this.requestPostFactory.FromPost(newPost1), TentFeedRequestBoundaryType.Since)
                 .AddLimit(1);
-            var feedResultFirstSincePost1 = await this.userPostRepository.GetAsync(ownerId, feedRequestFirstSincePost1);
+            var feedResultFirstSincePost1 = await this.userPostRepository.GetAsync(ownerId, ownerId, feedRequestFirstSincePost1);
 
             Assert.Equal(1, feedResultFirstSincePost1.Count);
             Assert.Equal(newPost2.Id, feedResultFirstSincePost1[0].PostId);
@@ -229,7 +231,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             // Create a feed request to find all posts before Post3.
             var feedRequestBeforePost3 = this.feedRequestFactory.Make()
                 .AddPostBoundary(this.requestPostFactory.FromPost(newPost3), TentFeedRequestBoundaryType.Before);
-            var feedResultBeforePost3 = await this.userPostRepository.GetAsync(ownerId, feedRequestBeforePost3);
+            var feedResultBeforePost3 = await this.userPostRepository.GetAsync(ownerId, ownerId, feedRequestBeforePost3);
 
             Assert.Equal(2, feedResultBeforePost3.Count);
             Assert.Equal(newPost2.Id, feedResultBeforePost3[0].PostId);
@@ -238,7 +240,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             // Create a feed request to find posts that mention User2.
             var feedRequestMentionsUser2 = this.feedRequestFactory.Make()
                 .AddMentions(this.requestPostFactory.FromUser(user2));
-            var feedResultMentionsUser2 = await this.userPostRepository.GetAsync(ownerId, feedRequestMentionsUser2);
+            var feedResultMentionsUser2 = await this.userPostRepository.GetAsync(ownerId, ownerId, feedRequestMentionsUser2);
 
             Assert.Equal(1, feedResultMentionsUser2.Count);
             Assert.Equal(newPost1.Id, feedResultMentionsUser2[0].PostId);
@@ -246,7 +248,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             // Create a feed request to find posts that don't mention User2.
             var feedRequestNotMentionsUser2 = this.feedRequestFactory.Make()
                 .AddNotMentions(this.requestPostFactory.FromUser(user2));
-            var feedResultNotMentionsUser2 = await this.userPostRepository.GetAsync(ownerId, feedRequestNotMentionsUser2);
+            var feedResultNotMentionsUser2 = await this.userPostRepository.GetAsync(ownerId, ownerId, feedRequestNotMentionsUser2);
              
             Assert.Equal(2, feedResultNotMentionsUser2.Count);
             Assert.Equal(newPost3.Id, feedResultNotMentionsUser2[0].PostId);
@@ -255,7 +257,7 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             // Create a feed request to find posts that mention NewPost1.
             var feedRequestMentionsPost1 = this.feedRequestFactory.Make()
                 .AddMentions(this.requestPostFactory.FromPost(newPost1));
-            var feedResultMentionsPost1 = await this.userPostRepository.GetAsync(ownerId, feedRequestMentionsPost1);
+            var feedResultMentionsPost1 = await this.userPostRepository.GetAsync(ownerId, ownerId, feedRequestMentionsPost1);
 
             Assert.Equal(1, feedResultMentionsPost1.Count);
             Assert.Equal(newPost3.Id, feedResultMentionsPost1[0].PostId);
@@ -263,14 +265,14 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             // Create a feed request to find posts that mention NewPost2 (none).
             var feedRequestMentionsPost2 = this.feedRequestFactory.Make()
                 .AddMentions(this.requestPostFactory.FromPost(newPost2));
-            var feedResultMentionsPost2 = await this.userPostRepository.GetAsync(ownerId, feedRequestMentionsPost2);
+            var feedResultMentionsPost2 = await this.userPostRepository.GetAsync(ownerId, ownerId, feedRequestMentionsPost2);
 
             Assert.Equal(0, feedResultMentionsPost2.Count);
 
             // Create a feed request to find posts that don't mention NewPost3 (all).
             var feedRequestNotMentionsPost3 = this.feedRequestFactory.Make()
                 .AddNotMentions(this.requestPostFactory.FromPost(newPost3));
-            var feedResultNotMentionsPost3 = await this.userPostRepository.GetAsync(ownerId, feedRequestNotMentionsPost3);
+            var feedResultNotMentionsPost3 = await this.userPostRepository.GetAsync(ownerId, ownerId, feedRequestNotMentionsPost3);
 
             Assert.Equal(3, feedResultNotMentionsPost3.Count);
             Assert.Equal(newPost3.Id, feedResultNotMentionsPost3[0].PostId);
@@ -319,30 +321,89 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
 
             // Create a feed request to count all the posts.
             var feedRequestAll = this.feedRequestFactory.Make();
-            var feedCountAll = await this.userPostRepository.CountAsync(ownerId, feedRequestAll);
+            var feedCountAll = await this.userPostRepository.CountAsync(ownerId, ownerId, feedRequestAll);
 
             Assert.Equal(3, feedCountAll);
 
             // Create a feed request to count all the posts by User2.
             var feedRequestFromUser2 = this.feedRequestFactory.Make()
                 .AddUsers(user2);
-            var feedCountFromUser2 = await this.userPostRepository.CountAsync(ownerId, feedRequestFromUser2);
+            var feedCountFromUser2 = await this.userPostRepository.CountAsync(ownerId, ownerId, feedRequestFromUser2);
 
             Assert.Equal(2, feedCountFromUser2);
 
             // Make sure the count isn't affected by skipping posts.
             var feedRequestAllSkip = this.feedRequestFactory.Make()
                 .AddSkip(2);
-            var feedCountAllSkip = await this.userPostRepository.CountAsync(ownerId, feedRequestAllSkip);
+            var feedCountAllSkip = await this.userPostRepository.CountAsync(ownerId, ownerId, feedRequestAllSkip);
 
             Assert.Equal(3, feedCountAllSkip);
 
             // Make sure the count isn't affected by limiting posts.
             var feedRequestAllLimit = this.feedRequestFactory.Make()
                 .AddLimit(2);
-            var feedCountAllLimit = await this.userPostRepository.CountAsync(ownerId, feedRequestAllLimit);
+            var feedCountAllLimit = await this.userPostRepository.CountAsync(ownerId, ownerId, feedRequestAllLimit);
 
             Assert.Equal(3, feedCountAllLimit);
+        }
+
+        [Fact]
+        public async Task OtherUserPostFeedRequest()
+        {
+            var requesterId = Guid.NewGuid().ToString("N");
+            var ownerId = Guid.NewGuid().ToString("N");
+
+            var user1 = new User { Id = requesterId };
+            var user2 = new User { Id = ownerId };
+            var user3 = new User { Id = Guid.NewGuid().ToString("N") };
+
+            await this.userRepository.UpdateAsync(user1);
+            await this.userRepository.UpdateAsync(user2);
+            await this.userRepository.UpdateAsync(user3);
+
+            var type = this.postTypeFactory.FromString("https://test.com/type#type");
+
+            // Public post from feedowner.
+            var newPost1 = this.postFactory.FromContent(user2, new TentContentMeta(), type).Post();
+
+            // Private post from feedowner that mentions the requester.
+            var newPost2 = this.postFactory.FromContent(user2, new TentContentMeta(), type)
+                .WithMentions(new TentMention { User = user1 })
+                .WithPublic(false)
+                .Post();
+            newPost2.ReceivedAt = newPost2.PublishedAt.GetValueOrDefault().AddSeconds(2);
+
+            // Private post from the feedowner without mentions.
+            var newPost3 = this.postFactory.FromContent(user2, new TentContentMeta(), type)
+                .WithPublic(false)
+                .Post();
+            newPost3.ReceivedAt = newPost3.PublishedAt.GetValueOrDefault().AddSeconds(4);
+
+            // Public post from different user.
+            var newPost4 = this.postFactory.FromContent(user3, new TentContentMeta(), type).Post();
+            newPost4.ReceivedAt = newPost4.PublishedAt.GetValueOrDefault().AddSeconds(6);
+
+            // Save the corresponding User Posts.
+            await this.userPostRepository.UpdateAsync(ownerId, newPost1, false);
+            await this.userPostRepository.UpdateAsync(ownerId, newPost2, false);
+            await this.userPostRepository.UpdateAsync(ownerId, newPost3, false);
+            await this.userPostRepository.UpdateAsync(ownerId, newPost4, false);
+
+            // Create a feed request to retrieve all the posts that the requester can access.
+            var feedRequestAllRequester = this.feedRequestFactory.Make();
+            var feedResultAllRequester = await this.userPostRepository.GetAsync(requesterId, ownerId, feedRequestAllRequester);
+
+            Assert.Equal(2, feedResultAllRequester.Count);
+            Assert.Equal(newPost2.Id, feedResultAllRequester[0].PostId);
+            Assert.Equal(newPost1.Id, feedResultAllRequester[1].PostId);
+
+            // The owners themselves should have access to all the posts.
+            var feedRequestAllOwner = this.feedRequestFactory.Make();
+            var feedResultAllOwner = await this.userPostRepository.GetAsync(ownerId, ownerId, feedRequestAllOwner);
+
+            Assert.Equal(4, feedResultAllOwner.Count);
+            Assert.Equal(newPost4.Id, feedResultAllOwner[0].PostId);
+            Assert.Equal(newPost1.Id, feedResultAllOwner[3].PostId);
         }
 
         [Fact]

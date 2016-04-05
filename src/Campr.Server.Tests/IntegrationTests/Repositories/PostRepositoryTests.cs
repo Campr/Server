@@ -173,10 +173,10 @@ namespace Campr.Server.Tests.IntegrationTests.Repositories
             await this.postRepository.UpdateAsync(newPost2);
             
             // Retrieve these two posts in bulk.
-            var references = new List<TentPostIdentifier>
+            var references = new List<ITentPostIdentifier>
             {
-                new TentPostIdentifier { UserId = newPost1.UserId, PostId = newPost1.Id, VersionId = newPost1.Version.Id },
-                new TentPostIdentifier { UserId = newPost2.UserId, PostId = newPost2.Id, VersionId = newPost2.Version.Id }
+                new TentPostIdentifier(newPost1.UserId, newPost1.Id, newPost1.Version.Id),
+                new TentPostIdentifier(newPost2.UserId, newPost2.Id, newPost2.Version.Id)
             };
 
             var posts = await this.postRepository.GetAsync<TentContentMeta>(references);

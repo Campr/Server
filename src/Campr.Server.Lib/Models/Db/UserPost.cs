@@ -6,7 +6,7 @@ using Campr.Server.Lib.Models.Tent;
 
 namespace Campr.Server.Lib.Models.Db
 {
-    public class UserPost : ModelBase
+    public class UserPost : ModelBase, ITentPostIdentifier
     {
         [DbProperty]
         public string[] KeyOwnerUserPost { get; set; }
@@ -25,6 +25,9 @@ namespace Campr.Server.Lib.Models.Db
 
         [DbProperty]
         public string VersionId { get; set; }
+
+        [DbProperty]
+        public bool IsFromFollowing { get; set; }
 
         [DbProperty]
         public DateTime VersionReceivedAt { get; set; }
@@ -46,5 +49,8 @@ namespace Campr.Server.Lib.Models.Db
 
         [DbProperty]
         public IList<UserPostMention> Mentions { get; set; }
+
+        [DbProperty]
+        public UserPostPermissions Permissions { get; set; }
     }
 }

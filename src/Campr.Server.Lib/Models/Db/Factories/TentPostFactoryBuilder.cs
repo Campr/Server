@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Campr.Server.Lib.Extensions;
 using Campr.Server.Lib.Helpers;
@@ -22,11 +23,16 @@ namespace Campr.Server.Lib.Models.Db.Factories
 
         private readonly IModelHelpers modelHelpers;
         private readonly TentPost<T> post;
+        private List<User> permissionsUsers;
 
         public ITentPostFactoryBuilder<T> WithMentions(params TentMention[] mentions)
         {
             Ensure.Argument.IsNotNull(mentions, nameof(mentions));
             this.post.Mentions = mentions.ToList();
+
+            // Add the mentioned users to the permissions.
+            (this.permissionsUsers ?? (this.permissionsUsers = new List<User>())).AddRange(mentions.Select(m => m.User));
+
             return this;
         }
 
@@ -71,6 +77,14 @@ namespace Campr.Server.Lib.Models.Db.Factories
             this.post.Version.ReceivedAt = this.post.Version.ReceivedAt.Value.TruncateToMilliseconds();
             this.post.PublishedAt = this.post.PublishedAt.Value.TruncateToMilliseconds();
             this.post.ReceivedAt = this.post.ReceivedAt.Value.TruncateToMilliseconds();
+
+            // If the post is private, add the cached User Ids to the permissions.
+            if (!this.post.Permissions.Public.GetValueOrDefault(true))
+            {
+                var users = this.permissionsUsers?.Where(u => u != null).Distinct().ToList();
+                this.post.Permissions.UserIds = users?.Select(u => u.Id).ToList();
+                this.post.Permissions.Entities = users?.Select(u => u.Entity).ToList();
+            }
 
             // Compute the Version Id and set the dates.
             this.post.Version.Id = this.modelHelpers.GetVersionIdFromPost(this.post);

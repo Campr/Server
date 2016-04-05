@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Campr.Server.Lib.Models.Tent;
+﻿using Campr.Server.Lib.Models.Tent;
 
 namespace Campr.Server.Lib.Models.Db.Factories
 {

@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Linq;
+using RethinkDb.Driver;
 using RethinkDb.Driver.Ast;
 
 namespace Campr.Server.Lib.Extensions
 {
-    public static class ReqlExtensions
+    public static class RethinkDbExtensions
     {
-        public static ReqlExpr BetterOr(this ReqlExpr r, params object[] exprs)
+        public static ReqlExpr BetterOr(this RethinkDB r, params object[] exprs)
         {
             switch (exprs.Length)
             {
@@ -22,7 +23,7 @@ namespace Campr.Server.Lib.Extensions
             }
         }
 
-        public static ReqlExpr BetterAnd(this ReqlExpr r, params object[] exprs)
+        public static ReqlExpr BetterAnd(this RethinkDB r, params object[] exprs)
         {
             switch (exprs.Length)
             {
@@ -34,7 +35,7 @@ namespace Campr.Server.Lib.Extensions
                     return (ReqlExpr)exprs[0];
                 // Otherwise, combine using the builtin And.
                 default:
-                    return r.And(exprs);
+                    return r.And(exprs[0], exprs.Skip(1).ToArray());
             }
         }
     }

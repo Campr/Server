@@ -1,6 +1,7 @@
 ﻿using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Json;
 using Campr.Server.Lib.Models.Db;
+using Campr.Server.Lib.Models.Other;
 using Newtonsoft.Json.Linq;
 
 namespace Campr.Server.Lib.Models.Tent
@@ -15,23 +16,15 @@ namespace Campr.Server.Lib.Models.Tent
             };
             
             if (!string.IsNullOrWhiteSpace(this.OriginalEntity))
-            {
                 result.Add("entity", this.OriginalEntity);
-            }
             else if (!string.IsNullOrWhiteSpace(this.Entity))
-            {
                 result.Add("entity", this.Entity);
-            }
 
             if (!string.IsNullOrWhiteSpace(this.VersionId))
-            {
                 result.Add("version", this.VersionId);
-            }
 
-            if (!string.IsNullOrWhiteSpace(this.Type))
-            {
-                result.Add("type", this.Type);
-            }
+            if (this.Type != null)
+                result.Add("type", this.Type.ToString());
 
             return result;
         }
@@ -60,7 +53,7 @@ namespace Campr.Server.Lib.Models.Tent
         
         [DbProperty]
         [WebProperty]
-        public string Type { get; set; }
+        public ITentPostType Type { get; set; }
         
         public User User { get; set; }
         public TentPost<object> Post { get; set; }

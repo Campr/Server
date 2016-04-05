@@ -73,7 +73,7 @@ namespace Campr.Server.Lib.Repositories
             }, cancellationToken);
         }
 
-        public async Task<IList<TentPost<T>>> GetAsync<T>(IList<TentPostIdentifier> references, CancellationToken cancellationToken = default(CancellationToken)) where T : class
+        public async Task<IList<TentPost<T>>> GetAsync<T>(IList<ITentPostIdentifier> references, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
             var postIds = references.Select(r => new [] { r.UserId, r.PostId, this.modelHelpers.GetShortVersionId(r.VersionId) });
             var results = await this.db.Run(c => this.tableVersions
