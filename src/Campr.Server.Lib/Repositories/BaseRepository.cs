@@ -38,7 +38,7 @@ namespace Campr.Server.Lib.Repositories
             {
                 var result = await this.Table
                     .Insert(newT)
-                    .optArg("conflict", "replace")
+                    .OptArg("conflict", "replace")
                     .RunResultAsync(c, null, cancellationToken);
 
                 result.AssertNoErrors();

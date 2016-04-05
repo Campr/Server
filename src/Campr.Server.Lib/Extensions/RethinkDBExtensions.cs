@@ -19,7 +19,7 @@ namespace Campr.Server.Lib.Extensions
                     return (ReqlExpr)exprs[0];
                 // Otherwise, combine using the builtin Or.
                 default:
-                    return r.Or(exprs[0], exprs.Skip(1).ToArray());
+                    return r.Or(exprs);
             }
         }
 
@@ -35,7 +35,7 @@ namespace Campr.Server.Lib.Extensions
                     return (ReqlExpr)exprs[0];
                 // Otherwise, combine using the builtin And.
                 default:
-                    return r.And(exprs[0], exprs.Skip(1).ToArray());
+                    return r.And(exprs);
             }
         }
     }

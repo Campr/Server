@@ -10,7 +10,7 @@
     "Microsoft.Extensions.DependencyInjection": "1.0.0-rc1-final",
     "Microsoft.Net.Http": "2.2.29",
     "Microsoft.Net.Http.Headers": "1.0.0-rc1-final",
-    "RethinkDb.Driver": "2.2.9-beta-2",
+    "RethinkDb.Driver": "2.2.10-beta-1",
     "WindowsAzure.Storage": "6.2.2-preview"
   },
 

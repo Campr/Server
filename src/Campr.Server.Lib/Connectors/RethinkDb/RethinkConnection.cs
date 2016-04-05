@@ -105,7 +105,7 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
                 if (!tableList.Contains("userversions"))
                 {
                     var tableCreateResult = await db.TableCreate("userversions")
-                        .optArg("primary_key", "key_user_version")
+                        .OptArg("primary_key", "key_user_version")
                         .RunResultAsync(this.connection, null, cancellationToken);
 
                     tableCreateResult.AssertNoErrors();
@@ -114,7 +114,7 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
                 if (!tableList.Contains("posts"))
                 {
                     var tableCreatedResult = await db.TableCreate("posts")
-                        .optArg("primary_key", "key_user_post")
+                        .OptArg("primary_key", "key_user_post")
                         .RunResultAsync(this.connection, null, cancellationToken);
 
                     tableCreatedResult.AssertTablesCreated(1);
@@ -146,7 +146,7 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
                 if (!tableList.Contains("postversions"))
                 {
                     var tableCreatedResult = await db.TableCreate("postversions")
-                        .optArg("primary_key", "key_user_post_version")
+                        .OptArg("primary_key", "key_user_post_version")
                         .RunResultAsync(this.connection, null, cancellationToken);
 
                     tableCreatedResult.AssertTablesCreated(1);
@@ -167,7 +167,7 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
                 if (!tableList.Contains("userposts"))
                 {
                     var tableCreatedResult = await db.TableCreate("userposts")
-                        .optArg("primary_key", "key_owner_user_post")
+                        .OptArg("primary_key", "key_owner_user_post")
                         .RunResultAsync(this.connection, null, cancellationToken);
 
                     tableCreatedResult.AssertTablesCreated(1);
@@ -221,7 +221,7 @@ namespace Campr.Server.Lib.Connectors.RethinkDb
                 if (!tableList.Contains("userpostversions"))
                 {
                     var tableCreatedResult = await db.TableCreate("userpostversions")
-                        .optArg("primary_key", "key_owner_user_post_version")
+                        .OptArg("primary_key", "key_owner_user_post_version")
                         .RunResultAsync(this.connection, null, cancellationToken);
 
                     tableCreatedResult.AssertTablesCreated(1);
