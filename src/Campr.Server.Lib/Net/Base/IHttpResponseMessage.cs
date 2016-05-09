@@ -2,7 +2,7 @@
 using System.Net.Http;
 using System.Net.Http.Headers;
 
-namespace Campr.Server.Lib.Net
+namespace Campr.Server.Lib.Net.Base
 {
     /// <summary>
     ///     The response of an Http request.

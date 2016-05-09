@@ -19,7 +19,7 @@ namespace Campr.Server.Lib.Logic
         Task CreateUserPostAsync<T>(User owner, TentPost<T> post, bool? isFromFollowing = null) where T : class;
          //Task<TentPost<T>> ImportPostFromLinkAsync<T>(User user, User targetUser, Uri uri) where T : class;
 
-         Task<IList<TentPost<T>>> GetPostsAsync<T>(User requester, User feedOwner , ITentFeedRequest feedRequest, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
+        Task<IList<TentPost<T>>> GetPostsAsync<T>(User requester, User feedOwner , ITentFeedRequest feedRequest, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
         Task<long> GetCountAsync(User requester, User feedOwner, ITentFeedRequest feedRequest, CancellationToken cancellationToken = default(CancellationToken));
 
         //Task<IList<TentMention>> GetMentionsAsync(User user, User targetUser, string postId, ITentRequestParameters parameters, bool proxy);

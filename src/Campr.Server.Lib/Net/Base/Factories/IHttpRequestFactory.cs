@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Campr.Server.Lib.Net.Factories
+namespace Campr.Server.Lib.Net.Base.Factories
 {
     public interface IHttpRequestFactory
     {

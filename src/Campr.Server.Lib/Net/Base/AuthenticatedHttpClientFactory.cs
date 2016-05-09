@@ -3,7 +3,7 @@ using Campr.Server.Lib.Extensions;
 using Campr.Server.Lib.Infrastructure;
 using Campr.Server.Lib.Models.Tent;
 
-namespace Campr.Server.Lib.Net
+namespace Campr.Server.Lib.Net.Base
 {
     class AuthenticatedHttpClientFactory : IAuthenticatedHttpClientFactory
     {

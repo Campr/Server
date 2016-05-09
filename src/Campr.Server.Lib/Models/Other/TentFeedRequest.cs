@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Campr.Server.Lib.Enums;
 using Campr.Server.Lib.Extensions;
+using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Infrastructure;
 using Campr.Server.Lib.Logic;
 using Campr.Server.Lib.Models.Db;
@@ -35,6 +36,7 @@ namespace Campr.Server.Lib.Models.Other
         private readonly IUserLogic userLogic;
         private readonly ITentRequestPostFactory requestPostFactory;
         private readonly ITentRequestDateFactory requestDateFactory;
+        private readonly IQueryStringHelpers queryStringHelpers;
         private readonly TaskRunner resolveDependenciesRunner;
 
         private List<ITentPostType> types;
@@ -182,13 +184,22 @@ namespace Campr.Server.Lib.Models.Other
             return this.limit;
         }
 
-        public async Task<Uri> AsUriAsync(string parameter = null, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<Uri> AsUriAsync(Uri baseUri, string queryOverride = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             // Make sure we have all the data we need.
             await this.resolveDependenciesRunner.RunOnce(cancellationToken);
 
-            // TODO.
-            throw new NotImplementedException();
+            // Build a new Uri from the one that was provided.
+            var builder = new UriBuilder(baseUri)
+            {
+                Query = !string.IsNullOrWhiteSpace(queryOverride)
+                    // If a query was provided, use it.
+                    ? queryOverride
+                    // Otherwise, build it from the current query.
+                    : '?' + this.queryStringHelpers.BuildQueryString(this.ToDictionary())
+            };
+
+            return builder.Uri;
         }
 
         public async Task<ReqlExpr> AsCountTableQueryAsync(RethinkDB rdb, Table table, string requesterId, string feedOwnerId, CancellationToken cancellationToken = default(CancellationToken))

@@ -4,7 +4,7 @@ using Campr.Server.Lib.Configuration;
 using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Infrastructure;
 
-namespace Campr.Server.Lib.Net.Factories
+namespace Campr.Server.Lib.Net.Base.Factories
 {
     class HttpRequestFactory : IHttpRequestFactory
     {

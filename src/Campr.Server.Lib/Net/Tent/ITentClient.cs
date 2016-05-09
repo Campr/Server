@@ -1,15 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Campr.Server.Lib.Models.Other;
 using Campr.Server.Lib.Models.Tent;
-using Campr.Server.Lib.Models.Tent.PostContent;
 
 namespace Campr.Server.Lib.Net.Tent
 {
     public interface ITentClient
     {
+        Task<TentPost<T>> GetAsync<T>(string postId, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
+        Task<TentPost<T>> GetAsync<T>(string postId, string versionId, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
+        Task<IList<TentPost<T>>> GetAsync<T>(ITentFeedRequest feedRequest, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
+        Task<long> CountAsync(ITentFeedRequest feedRequest, CancellationToken cancellationToken = default(CancellationToken));
+
         //Task<TentPost<T>> RetrievePostForUserAsync<T>(TentPost<TentContentMeta> metaPost, ITentHawkSignature credentials, string postId, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
         //Task<TentPost<T>> RetrievePostForUserAsync<T>(TentPost<TentContentMeta> metaPost, ITentHawkSignature credentials, string postId, string versionId, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
         //Task<IList<TentPost<T>>> RetrievePublicationsForUserAsync<T>(TentPost<TentContentMeta> metaPost, ITentRequestParameters parameters, ITentHawkSignature credentials, CancellationToken cancellationToken = default(CancellationToken)) where T : class;

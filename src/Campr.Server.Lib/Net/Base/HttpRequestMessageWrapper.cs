@@ -8,7 +8,7 @@ using Campr.Server.Lib.Infrastructure;
 using Campr.Server.Lib.Models.Other;
 using Campr.Server.Lib.Models.Tent;
 
-namespace Campr.Server.Lib.Net
+namespace Campr.Server.Lib.Net.Base
 {
     public class HttpRequestMessageWrapper : IHttpRequestMessage
     {

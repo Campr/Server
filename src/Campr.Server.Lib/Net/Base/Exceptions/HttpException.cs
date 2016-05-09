@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net;
 
-namespace Campr.Server.Lib.Net.Exceptions
+namespace Campr.Server.Lib.Net.Base.Exceptions
 {
     public class HttpException : Exception
     {

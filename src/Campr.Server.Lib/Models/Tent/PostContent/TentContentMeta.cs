@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Services.Client;
+using System.Linq;
 using System.Text.RegularExpressions;
+using Campr.Server.Lib.Enums;
 using Campr.Server.Lib.Extensions;
 using Campr.Server.Lib.Json;
 
@@ -36,25 +39,22 @@ namespace Campr.Server.Lib.Models.Tent.PostContent
 
         public bool IsUrlServerMatch(Uri uri)
         {
-            // ReSharper disable once LoopCanBeConvertedToQuery
-            foreach (var server in this.Servers)
+            // No need to look further if we don't have a servers collection.
+            if (this.Servers == null)
+                return false;
+
+            // Check if we have at least one match.
+            return this.Servers.Any(s =>
             {
-                // Find the corresponding endpoint 
-                var postEndpoint = server.Urls.TryGetValue("post");
-                if (postEndpoint == null)
-                {
-                    continue;
-                }
+                // Find the corresponding endpoint.
+                var postEndpoint = s.GetEndpoint(TentMetaEndpointEnum.Post);
+                if (string.IsNullOrWhiteSpace(postEndpoint))
+                    return false;
 
-                // Create a regex out of the endpoint and test the provided url.
+                // Create a Regex to test the provided Uri.
                 var postEndpointRegex = new Regex('^' + postEndpoint.Replace("{entity}", "(.*)").Replace("{post}", "(.*)"));
-                if (postEndpointRegex.IsMatch(uri.AbsoluteUri))
-                {
-                    return true;
-                }
-            }
-
-            return false;
+                return postEndpointRegex.IsMatch(uri.AbsoluteUri);
+            });
         }
     }
 }

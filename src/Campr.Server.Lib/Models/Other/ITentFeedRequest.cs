@@ -30,7 +30,7 @@ namespace Campr.Server.Lib.Models.Other
         ITentFeedRequest AddBoundary(ITentRequestDate boundaryDate, TentFeedRequestBoundaryType boundaryType);
         ITentFeedRequest SortBy(TentFeedRequestSort newSortBy);
 
-        Task<Uri> AsUriAsync(string parameter = null, CancellationToken cancellationToken = default(CancellationToken));
+        Task<Uri> AsUriAsync(Uri baseUri, string queryOverride = null, CancellationToken cancellationToken = default(CancellationToken));
         Task<ReqlExpr> AsTableQueryAsync(RethinkDB rdb, Table table, string requesterId, string feedOwnerId, CancellationToken cancellationToken = default(CancellationToken));
         Task<ReqlExpr> AsCountTableQueryAsync(RethinkDB rdb, Table table, string requesterId, string feedOwnerId, CancellationToken cancellationToken = default(CancellationToken));
         ITentHawkSignature AsCredentials();

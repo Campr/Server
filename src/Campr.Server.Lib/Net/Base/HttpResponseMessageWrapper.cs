@@ -5,7 +5,7 @@ using System.Net.Http.Headers;
 using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Infrastructure;
 
-namespace Campr.Server.Lib.Net
+namespace Campr.Server.Lib.Net.Base
 {
     public class HttpResponseMessageWrapper : IHttpResponseMessage
     {
