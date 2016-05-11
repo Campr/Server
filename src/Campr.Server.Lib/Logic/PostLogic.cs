@@ -88,6 +88,7 @@ namespace Campr.Server.Lib.Logic
         private readonly ILoggingService loggingService;
         private readonly ITentPostFactory postFactory;
         private readonly ITentPostTypeFactory postTypeFactory;
+        private readonly ITentFeedRequestFactory feedRequestFactory;
         private readonly IUserPostFactory userPostFactory;
         private readonly ITextHelpers textHelpers;
         private readonly IModelHelpers modelHelpers;
@@ -143,6 +144,33 @@ namespace Campr.Server.Lib.Logic
             //
             //            return externalDbPost;
             return null;
+        }
+
+        public async Task<TentPost<T>> GetLastPostOfTypeAsync<T>(User requester, User feedOwner, User user, ITentPostType type, CancellationToken cancellationToken = new CancellationToken()) where T : class
+        {
+            // Use a feed request to fulfill this query.
+            var feedRequest = this.feedRequestFactory.Make()
+                .AddUsers(user)
+                .AddTypes(type)
+                .AddLimit(1);
+
+            // Perform the request.
+            var results = await this.GetPostsAsync<T>(requester, feedOwner, feedRequest, cancellationToken);
+            return results?.FirstOrDefault();
+        }
+
+        public async Task<TentPost<T>> GetLastPostOfTypeMentioningAsync<T>(User requester, User feedOwner, User user, ITentPostType type, ITentRequestPost mention, CancellationToken cancellationToken = new CancellationToken()) where T : class
+        {
+            // Use a feed request to fulfill this query.
+            var feedRequest = this.feedRequestFactory.Make()
+                .AddUsers(user)
+                .AddTypes(type)
+                .AddMentions(mention)
+                .AddLimit(1);
+
+            // Perform the request.
+            var results = await this.GetPostsAsync<T>(requester, feedOwner, feedRequest, cancellationToken);
+            return results?.FirstOrDefault();
         }
 
         public async Task<TentPost<TentContentCredentials>> CreateNewCredentialsPostAsync(
@@ -412,7 +440,7 @@ namespace Campr.Server.Lib.Logic
             return await this.postRepository.GetAsync<T>(userPosts.Cast<ITentPostIdentifier>().ToList(), cancellationToken);
         }
 
-        public Task<long> GetCountAsync(User requester, User feedOwner, ITentFeedRequest feedRequest, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<long> CountPostsAsync(User requester, User feedOwner, ITentFeedRequest feedRequest, CancellationToken cancellationToken = default(CancellationToken))
         {
             // If the target user isn't the feed owner, update the request.
             if (requester.Id != feedOwner.Id)
@@ -656,7 +684,7 @@ namespace Campr.Server.Lib.Logic
         public async Task<TentPost<TentContentMeta>> GetMetaPostAsync(User user, CancellationToken cancellationToken = default(CancellationToken))
         {
             // Start by trying to retrieve the Meta Post internally.
-            var metaPost = await this.GetMetaPostNoProxyAsync(user.Id, cancellationToken);
+            var metaPost = await this.GetLastPostOfTypeAsync<TentContentMeta>(user, user, user, this.tentConstants.MetaPostType, cancellationToken);
             if (metaPost != null || user.IsInternal())
                 return metaPost;
 
@@ -682,17 +710,17 @@ namespace Campr.Server.Lib.Logic
             return null;
         }
 
-        private Task<TentPost<TentContentMeta>> GetMetaPostNoProxyAsync(string userId, CancellationToken cancellationToken)
-        {
-            return this.postRepository.GetLastVersionOfTypeAsync<TentContentMeta>(userId, this.tentConstants.MetaPostType, cancellationToken);
-        }
+        //private Task<TentPost<TentContentMeta>> GetMetaPostNoProxyAsync(string userId, CancellationToken cancellationToken)
+        //{
+        //    return this.postRepository.GetLastVersionOfTypeAsync<TentContentMeta>(userId, this.tentConstants.MetaPostType, cancellationToken);
+        //}
 
-        private async Task<IList<TentPost<TentContentMeta>>> GetMetaPostsNoProxyAsync(IEnumerable<string> userIds, CancellationToken cancellationToken)
-        {
-            var getMetaPostTasks = userIds.Select(u => this.GetMetaPostNoProxyAsync(u, cancellationToken)).ToList();
-            await Task.WhenAll(getMetaPostTasks);
-            return getMetaPostTasks.Where(t => t.Result != null).Select(t => t.Result).ToList();
-        }
+        //private async Task<IList<TentPost<TentContentMeta>>> GetMetaPostsNoProxyAsync(IEnumerable<string> userIds, CancellationToken cancellationToken)
+        //{
+        //    var getMetaPostTasks = userIds.Select(u => this.GetMetaPostNoProxyAsync(u, cancellationToken)).ToList();
+        //    await Task.WhenAll(getMetaPostTasks);
+        //    return getMetaPostTasks.Where(t => t.Result != null).Select(t => t.Result).ToList();
+        //}
 
         //public Task<IDictionary<string, TentMetaProfile>> GetMetaProfileForUserAsync(string userId, CancellationToken cancellationToken)
         //{

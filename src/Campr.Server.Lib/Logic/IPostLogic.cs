@@ -13,14 +13,16 @@ namespace Campr.Server.Lib.Logic
     public interface IPostLogic
     {
         Task<TentPost<T>> GetPostAsync<T>(User requester, User feedOwner, User user, string postId, string versionId = null, TentPost<TentContentCredentials> credentials = null, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
+        Task<TentPost<T>> GetLastPostOfTypeAsync<T>(User requester, User feedOwner, User user, ITentPostType type, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
+        Task<TentPost<T>> GetLastPostOfTypeMentioningAsync<T>(User requester, User feedOwner, User user, ITentPostType type, ITentRequestPost mention, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
 
         Task<TentPost<TentContentCredentials>> CreateNewCredentialsPostAsync(User user, User targetUser, TentPost<object> targetPost);
         Task<TentPost<T>> CreatePostAsync<T>(User user, TentPost<T> post, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
         Task CreateUserPostAsync<T>(User owner, TentPost<T> post, bool? isFromFollowing = null) where T : class;
          //Task<TentPost<T>> ImportPostFromLinkAsync<T>(User user, User targetUser, Uri uri) where T : class;
 
-        Task<IList<TentPost<T>>> GetPostsAsync<T>(User requester, User feedOwner , ITentFeedRequest feedRequest, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
-        Task<long> GetCountAsync(User requester, User feedOwner, ITentFeedRequest feedRequest, CancellationToken cancellationToken = default(CancellationToken));
+        Task<IList<TentPost<T>>> GetPostsAsync<T>(User requester, User feedOwner, ITentFeedRequest feedRequest, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
+        Task<long> CountPostsAsync(User requester, User feedOwner, ITentFeedRequest feedRequest, CancellationToken cancellationToken = default(CancellationToken));
 
         //Task<IList<TentMention>> GetMentionsAsync(User user, User targetUser, string postId, ITentRequestParameters parameters, bool proxy);
         //Task<long> GetMentionsCountAsync(User user, User targetUser, string postId, ITentRequestParameters parameters, bool proxy);

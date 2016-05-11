@@ -5,7 +5,7 @@ using Campr.Server.Lib.Extensions;
 using Campr.Server.Lib.Infrastructure;
 using Campr.Server.Lib.Models.Tent;
 using Campr.Server.Lib.Net;
-using Campr.Server.Lib.Net.Factories;
+using Campr.Server.Lib.Net.Base.Factories;
 using Campr.Server.Lib.Net.Tent;
 
 namespace Campr.Server.Lib.Services
