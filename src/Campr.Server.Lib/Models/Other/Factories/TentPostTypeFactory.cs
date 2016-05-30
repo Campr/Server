@@ -5,6 +5,15 @@ namespace Campr.Server.Lib.Models.Other.Factories
 {
     class TentPostTypeFactory : ITentPostTypeFactory
     {
+        public ITentPostType FromType(ITentPostType postType, string subType)
+        {
+            Ensure.Argument.IsNotNull(postType, nameof(postType));
+            Ensure.Argument.IsNotNullOrWhiteSpace(subType, nameof(subType));
+
+            // Create a new Post Type with the provided SubType.
+            return new TentPostType(postType.Type, subType);
+        }
+
         public ITentPostType FromString(string postType, bool forceWildcard)
         {
             Ensure.Argument.IsNotNullOrWhiteSpace(postType, nameof(postType));

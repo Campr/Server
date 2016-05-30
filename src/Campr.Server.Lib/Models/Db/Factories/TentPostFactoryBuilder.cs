@@ -8,7 +8,7 @@ using Campr.Server.Lib.Models.Tent;
 
 namespace Campr.Server.Lib.Models.Db.Factories
 {
-    class TentPostFactoryBuilder<T> : ITentPostFactoryBuilder<T> where T : ModelBase
+    class TentPostFactoryBuilder<T> : ITentPostFactoryBuilder<T> where T : class 
     {
         public TentPostFactoryBuilder(
             IModelHelpers modelHelpers,

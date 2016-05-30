@@ -20,7 +20,28 @@ namespace Campr.Server.Lib.Models.Db.Factories
 
         private readonly ITextHelpers textHelpers;
         private readonly IModelHelpers modelHelpers;
-        
+
+        public ITentPostFactoryBuilder<object> Make(User user, ITentPostType type)
+        {
+            return new TentPostFactoryBuilder<object>(this.modelHelpers, new TentPost<object>
+            {
+                Id = this.textHelpers.GenerateUniqueId(),
+                UserId = user.Id,
+                Entity = user.Entity,
+                Type = type,
+                Version = new TentVersion
+                {
+                    UserId = user.Id,
+                    Entity = user.Entity,
+                    Type = type
+                },
+                Permissions = new TentPermissions
+                {
+                    Public = true
+                }
+            });
+        }
+
         public ITentPostFactoryBuilder<T> FromContent<T>(User user, T content, ITentPostType type) where T : ModelBase
         {
             return new TentPostFactoryBuilder<T>(this.modelHelpers, new TentPost<T>

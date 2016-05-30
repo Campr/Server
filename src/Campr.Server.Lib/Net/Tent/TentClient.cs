@@ -8,6 +8,7 @@ using Campr.Server.Lib.Enums;
 using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Infrastructure;
 using Campr.Server.Lib.Logic;
+using Campr.Server.Lib.Models.Db;
 using Campr.Server.Lib.Models.Other;
 using Campr.Server.Lib.Models.Tent;
 using Campr.Server.Lib.Models.Tent.PostContent;
@@ -15,21 +16,23 @@ using Campr.Server.Lib.Net.Base.Factories;
 
 namespace Campr.Server.Lib.Net.Tent
 {
-    public class TentClient : ITentClient
+    public class TentClient : SimpleTentClient, ITentClient
     {
         public TentClient(
             IHttpRequestFactory httpRequestFactory,
             IHttpClientFactory httpClientFactory,
             IQueryStringHelpers queryStringHelpers,
+            IBewitLogic bewitLogic,
             IUriHelpers uriHelpers,
             ITentConstants tentConstants,
 
-            TentPost<TentContentMeta> target, 
-            ITentHawkSignature credentials = null)
+            TentPost<TentContentMeta> target,
+            ITentHawkSignature credentials = null) : base(httpRequestFactory, httpClientFactory, tentConstants, credentials)
         {
             Ensure.Argument.IsNotNull(httpRequestFactory, nameof(httpRequestFactory));
             Ensure.Argument.IsNotNull(httpClientFactory, nameof(httpClientFactory));
             Ensure.Argument.IsNotNull(queryStringHelpers, nameof(queryStringHelpers));
+            Ensure.Argument.IsNotNull(bewitLogic, nameof(bewitLogic));
             Ensure.Argument.IsNotNull(uriHelpers, nameof(uriHelpers));
             Ensure.Argument.IsNotNull(tentConstants, nameof(tentConstants));
 
@@ -38,11 +41,11 @@ namespace Campr.Server.Lib.Net.Tent
             this.httpRequestFactory = httpRequestFactory;
             this.httpClientFactory = httpClientFactory;
             this.queryStringHelpers = queryStringHelpers;
+            this.bewitLogic = bewitLogic;
             this.uriHelpers = uriHelpers;
             this.tentConstants = tentConstants;
 
             this.target = target;
-            this.credentials = credentials;
 
             // Make sure that the provided meta post has at least one server.
             if (this.target.Content?.Servers.FirstOrDefault() == null)
@@ -52,11 +55,11 @@ namespace Campr.Server.Lib.Net.Tent
         private readonly IHttpRequestFactory httpRequestFactory;
         private readonly IHttpClientFactory httpClientFactory;
         private readonly IQueryStringHelpers queryStringHelpers;
+        private readonly IBewitLogic bewitLogic;
         private readonly IUriHelpers uriHelpers;
         private readonly ITentConstants tentConstants;
 
         private readonly TentPost<TentContentMeta> target;
-        private readonly ITentHawkSignature credentials;
 
         #region Public interface.
 
@@ -87,7 +90,7 @@ namespace Campr.Server.Lib.Net.Tent
 
             // Build the Uri for the specified post and perform the request.
             var postUri = this.GetEndpointUriFromMetaPost(TentMetaEndpointEnum.Post, parameters, queryParameters);
-            return this.GetAtUriAsync<T>(postUri, cancellationToken);
+            return this.GetAsync<T>(postUri, cancellationToken);
         }
 
         public async Task<IList<TentPost<T>>> GetAsync<T>(ITentFeedRequest feedRequest, CancellationToken cancellationToken = new CancellationToken()) where T : class
@@ -110,8 +113,8 @@ namespace Campr.Server.Lib.Net.Tent
                     .AddAccept(this.tentConstants.PostFeedContentType);
 
                 // If needed, add credentials.
-                if (this.credentials != null)
-                    request.AddCredentials(this.credentials);
+                if (this.Credentials != null)
+                    request.AddCredentials(this.Credentials);
                 
                 var response = await client.SendAsync<TentPostResult<T>>(request, cancellationToken);
 
@@ -146,30 +149,38 @@ namespace Campr.Server.Lib.Net.Tent
             return await this.CountAtUriAsync(requestUri, this.tentConstants.PostFeedContentType, cancellationToken);
         }
 
-        #endregion
-
-        #region Private methods.
-
-        private async Task<TentPost<T>> GetAtUriAsync<T>(Uri postUri, CancellationToken cancellationToken) where T : class
+        public async Task<Uri> PostRelationshipAsync(User requester, TentPost<object> relationship, CancellationToken cancellationToken = default(CancellationToken))
         {
+            Ensure.Argument.IsNotNull(relationship, nameof(relationship));
+
+            // Generate a bewit signature for the credentials post.
+            var bewit = await this.bewitLogic.CreateBewitForPostAsync(requester, relationship, cancellationToken);
+
+            // Build the Uri for this request.
+            var postUri = this.GetEndpointUriFromMetaPost(TentMetaEndpointEnum.Post, new Dictionary<string, string>
+            {
+                { "entity", relationship.Entity },
+                { "post", relationship.Id }
+            });
+
             // Build the request.
             var request = this.httpRequestFactory
-                .Get(postUri)
-                .AddAccept(this.tentConstants.PostContentType);
-
-            // If needed, and an Authorization header to this request.
-            if (this.credentials != null)
-                request.AddCredentials(this.credentials);
+                .Put(postUri)
+                .AddLink(this.uriHelpers.GetCamprPostBewitUri(requester.Handle, relationship.PassengerCredentials.Id, bewit), this.tentConstants.CredentialsRel)
+                .AddAccept(this.tentConstants.PostContentType)
+                .AddContent(relationship);
 
             // Perform the request using an HTTP client.
             var client = this.httpClientFactory.Make();
-            var postResult = await client.SendAsync<TentPostResult<T>>(request, cancellationToken);
+            var response = await client.SendAsync(request, cancellationToken);
 
-            // TODO: Perform validation.
-
-            // Return the post.
-            return postResult?.Post;
+            // Extract the Link header from the response and return it.
+            return response?.FindLinkInHeader(this.tentConstants.CredentialsRel);
         }
+
+        #endregion
+
+        #region Private methods.
 
         private async Task<long> CountAtUriAsync(Uri uri, string accept, CancellationToken cancellationToken)
         {
@@ -179,8 +190,8 @@ namespace Campr.Server.Lib.Net.Tent
                 .AddAccept(accept);
 
             // If needed, and an Authorization header to this request.
-            if (this.credentials != null)
-                request.AddCredentials(this.credentials);
+            if (this.Credentials != null)
+                request.AddCredentials(this.Credentials);
 
             // Perform the request using an HTTP client.
             var client = this.httpClientFactory.Make();
@@ -378,37 +389,6 @@ namespace Campr.Server.Lib.Net.Tent
 
         //    var client = this.CreateClient();
         //    return client.SendAsync(request);
-        //}
-
-        //public async Task<Uri> PostRelationshipAsync(string userHandle, TentPost<TentContentMeta> metaPost, TentPost<object> relationshipPost)
-        //{
-        //    Ensure.Argument.IsNotNullOrWhiteSpace(userHandle, nameof(userHandle));
-        //    Ensure.Argument.IsNotNull(metaPost, nameof(metaPost));
-        //    Ensure.Argument.IsNotNull(relationshipPost, nameof(relationshipPost));
-        //    Ensure.Argument.IsNotNull(relationshipPost.PassengerCredentials, "relationshipPost.PassengerCredentials");
-
-        //    // Generate a bewit signature for the credentials post.
-        //    var bewit = await this.bewitLogic.CreateBewitForPostAsync(userHandle, relationshipPost.PassengerCredentials.Id);
-
-        //    // Create the Uri for the request.
-        //    var postUri = this.GetEndpointUriFromMetaPost(metaPost, "post", new Dictionary<string, string>
-        //    {
-        //        { "entity", relationshipPost.Entity },
-        //        { "post", relationshipPost.Id }
-        //    });
-
-        //    // Create the request.
-        //    var request = this.requestFactory
-        //        .Put(postUri)
-        //        .AddLink(this.uriHelpers.GetCamprPostBewitUri(userHandle, relationshipPost.PassengerCredentials.Id, bewit), this.tentConstants.CredentialsRel)
-        //        .AddAccept(this.tentConstants.PostContentType)
-        //        .AddContent(relationshipPost);
-
-        //    var client = this.CreateClient();
-        //    var response = await client.SendAsync(request);
-
-        //    // Extract the Link header to credentials from the response.
-        //    return response?.FindLinkInHeader(this.tentConstants.CredentialsRel);
         //}
 
         //public Task<bool> PostNotificationAsync(TentPost<TentContentMeta> metaPost, TentPost<object> post, ITentHawkSignature credentials)

@@ -18,8 +18,8 @@ namespace Campr.Server.Lib.Logic
 
         Task<TentPost<TentContentCredentials>> CreateNewCredentialsPostAsync(User user, User targetUser, TentPost<object> targetPost);
         Task<TentPost<T>> CreatePostAsync<T>(User user, TentPost<T> post, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
-        Task CreateUserPostAsync<T>(User owner, TentPost<T> post, bool? isFromFollowing = null) where T : class;
-         //Task<TentPost<T>> ImportPostFromLinkAsync<T>(User user, User targetUser, Uri uri) where T : class;
+        Task CreateUserPostAsync<T>(User owner, TentPost<T> post, bool? isFromFollowing = null, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
+        Task<TentPost<T>> ImportPostFromLinkAsync<T>(User user, User targetUser, Uri uri, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
 
         Task<IList<TentPost<T>>> GetPostsAsync<T>(User requester, User feedOwner, ITentFeedRequest feedRequest, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
         Task<long> CountPostsAsync(User requester, User feedOwner, ITentFeedRequest feedRequest, CancellationToken cancellationToken = default(CancellationToken));

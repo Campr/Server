@@ -6,6 +6,7 @@ namespace Campr.Server.Lib.Net.Tent
 {
     public interface ITentClientFactory
     {
+        ISimpleTentClient Make();
         ITentClient Make(TentPost<TentContentMeta> target);
         ITentClient MakeAuthenticated(TentPost<TentContentMeta> target, ITentHawkSignature credentials);
     }

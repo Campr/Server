@@ -72,5 +72,15 @@ namespace Campr.Server.Lib.Models.Other.Factories
                 Post = post
             };
         }
+
+        public ITentRequestPost FromMention(TentMention mention)
+        {
+            Ensure.Argument.IsNotNull(mention, nameof(mention));
+            return new TentRequestPost(this.userLogic, this.userRepository, this.postRepository, this.uriHelpers)
+            {
+                UserId = mention.UserId,
+                PostId = mention.PostId
+            };
+        }
     }
 }

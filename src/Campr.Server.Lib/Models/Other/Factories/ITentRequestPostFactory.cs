@@ -8,5 +8,6 @@ namespace Campr.Server.Lib.Models.Other.Factories
         ITentRequestPost FromString(string post);
         ITentRequestPost FromUser(User user);
         ITentRequestPost FromPost(TentPost post);
+        ITentRequestPost FromMention(TentMention mention);
     }
 }

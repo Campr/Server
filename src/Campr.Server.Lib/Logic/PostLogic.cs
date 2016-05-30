@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -61,7 +62,6 @@ namespace Campr.Server.Lib.Logic
             this.postRepository = postRepository;
             this.userRepository = userRepository;
             this.tentQueues = tentQueues;
-            this.tentClient = tentClient;
             this.discoveryService = discoveryService;
             this.postFactory = postFactory;
             this.postTypeFactory = postTypeFactory;
@@ -83,7 +83,7 @@ namespace Campr.Server.Lib.Logic
         private readonly IUserRepository userRepository;
         private readonly IUserPostRepository userPostRepository;
         private readonly ITentQueues tentQueues;
-        private readonly ITentClient tentClient;
+        private readonly ITentClientFactory tentClientFactory;
         private readonly IDiscoveryService discoveryService;
         private readonly ILoggingService loggingService;
         private readonly ITentPostFactory postFactory;
@@ -368,7 +368,7 @@ namespace Campr.Server.Lib.Logic
             return post;
         }
 
-        public async Task CreateUserPostAsync<T>(User owner, TentPost<T> post, bool? isFromFollowing = null) where T : class
+        public async Task CreateUserPostAsync<T>(User owner, TentPost<T> post, bool? isFromFollowing = null, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
             //// If needed, check if our user is a subscriber.
             //// TODO
@@ -388,7 +388,7 @@ namespace Campr.Server.Lib.Logic
             //}
 
             // Create the feed item and save it to the db.
-            await this.userPostRepository.UpdateAsync(owner.Id, post, isFromFollowing.GetValueOrDefault());
+            await this.userPostRepository.UpdateAsync(owner.Id, post, isFromFollowing.GetValueOrDefault(), cancellationToken);
 
             // TODO.
             //// If needed, propagate to apps.
@@ -405,21 +405,22 @@ namespace Campr.Server.Lib.Logic
             //}
         }
 
-        //public async Task<TentPost<T>> ImportPostFromLinkAsync<T>(User user, User targetUser, Uri uri) where T : class
-        //{
-        //    // Retrieve the post.
-        //    var externalPost = await this.tentClient.RetrievePostAtUriAsync<T>(uri);
-        //    if (externalPost == null)
-        //        return null;
+        public async Task<TentPost<T>> ImportPostFromLinkAsync<T>(User user, User targetUser, Uri uri, CancellationToken cancellationToken = default(CancellationToken)) where T : class
+        {
+            // Retrieve the post.
+            var tentClient = this.tentClientFactory.Make();
+            var externalPost = await tentClient.GetAsync<T>(uri, cancellationToken);
+            if (externalPost == null)
+                return null;
 
-        //    // Save this post to the Db.
-        //    externalPost = await this.CreatePostAsync(targetUser, externalPost);
+            // Save this post to the Db.
+            externalPost = await this.CreatePostAsync(targetUser, externalPost, cancellationToken);
 
-        //    // Add a feed item to the post for our user.
-        //    await this.CreateUserPostAsync(user, externalPost);
+            // Add a feed item to the post for our user.
+            await this.CreateUserPostAsync(user, externalPost, null, cancellationToken);
 
-        //    return externalPost;
-        //}
+            return externalPost;
+        }
 
         public async Task<IList<TentPost<T>>> GetPostsAsync<T>(User requester, User feedOwner, ITentFeedRequest feedRequest, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
