@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Campr.Server.Lib.Configuration;
 using Campr.Server.Lib.Connectors.Queues;
-using Campr.Server.Lib.Enums;
 using Campr.Server.Lib.Exceptions;
 using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Infrastructure;
@@ -73,7 +70,7 @@ namespace Campr.Server.Lib.Logic
 
             // We have to use this *bad* strategy for UserLogic because of the circular dependency.
             this.userLogic = new Lazy<IUserLogic>(serviceProvider.GetService<IUserLogic>);
-            //this.followLogic = new Lazy<IFollowLogic>(() => container.Resolve<IFollowLogic>());
+            this.followLogic = new Lazy<IFollowLogic>(serviceProvider.GetService<IFollowLogic>);
             //this.typeSpecificLogic = new Lazy<ITypeSpecificLogic>(() => container.Resolve<ITypeSpecificLogic>());
             //this.appPostLogic = new Lazy<IAppPostLogic>(() => container.Resolve<IAppPostLogic>());
         }
@@ -97,7 +94,7 @@ namespace Campr.Server.Lib.Logic
         private readonly IGeneralConfiguration configuration;
 
         private readonly Lazy<IUserLogic> userLogic;
-        //private readonly Lazy<IFollowLogic> followLogic;
+        private readonly Lazy<IFollowLogic> followLogic;
         //private readonly Lazy<ITypeSpecificLogic> typeSpecificLogic;
         //private readonly Lazy<IAppPostLogic> appPostLogic;
 
@@ -105,7 +102,7 @@ namespace Campr.Server.Lib.Logic
 
         #region Interface implementation.
 
-        public async Task<TentPost<T>> GetPostAsync<T>(User requester, User feedOwner, User user, string postId, string versionId = null, TentPost<TentContentCredentials> credentials = null, CancellationToken cancellationToken = default(CancellationToken)) where T : class
+        public async Task<TentPost<T>> GetPostAsync<T>(User requester, User feedOwner, User user, string postId, string versionId = null, TentPost<TentContentCredentials> credentialsPost = null, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
             // If the feed owner is the requester, don't proxy.
             if (requester.Id == feedOwner.Id)
@@ -137,13 +134,13 @@ namespace Campr.Server.Lib.Logic
 
             // Otherwise, try and retrieve it externally.
             var metaPost = await this.GetMetaPostAsync(user, cancellationToken);
-            //            var credentials = await this.followLogic.Value.GetCredentialsForUser(user, targetUser, false, credentialsPost);
-            //
-            //            var externalPost = await this.tentClient.RetrievePostForUserAsync<object>(metaPost, credentials, postId, versionId);
-            //            var externalDbPost = await this.CreatePostAsync(targetUser, externalPost);
-            //
-            //            return externalDbPost;
-            return null;
+            var credentials = await this.followLogic.Value.GetCredentialsForUserAsync(user, feedOwner, false, credentialsPost, cancellationToken);
+
+            var tentClient = this.tentClientFactory.MakeAuthenticated(metaPost, credentials);
+            var externalPost = await tentClient.GetAsync<T>(postId, versionId, cancellationToken);
+            externalPost = await this.CreatePostAsync(feedOwner, externalPost, cancellationToken);
+
+            return externalPost;
         }
 
         public async Task<TentPost<T>> GetLastPostOfTypeAsync<T>(User requester, User feedOwner, User user, ITentPostType type, CancellationToken cancellationToken = new CancellationToken()) where T : class
