@@ -1,8 +1,8 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Campr.Server.Lib.Configuration;
-using Campr.Server.Lib.Connectors.Queues;
 using Campr.Server.Lib.Infrastructure;
 using Campr.Server.Lib.Models.Db;
 using Campr.Server.Lib.Models.Other;
@@ -10,8 +10,8 @@ using Campr.Server.Lib.Models.Other.Factories;
 using Campr.Server.Lib.Models.Tent;
 using Campr.Server.Lib.Models.Tent.PostContent;
 using Campr.Server.Lib.Net.Tent;
-using Campr.Server.Lib.Repositories;
 using Campr.Server.Lib.Models.Db.Factories;
+using Campr.Server.Lib.Models.Queues;
 
 namespace Campr.Server.Lib.Logic
 {
@@ -50,22 +50,22 @@ namespace Campr.Server.Lib.Logic
         private readonly ITentHawkSignatureFactory hawkSignatureFactory;
         private readonly ITentConstants tentConstants;
 
-        public Task<TentPost> GetRelationship(User user, User targetUser, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<TentPost<object>> GetRelationship(User user, User targetUser, CancellationToken cancellationToken = default(CancellationToken))
         {
             return this.GetRelationship(user, targetUser, true, true, false, cancellationToken);
         }
 
-        public Task<TentPost> GetRelationship(User user, User targetUser, bool createIfNotFound, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<TentPost<object>> GetRelationship(User user, User targetUser, bool createIfNotFound, CancellationToken cancellationToken = default(CancellationToken))
         {
             return this.GetRelationship(user, targetUser, createIfNotFound, true, false, cancellationToken);
         }
 
-        public Task<TentPost> GetRelationship(User user, User targetUser, bool createIfNotFound, bool propagate, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<TentPost<object>> GetRelationship(User user, User targetUser, bool createIfNotFound, bool propagate, CancellationToken cancellationToken = default(CancellationToken))
         {
             return this.GetRelationship(user, targetUser, createIfNotFound, propagate, false, cancellationToken);
         }
 
-        public async Task<TentPost> GetRelationship(User user, User targetUser, bool createIfNotFound, bool propagate, bool alwaysIncludeCredentials, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<TentPost<object>> GetRelationship(User user, User targetUser, bool createIfNotFound, bool propagate, bool alwaysIncludeCredentials, CancellationToken cancellationToken = default(CancellationToken))
         {
             Ensure.Argument.IsNotNull(user, nameof(user));
             Ensure.Argument.IsNotNull(targetUser, nameof(targetUser));
@@ -80,12 +80,15 @@ namespace Campr.Server.Lib.Logic
                 .WithMentions(new TentMention { User = targetUser })
                 .WithPublic(false)
                 .Post();
-            await this.postLogic.CreatePostAsync(user, localRelationshipPost, cancellationToken);
 
             // If we just created a new relationship post, create the corresponding credentials post.
             TentPost<TentContentCredentials> localCredentialsPost;
             if (existingRelationship == null)
             {
+                // Save the relationship post.
+                await this.postLogic.CreatePostAsync(user, localRelationshipPost, cancellationToken);
+
+                // Create a new credentials post to go along with this new relationship post.
                 localCredentialsPost = await this.postLogic.CreateNewCredentialsPostAsync(user, user, localRelationshipPost);
             }
             // Otherwise, retrieve the existing credentials post.
@@ -174,56 +177,50 @@ namespace Campr.Server.Lib.Logic
             return localRelationshipPost;
         }
 
-        //public async Task<IDbPost<object>> AcceptRelationship(DbUser user, DbUser targetUser, Uri credentialsLinkUri, string entity, string postId)
-        //{
-        //    // Retrieve any local existing relationship post.
-        //    var localRelationshipPost = await this.GetRelationship(user, targetUser, true, false, true);
-        //    var localCredentialsPost = localRelationshipPost.Post.PassengerCredentials;
+        public async Task<TentPost<object>> AcceptRelationship(User user, User targetUser, Uri credentialsLinkUri, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            // Retrieve any local existing relationship post.
+            var localRelationshipPost = await this.GetRelationship(user, targetUser, true, false, true, cancellationToken);
+            var localCredentialsPost = localRelationshipPost.PassengerCredentials;
 
-        //    // Retrieve the meta post for the remote user.
-        //    var metaPost = this.postLogic.GetMetaPostForUser(targetUser.Id);
+            // Retrieve the meta post for the remote user.
+            var metaPost = await this.postLogic.GetMetaPostAsync(targetUser, cancellationToken);
 
-        //    // Check the meta post's server to see if we have a match with the provided credentials link.
-        //    if (!metaPost.Post.Content.IsUrlServerMatch(credentialsLinkUri))
-        //    {
-        //        return null;
-        //    }
+            // Check the meta post's server to see if we have a match with the provided credentials link.
+            if (!metaPost.Content.IsUrlServerMatch(credentialsLinkUri))
+                return null;
 
-        //    // Retrieve and import the credentials post into our user's feed.
-        //    var remoteCredentialsPost = await this.postLogic.ImportPostFromLinkAsync<TentContentCredentials>(user, targetUser, credentialsLinkUri);
-        //    if (remoteCredentialsPost == null
-        //        || remoteCredentialsPost.Post.Mentions == null
-        //        || remoteCredentialsPost.Post.Mentions.All(m => m.Post == null))
-        //    {
-        //        return null;
-        //    }
+            // Retrieve and import the credentials post into our user's feed.
+            var remoteCredentialsPost = await this.postLogic.ImportPostFromLinkAsync<TentContentCredentials>(user, targetUser, credentialsLinkUri, cancellationToken);
+            if (remoteCredentialsPost?.Mentions == null || remoteCredentialsPost.Mentions.All(m => m.Post == null))
+                return null;
 
-        //    // Extract the remote relationship post.
-        //    var remoteRelationshipPost = remoteCredentialsPost.Post.Mentions.First(m => m.Post != null).Post;
+            // Extract the remote relationship post.
+            var remoteRelationshipPost = remoteCredentialsPost.Mentions.First(m => m.Post != null).Post;
 
-        //    // Update the Relationship post for our user.
-        //    localRelationshipPost.Post.Type = this.tentConstants.RelationshipPostType();
-        //    localRelationshipPost.Post.Permissions = new ApiPermissions { Public = true }; // Set the visibility to public.
+            // Update the Relationship post for our user.
+            localRelationshipPost.Type = this.tentConstants.RelationshipPostType;
+            localRelationshipPost.Permissions = null; // Set the visibility to public.
 
-        //    var localMentionToRemoteRelationshipPost = localRelationshipPost.Post.Mentions.First();
-        //    localMentionToRemoteRelationshipPost.PostId = remoteRelationshipPost.Post.Id;
-        //    localMentionToRemoteRelationshipPost.Type = remoteRelationshipPost.Post.Type;
+            var localMentionToRemoteRelationshipPost = localRelationshipPost.Mentions.First();
+            localMentionToRemoteRelationshipPost.PostId = remoteRelationshipPost.Id;
+            localMentionToRemoteRelationshipPost.Type = remoteRelationshipPost.Type;
 
-        //    // Create the new version, this one will be propagated through mentions.
-        //    localRelationshipPost = await this.postLogic.CreatePostAsync(user, localRelationshipPost.Post, true, false);
+            // Create the new version, this one will be propagated through mentions.
+            localRelationshipPost = await this.postLogic.CreatePostAsync(user, localRelationshipPost, false, cancellationToken);
 
-        //    // Send a link to the local credentials back to the remote server.
-        //    remoteRelationshipPost.Post.PassengerCredentials = localCredentialsPost;
+            // Send a link to the local credentials back to the remote server.
+            remoteRelationshipPost.PassengerCredentials = localCredentialsPost;
 
-        //    // Queue the creation of a meta post subscription for that user.
-        //    await this.tentQueues.MetaSubscriptions.AddMessageAsync(new QueueMetaSubscriptionMessage
-        //    {
-        //        UserId = user.Id,
-        //        TargetUserId = targetUser.Id
-        //    });
+            //// Queue the creation of a meta post subscription for that user.
+            //await this.tentQueues.MetaSubscriptions.AddMessageAsync(new QueueMetaSubscriptionMessage
+            //{
+            //    UserId = user.Id,
+            //    TargetUserId = targetUser.Id
+            //});
 
-        //    return remoteRelationshipPost;
-        //}
+            return remoteRelationshipPost;
+        }
 
         public Task<ITentHawkSignature> GetCredentialsForUserAsync(User user, User targetUser, CancellationToken cancellationToken = new CancellationToken())
         {

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Microsoft.Net.Http.Headers;
 
 namespace Campr.Server.Lib.Helpers
 {
@@ -34,10 +33,10 @@ namespace Campr.Server.Lib.Helpers
             return result;
         }
 
-        public string ReadRelInContentType(MediaTypeHeaderValue contentType)
-        {
-            // Read the rel parameter of the Content Type header.
-            return contentType?.Parameters.FirstOrDefault(p => p.Name == "rel")?.Value.Trim('"');
-        }
+        //public string ReadRelInContentType(MediaTypeHeaderValue contentType)
+        //{
+        //    // Read the rel parameter of the Content Type header.
+        //    return contentType?.Parameters.FirstOrDefault(p => p.Name == "rel")?.Value.Trim('"');
+        //}
     }
 }

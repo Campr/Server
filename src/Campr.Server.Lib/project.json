@@ -1,20 +1,19 @@
 {
   "version": "1.0.0-*",
   "description": "Campr.Server.Common Class Library",
-  "authors": [ "Campr" ],
-  "tags": [ "" ],
-  "projectUrl": "",
-  "licenseUrl": "",
+  "authors": ["Campr"],
 
   "dependencies": {
-    "Microsoft.Extensions.DependencyInjection": "1.0.0-rc1-final",
-    "Microsoft.Net.Http": "2.2.29",
-    "Microsoft.Net.Http.Headers": "1.0.0-rc1-final",
-    "RethinkDb.Driver": "2.2.10-beta-1",
-    "WindowsAzure.Storage": "6.2.2-preview"
+    "System.Globalization.Extensions": "4.0.1-rc2-24027",
+    "System.Reflection.TypeExtensions": "4.1.0-rc2-24027",
+    "Microsoft.Extensions.DependencyInjection": "1.0.0-rc2-final",
+    "WindowsAzure.Storage": "7.0.2-preview",
+    "RethinkDb.Driver": "2.3.4-beta-2"
   },
 
   "frameworks": {
-    "dnxcore50": {}
+    "netstandard1.5": {
+      "imports": ["portable-net451+win8", "dnxcore50"]
+    }
   }
 }

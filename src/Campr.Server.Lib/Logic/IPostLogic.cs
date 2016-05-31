@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Campr.Server.Lib.Enums;
 using Campr.Server.Lib.Models.Db;
 using Campr.Server.Lib.Models.Other;
 using Campr.Server.Lib.Models.Tent;
@@ -18,6 +17,7 @@ namespace Campr.Server.Lib.Logic
 
         Task<TentPost<TentContentCredentials>> CreateNewCredentialsPostAsync(User user, User targetUser, TentPost<object> targetPost);
         Task<TentPost<T>> CreatePostAsync<T>(User user, TentPost<T> post, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
+        Task<TentPost<T>> CreatePostAsync<T>(User user, TentPost<T> post, bool propagate, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
         Task CreateUserPostAsync<T>(User owner, TentPost<T> post, bool? isFromFollowing = null, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
         Task<TentPost<T>> ImportPostFromLinkAsync<T>(User user, User targetUser, Uri uri, CancellationToken cancellationToken = default(CancellationToken)) where T : class;
 

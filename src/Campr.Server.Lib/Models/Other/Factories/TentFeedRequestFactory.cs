@@ -5,15 +5,18 @@ using Campr.Server.Lib.Enums;
 using Campr.Server.Lib.Extensions;
 using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Infrastructure;
+using Campr.Server.Lib.Logic;
 
 namespace Campr.Server.Lib.Models.Other.Factories
 {
     class TentFeedRequestFactory : ITentFeedRequestFactory
     {
         public TentFeedRequestFactory(
-            IUriHelpers uriHelpers,
+            IUserLogic userLogic,
             ITentRequestDateFactory requestDateFactory,
             ITentRequestPostFactory requestPostFactory,
+            IUriHelpers uriHelpers,
+            IQueryStringHelpers queryStringHelpers,
             ITentPostTypeFactory postTypeFactory,
             IGeneralConfiguration configuration)
         {
@@ -23,24 +26,30 @@ namespace Campr.Server.Lib.Models.Other.Factories
             Ensure.Argument.IsNotNull(postTypeFactory, nameof(postTypeFactory));
             Ensure.Argument.IsNotNull(configuration, nameof(configuration));
 
-            this.uriHelpers = uriHelpers;
+            this.userLogic = userLogic;
             this.requestPostFactory = requestPostFactory;
             this.requestDateFactory = requestDateFactory;
             this.postTypeFactory = postTypeFactory;
+            this.uriHelpers = uriHelpers;
+            this.queryStringHelpers = queryStringHelpers;
             this.configuration = configuration;
         }
 
-        private readonly IUriHelpers uriHelpers;
+        private readonly IUserLogic userLogic;
         private readonly ITentRequestPostFactory requestPostFactory;
         private readonly ITentRequestDateFactory requestDateFactory;
+        private readonly IUriHelpers uriHelpers;
+        private readonly IQueryStringHelpers queryStringHelpers;
         private readonly ITentPostTypeFactory postTypeFactory;
         private readonly IGeneralConfiguration configuration;
 
         public ITentFeedRequest Make()
         {
             return new TentFeedRequest(
+                this.userLogic,
                 this.requestPostFactory,
-                this.requestDateFactory);
+                this.requestDateFactory,
+                this.queryStringHelpers);
         }
 
         public ITentFeedRequest FromQueryParameters(IReadOnlyDictionary<string, IList<IList<string>>> queryString)

@@ -209,10 +209,19 @@ namespace Campr.Server.Lib.Logic
             return credentialsPost;
         }
 
-        public async Task<TentPost<T>> CreatePostAsync<T>(
+        public Task<TentPost<T>> CreatePostAsync<T>(
             User user,
             TentPost<T> post,
             CancellationToken cancellationToken = default(CancellationToken)) where T : class
+        {
+            return this.CreatePostAsync(user, post, true, cancellationToken);
+        }
+
+        public async Task<TentPost<T>> CreatePostAsync<T>(
+            User user, 
+            TentPost<T> post, 
+            bool propagate, 
+            CancellationToken cancellationToken = new CancellationToken()) where T : class
         {
             // Validate parameters.
             Ensure.Argument.IsNotNull(user, nameof(user));

@@ -22,14 +22,21 @@ namespace Campr.Server.Lib.Models.Other
         #region Constructors & Private fields.
 
         public TentFeedRequest(
+            IUserLogic userLogic,
             ITentRequestPostFactory requestPostFactory,
-            ITentRequestDateFactory requestDateFactory)
+            ITentRequestDateFactory requestDateFactory,  
+            IQueryStringHelpers queryStringHelpers)
         {
+            Ensure.Argument.IsNotNull(userLogic, nameof(userLogic));
             Ensure.Argument.IsNotNull(requestPostFactory, nameof(requestPostFactory));
             Ensure.Argument.IsNotNull(requestDateFactory, nameof(requestDateFactory));
-            
+            Ensure.Argument.IsNotNull(queryStringHelpers, nameof(queryStringHelpers));
+
+            this.userLogic = userLogic;
             this.requestPostFactory = requestPostFactory;
             this.requestDateFactory = requestDateFactory;
+            this.queryStringHelpers = queryStringHelpers;
+
             this.resolveDependenciesRunner = new TaskRunner(this.ResolveDependenciesAsync);
         }
 
