@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Services.Client;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Campr.Server.Lib.Enums;
-using Campr.Server.Lib.Extensions;
 using Campr.Server.Lib.Json;
 
 namespace Campr.Server.Lib.Models.Tent.PostContent

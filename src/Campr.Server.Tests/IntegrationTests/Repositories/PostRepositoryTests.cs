@@ -9,13 +9,13 @@ using Campr.Server.Lib.Models.Tent;
 using Campr.Server.Lib.Models.Tent.PostContent;
 using Campr.Server.Lib.Repositories;
 using Campr.Server.Tests.Infrastructure;
-using Campr.Server.Tests.IntegrationTests.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Campr.Server.Tests.IntegrationTests.Repositories
 {
-    public class PostRepositoryTests : IClassFixture<RethinkDbFixture>
+    [Collection("RethinkDb")]
+    public class PostRepositoryTests
     {
         public PostRepositoryTests()
         {

@@ -2,13 +2,13 @@
 using Campr.Server.Lib.Models.Db.Factories;
 using Campr.Server.Lib.Repositories;
 using Campr.Server.Tests.Infrastructure;
-using Campr.Server.Tests.IntegrationTests.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Campr.Server.Tests.IntegrationTests.Repositories
 {
-    public class UserRepositoryTests : IClassFixture<RethinkDbFixture>
+    [Collection("RethinkDb")]
+    public class UserRepositoryTests
     {
         public UserRepositoryTests()
         {
