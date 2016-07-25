@@ -190,3 +190,6 @@ FakesAssemblies/
 
 # Asp.Net 5 Project
 project.lock.json
+
+# RethinkDB
+rethinkdb_data/
