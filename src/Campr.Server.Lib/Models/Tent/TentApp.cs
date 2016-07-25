@@ -1,6 +1,5 @@
 ﻿using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Json;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Campr.Server.Lib.Models.Tent
@@ -27,11 +26,11 @@ namespace Campr.Server.Lib.Models.Tent
         [DbProperty]
         [WebProperty]
         public string Id { get; set; }
-        
+
         [DbProperty]
         [WebProperty]
         public string Url { get; set; }
-        
+
         [DbProperty]
         [WebProperty]
         public string Name { get; set; }

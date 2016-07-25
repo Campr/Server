@@ -5,7 +5,6 @@ using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Infrastructure;
 using Campr.Server.Lib.Models.Db;
 using Campr.Server.Lib.Models.Db.Factories;
-using Campr.Server.Lib.Models.Tent.PostContent;
 using Campr.Server.Lib.Repositories;
 using Campr.Server.Lib.Services;
 
@@ -27,7 +26,7 @@ namespace Campr.Server.Lib.Logic
             Ensure.Argument.IsNotNull(loggerService, nameof(loggerService));
             Ensure.Argument.IsNotNull(uriHelpers, nameof(uriHelpers));
             Ensure.Argument.IsNotNull(cryptoHelpers, nameof(cryptoHelpers));
-            
+
             this.userRepository = userRepository;
             this.userFactory = userFactory;
             //this.discoveryService = discoveryService;
@@ -35,7 +34,7 @@ namespace Campr.Server.Lib.Logic
             this.uriHelpers = uriHelpers;
             this.cryptoHelpers = cryptoHelpers;
         }
-        
+
         private readonly IUserRepository userRepository;
         private readonly IUserFactory userFactory;
         //private readonly IDiscoveryService discoveryService;
@@ -62,7 +61,7 @@ namespace Campr.Server.Lib.Logic
         {
             if (string.IsNullOrWhiteSpace(entityOrHandle))
                 return null;
-            
+
             // Retry in case of conflicts when creating new users.
             for (var i = 0; i < 3; i++)
             {

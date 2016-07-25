@@ -1,6 +1,5 @@
 ﻿using Campr.Server.Lib.Helpers;
 using Campr.Server.Lib.Json;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Campr.Server.Lib.Models.Tent
@@ -22,23 +21,23 @@ namespace Campr.Server.Lib.Models.Tent
         [DbProperty]
         [WebProperty]
         public string Category { get; set; }
-        
+
         [DbProperty]
         [WebProperty]
         public string ContentType { get; set; }
-        
+
         [DbProperty]
         [WebProperty]
         public string Name { get; set; }
-        
+
         [DbProperty]
         [WebProperty]
         public string Digest { get; set; }
-        
+
         [DbProperty]
         [WebProperty]
         public long Size { get; set; }
-        
+
         public byte[] Data { get; set; }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using Campr.Server.Lib.Models.Queues;
-using Microsoft.WindowsAzure.Storage.Queue;
 
 namespace Campr.Server.Lib.Connectors.Queues
 {

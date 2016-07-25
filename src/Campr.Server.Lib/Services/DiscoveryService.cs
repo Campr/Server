@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Campr.Server.Lib.Configuration;
-using Campr.Server.Lib.Extensions;
 using Campr.Server.Lib.Infrastructure;
 using Campr.Server.Lib.Models.Tent;
-using Campr.Server.Lib.Net;
 using Campr.Server.Lib.Net.Base.Factories;
 using Campr.Server.Lib.Net.Tent;
 
@@ -33,7 +31,7 @@ namespace Campr.Server.Lib.Services
         private readonly ITentConstants tentConstants;
         private readonly IServiceProvider serviceProvider;
 
-        public async Task<TentPost<T>> DiscoverUriAsync<T>(Uri targetUri) where T: class 
+        public async Task<TentPost<T>> DiscoverUriAsync<T>(Uri targetUri) where T: class
         {
             //// Perform a GET request on the specified Uri.
             //var httpClient = this.serviceProvider.Resolve<IHttpClient>();

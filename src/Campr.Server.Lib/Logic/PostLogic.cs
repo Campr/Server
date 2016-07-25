@@ -122,9 +122,9 @@ namespace Campr.Server.Lib.Logic
             var internalPost = await this.postRepository.GetAsync<T>(user.Id, postId, cancellationToken);
 
             // If a post was found, check if our user can access it.
-            if (internalPost != null 
-                && requester.Id != user.Id 
-                && !internalPost.Permissions.Public.GetValueOrDefault() 
+            if (internalPost != null
+                && requester.Id != user.Id
+                && !internalPost.Permissions.Public.GetValueOrDefault()
                 && !internalPost.Permissions.UserIds.Contains(requester.Id))
                 return null;
 
@@ -215,9 +215,9 @@ namespace Campr.Server.Lib.Logic
         }
 
         public async Task<TentPost<T>> CreatePostAsync<T>(
-            User user, 
-            TentPost<T> post, 
-            bool propagate, 
+            User user,
+            TentPost<T> post,
+            bool propagate,
             CancellationToken cancellationToken = new CancellationToken()) where T : class
         {
             // Validate parameters.

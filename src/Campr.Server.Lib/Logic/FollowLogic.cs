@@ -11,7 +11,6 @@ using Campr.Server.Lib.Models.Tent;
 using Campr.Server.Lib.Models.Tent.PostContent;
 using Campr.Server.Lib.Net.Tent;
 using Campr.Server.Lib.Models.Db.Factories;
-using Campr.Server.Lib.Models.Queues;
 
 namespace Campr.Server.Lib.Logic
 {
@@ -95,8 +94,8 @@ namespace Campr.Server.Lib.Logic
             else
             {
                 // Find the associated credentials post.
-                localCredentialsPost = await this.postLogic.GetLastPostOfTypeMentioningAsync<TentContentCredentials>(user, user, user, 
-                    this.tentConstants.CredentialsPostType, 
+                localCredentialsPost = await this.postLogic.GetLastPostOfTypeMentioningAsync<TentContentCredentials>(user, user, user,
+                    this.tentConstants.CredentialsPostType,
                     this.requestPostFactory.FromPost(existingRelationship),
                     cancellationToken);
 
@@ -251,9 +250,9 @@ namespace Campr.Server.Lib.Logic
                 m.UserId != user.Id && m.FoundPost);
 
             // Retrieve the credentials post for the remote relationship post.
-            var remoteCredentialsPost = await this.postLogic.GetLastPostOfTypeMentioningAsync<TentContentCredentials>(user, user, targetUser, 
-                this.tentConstants.CredentialsPostType, 
-                this.requestPostFactory.FromMention(remoteRelationshipPostMention), 
+            var remoteCredentialsPost = await this.postLogic.GetLastPostOfTypeMentioningAsync<TentContentCredentials>(user, user, targetUser,
+                this.tentConstants.CredentialsPostType,
+                this.requestPostFactory.FromMention(remoteRelationshipPostMention),
                 cancellationToken);
 
             return remoteCredentialsPost == null

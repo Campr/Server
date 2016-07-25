@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Campr.Server.Lib.Extensions;
@@ -22,7 +21,7 @@ namespace Campr.Server.Lib.Infrastructure
         }
 
         private readonly MurmurHash2Simple murmur;
-        private readonly SortedDictionary<uint, string> circle; 
+        private readonly SortedDictionary<uint, string> circle;
         private readonly uint replicate;
 
         // Cache of the ordered keys.
@@ -43,7 +42,7 @@ namespace Campr.Server.Lib.Infrastructure
         public void Remove(params string[] nodes)
         {
             Ensure.Argument.IsNotNull(nodes, nameof(nodes));
-            
+
             nodes.ToList().ForEach(this.RemoveSingle);
             this.orderedKeys = this.circle.Keys.ToArray();
         }
