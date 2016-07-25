@@ -134,7 +134,7 @@ namespace Campr.Server.Lib.Logic
 
             // Otherwise, try and retrieve it externally.
             var metaPost = await this.GetMetaPostAsync(user, cancellationToken);
-            var credentials = await this.followLogic.Value.GetCredentialsForUserAsync(user, feedOwner, false, credentialsPost, cancellationToken);
+            var credentials = await this.followLogic.Value.GetCredentialsForUserAsync(requester, user, false, credentialsPost, cancellationToken);
 
             var tentClient = this.tentClientFactory.MakeAuthenticated(metaPost, credentials);
             var externalPost = await tentClient.GetAsync<T>(postId, versionId, cancellationToken);
@@ -434,17 +434,29 @@ namespace Campr.Server.Lib.Logic
             if (requester.Id != feedOwner.Id)
                 feedRequest.ReplaceUsers(feedOwner);
 
-            // If the user is external, proxy the request.
+            // If the target feed is internal, fetch the posts immediately.
             if (!feedOwner.IsInternal())
             {
-                // TODO.
+                // Otherwise, perform the request internally.
+                var userPosts = await this.userPostRepository.GetAsync(requester.Id, feedOwner.Id, feedRequest, cancellationToken);
+
+                // Fetch the corresponding posts and return.
+                return await this.postRepository.GetAsync<T>(userPosts.Cast<ITentPostIdentifier>().ToList(), cancellationToken);
             }
 
-            // Otherwise, perform the request internally.
-            var userPosts = await this.userPostRepository.GetAsync(requester.Id, feedOwner.Id, feedRequest, cancellationToken);
+            // Otherwise, perform the request externally.
+            var metaPost = await this.GetMetaPostAsync(feedOwner, cancellationToken);
+            var credentials = await this.followLogic.Value.GetCredentialsForUserAsync(requester, feedOwner, cancellationToken);
 
-            // Fetch the corresponding posts and return.
-            return await this.postRepository.GetAsync<T>(userPosts.Cast<ITentPostIdentifier>().ToList(), cancellationToken);
+            var tentClient = this.tentClientFactory.MakeAuthenticated(metaPost, credentials);
+            var externalPosts = await tentClient.GetAsync<T>(feedRequest, cancellationToken);
+
+            // Import the posts and return.
+            var newPostTasks = externalPosts.Select(ep => this.CreatePostAsync(feedOwner, ep, cancellationToken)).ToList();
+            await Task.WhenAll(newPostTasks);
+
+            // Return the newly created posts.
+            return newPostTasks.Where(t => t.Result != null).Select(t => t.Result).ToList();
         }
 
         public Task<long> CountPostsAsync(User requester, User feedOwner, ITentFeedRequest feedRequest, CancellationToken cancellationToken = default(CancellationToken))
